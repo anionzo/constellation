@@ -1,0 +1,12 @@
+[submodule "designs/after-midnight"]
+	path = designs/after-midnight
+	url = https://github.com/anionzo/after-midnight.git
+[submodule "designs/astraea"]
+	path = designs/astraea
+	url = https://github.com/anionzo/astraea.git
+[submodule "designs/dream-journal"]
+	path = designs/dream-journal
+	url = https://github.com/anionzo/dream-journal.git
+[submodule "designs/quire"]
+	path = designs/quire
+	url = https://github.com/anionzo/quire.git

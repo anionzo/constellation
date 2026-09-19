@@ -1,0 +1,25 @@
+# deps
+node_modules/
+.dart_tool/
+.build/
+# builds
+dist/
+build/
+out/
+# env & secrets
+.env
+.env.*
+!.env.example
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+# flutter
+.flutter-plugins
+.flutter-plugins-dependencies
+*.apk
+*.ipa
+# logs
+*.log
+npm-debug.log*

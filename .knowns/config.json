@@ -1,0 +1,47 @@
+{
+  "name": "Design_full_app",
+  "id": "Design-full-app",
+  "createdAt": "2026-09-19T07:24:03.6444807Z",
+  "settings": {
+    "defaultPriority": "medium",
+    "gitTrackingMode": "git-tracked",
+    "statuses": [
+      "todo",
+      "in-progress",
+      "in-review",
+      "done",
+      "blocked",
+      "on-hold",
+      "urgent"
+    ],
+    "statusColors": {
+      "blocked": "red",
+      "done": "green",
+      "in-progress": "blue",
+      "in-review": "purple",
+      "on-hold": "yellow",
+      "todo": "gray",
+      "urgent": "orange"
+    },
+    "visibleColumns": [
+      "todo",
+      "in-progress",
+      "blocked",
+      "done",
+      "in-review"
+    ],
+    "semanticSearch": {
+      "enabled": true,
+      "model": "all-MiniLM-L6-v2",
+      "huggingFaceId": "Xenova/all-MiniLM-L6-v2",
+      "dimensions": 384,
+      "maxTokens": 256
+    },
+    "platforms": [
+      "claude-code",
+      "opencode",
+      "agents"
+    ],
+    "enableChatUI": true
+  }
+}
