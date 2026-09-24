@@ -1,0 +1,41 @@
+{
+  "docPath": "constellation/s-01-quy-c-vit-docs-constellation",
+  "currentVersion": 1,
+  "versions": [
+    {
+      "id": "v1",
+      "docPath": "constellation/s-01-quy-c-vit-docs-constellation",
+      "version": 1,
+      "timestamp": "2026-09-19T07:53:33.8073153Z",
+      "changes": [
+        {
+          "field": "title",
+          "oldValue": null,
+          "newValue": "S-01 Quy ước viết docs constellation"
+        },
+        {
+          "field": "description",
+          "oldValue": null,
+          "newValue": "Quy ước viết docs cho 4 app designs: vị trí .knowns/docs, mức khóa observe-only, cấm mint contract và sample code"
+        },
+        {
+          "field": "tags",
+          "oldValue": null,
+          "newValue": [
+            "constellation",
+            "conventions"
+          ]
+        }
+      ],
+      "snapshot": {
+        "content": "# S-01 Quy ước viết docs constellation\n\nMức khóa: **observe-only** — mỗi doc chỉ ghi điều quan sát được từ prototype + nguồn kiểm chứng (file + ngày đọc). Không suy diễn thêm cho liền mạch. Cái gì chưa rõ thì gắn nhãn, không tự bịa.\n\n## 1. Vị trí\n\n- Mọi doc nằm trong `.knowns/docs`, folder `constellation`. Không tạo `docs/` root, không viết vào trong `designs/*` (tôn trọng git-submodule boundary, không sửa HTML nguồn).\n- Header mỗi doc app ghi 1 lần: commit-hash 4 submodule + ngày đọc. Từng mục ghi `file nguồn` (vd `designs/quire/prototype.html`).\n\n## 2. Cấm tuyệt đối (anti-mint)\n\n- Cấm sample code dưới mọi hình thức.\n- Cấm đặt tên field, schema, API, endpoint, interface, class — kể cả gắn nhãn \"khái niệm\". Dữ liệu mô tả bằng nhóm quan-sát-được + quy tắc văn xuôi.\n- Cấm redesign visual/token, cấm merge 4 app thành 1 product.\n\n## 3. Nhãn bắt buộc\n\n- `Quan sát:` điều thấy trực tiếp trong HTML/readme/brief/notes.\n- `Chưa rõ — hỏi Lead:` ambiguity, không đoán. Mỗi cái map 1 dòng hậu quả nếu implement đoán sai.\n\n## 4. Mục lục chung (§1–§7)\n\nMọi doc app dùng chung số mục để kiểm completeness cơ học (không đồng nhất nội dung/visual): §1 Screens, §2 Flows, §3 Data, §4 States, §5 Tokens, §6 Copy, §7 Rules/Not-do.\n\n## 5. Thứ tự + done-when\n\n`S-01 → S-02 → dream-journal → quire → after-midnight → astraea → C-90 → C-91`. Đối chiếu đếm màn astraea (18 vs 13–14) chạy song song, tối đa 30 phút, board thắng tạm + flag. Done khi mỗi app đủ 2 docs + checklist C-90 tick hết.\n",
+        "description": "Quy ước viết docs cho 4 app designs: vị trí .knowns/docs, mức khóa observe-only, cấm mint contract và sample code",
+        "tags": [
+          "constellation",
+          "conventions"
+        ],
+        "title": "S-01 Quy ước viết docs constellation"
+      }
+    }
+  ]
+}

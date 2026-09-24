@@ -1,0 +1,55 @@
+---
+title: astraea-02 — Dữ liệu + quy tắc + failure
+description: 'Nhóm dữ liệu quan sát astraea: kiểu trải, bài đọc, 78 lá, hoàng đạo, nhật ký, chi tiết 4 lớp + failure-mode'
+createdAt: '2026-09-21T13:30:00.000Z'
+updatedAt: '2026-09-21T13:30:00.000Z'
+tags:
+  - constellation
+  - astraea
+---
+
+# astraea-02 — Dữ liệu + quy tắc + failure
+
+> Submodule `designs/astraea` @ `047351d`. Ngày đọc: 2026-09-21. File nguồn chính: `designs/astraea/readme.md` + quét 2 file HTML. HTML vỡ dấu nhiều đoạn — trích dài chỉ từ readme.
+
+## §1 Screens — tóm tắt định vị (chi tiết xem `constellation/astraea-01`)
+
+- Quan sát: "studio Tarot trong túi" cho người Việt; nghi thức rút bài chậm như buổi lễ riêng tư (readme dòng 3). Nếu đoán sai: dồn nhiều bước 1 màn, mất chất lễ nghi.
+
+## §2 Flows — vòng đời hiển thị (chi tiết xem `constellation/astraea-01`)
+
+- Quan sát: onboarding (chào → tài khoản → ngày sinh → quan tâm → trang chủ) rồi ritual → kết quả → lưu → nhật ký; hồ sơ giữ cung/ngày sinh/bộ đếm cá nhân hóa lần sau. Nếu đoán sai: rút trước onboarding, mất dữ liệu cá nhân hóa.
+- Quan sát: chi tiết lá là màn trung chuyển (từ kết quả/thư viện/hoàng đạo/trang chủ, quay lại đúng nơi tới). Nếu đoán sai: back luôn về trang chủ, người dùng lạc.
+- Chưa rõ — hỏi Lead: sau lưu đi đâu chính (ở lại kết quả / sang nhật ký / về trang chủ)? Nguyên mẫu cho cả mở nhật ký lẫn rút lại. Nếu đoán sai: mất dấu bài vừa lưu.
+
+## §3 Data — nhóm quan sát + quy tắc văn xuôi (không tên kỹ thuật)
+
+- Kiểu trải — Quan sát: 4 kiểu (một lá thông điệp hôm nay rút 1; ba lá quá khứ–hiện tại–tương lai rút 3; tình yêu bạn–người ấy–kết nối rút 3; công việc bối cảnh–điểm mạnh–bước tiếp rút 3). Quy tắc: số lá chọn đúng bằng số vị trí, nút lật khóa tới khi đủ. Nếu đoán sai: trải 3 vị trí chỉ 2 lá, thông điệp lệch vị trí.
+- Bài đọc — Quan sát: nhật ký mở sẵn 2 bài ví dụ (1 trải 3 lá, 1 lá đơn); bài mới lên đầu kèm ngày/tên trải/tên các lá; trang chủ chỉ 2 bài gần nhất + nút "tất cả". Nếu đoán sai: thứ tự cũ–mới đảo, trang chủ tràn danh sách.
+- 78 lá — Quan sát: 22 Ẩn Chính (số La Mã, tên, cung, nguyên tố, hành tinh, từ khóa xuôi/ngược, diễn giải 4 ngăn, câu hỏi phản chiếu) + 56 Ẩn Phụ 4 chất (14 hạng Át→Vua, diễn giải theo chất, ngắn hơn Ẩn Chính). Nếu đoán sai: Ẩn Phụ bị đòi nội dung sâu như Ẩn Chính, vỡ khối lượng biên tập.
+- Hoàng đạo — Quan sát: 12 cung (khoảng ngày, nguyên tố, hành tinh, chòm sao trong tranh, đúng 1 lá Ẩn Chính tương ứng); ngày sinh đổi → cung tự đổi. Nếu đoán sai: ánh xạ cung–lá sai, cá nhân hóa sai theo.
+- Nhật ký — Quan sát: 2 ngăn (bài đọc / ghi chú); ghi chú rỗng, ô trống thì nút thêm khóa; xóa toàn bộ 2 chạm (gài rồi xóa). Nếu đoán sai: 1 chạm xóa sạch dữ liệu.
+- Chi tiết lá 4 lớp — Quan sát: công tắc xuôi/ngược đổi toàn bộ nội dung (từ khóa + diễn giải + tiền tố "khi lá bài nằm ngược"); 4 ngăn (ý nghĩa chính, tình yêu, công việc, phát triển bản thân) + câu hỏi phản chiếu cuối. Nếu đoán sai: đổi mặt không đổi nội dung, công tắc thành đồ trang trí lừa người dùng.
+
+## §4 States — vòng đời rỗng → có → xóa
+
+- Quan sát: rỗng → có (nhật ký trống mời rút đầu tiên; có bài thì liệt kê; ghi chú trống mời ghi dòng đầu); có → xóa (hồ sơ xóa toàn bộ sau 2 chạm, về trạng thái trống, có báo đã xóa). Nếu đoán sai: màn trắng trơn không lối tiếp, hoặc 1 chạm mất sạch.
+- Quan sát: tải chỉ ở màn chờ ngắn trước kết quả; thư viện/hoàng đạo không tải (dữ liệu vẽ sẵn). Nếu đoán sai: thiếu màn chờ, tưởng app treo.
+- Quan sát: khóa nút khi thiếu thông tin là quy tắc xuyên suốt. Nếu đoán sai: gửi form thiếu, sinh lỗi không cần thiết.
+
+## §5 Tokens — tuyên bố nguyên văn + tag kiểm chứng (số liệu ở readme + mã nguồn)
+
+- Quan sát: nền đêm `#0B0A12`, chữ ngà `#F3EDE0`, vàng nhấn `#C9A86A` (nhạt `#E0C489`) — `chưa kiểm độc lập` (mới đọc mã, chưa đo tương phản thiết bị).
+- Quan sát: tiêu đề serif trang nhã, giao diện sans gọn; readme tuyên bố sans "đủ dấu tiếng Việt" — `chưa kiểm độc lập` (chưa kiểm dấu mọi cỡ chữ).
+- Quan sát: 1 điểm nhấn vàng duy nhất; thẻ/màn bo góc lớn; ngà trên nền đêm; vàng cho nút chính/mục chọn/link nhấn mạnh.
+- Quan sát (readme dòng 36–37, `chưa kiểm độc lập`): chạm tối thiểu 44px; nhấn/khóa rõ; tôn trọng giảm chuyển động; viền vàng focus bàn phím trong nguyên mẫu. Mới đọc mã + tuyên bố, chưa kiểm thiết bị/đo đạc. Nếu đoán sai (coi đã đạt): lọt lỗi tương phản/chạm/chữ ra release.
+
+## §6 Copy — trích giọng + trỏ file
+
+- Quan sát (readme): "nơi nghi thức rút bài diễn ra chậm rãi như một buổi lễ riêng tư" (dòng 3); "giọng thơ nhưng có đất, không tiên tri, không gieo sợ" (dòng 38).
+- Quan sát: diễn giải lá tuân thủ giọng (câu hỏi mở, không phán quyết), nhưng HTML vỡ dấu nhiều đoạn nên không trích dài — trích dẫn sản xuất phải lấy từ nguồn biên tập sạch do Lead cung cấp. Nếu đoán sai (sao chép từ HTML lỗi dấu): chữ lỗi lọt ra app.
+
+## §7 Rules — cấm + failure
+
+- Cấm: tiên tri/gieo sợ/phán quyết thay người dùng; thông điệp chỉ gợi ý phản chiếu. Không dùng dữ liệu ví dụ làm dữ liệu thật; không coi auth/form mẫu là backend thật. Không thêm màn/trường/endpoint ngoài quan sát khi chưa hỏi Lead; SSOT tokens ở readme + mã nguồn.
+- Failure 5 dòng: (1) đếm màn 18/16/14/13 chưa chốt → backlog + điều hướng lệch, nghiệm thu cãi nhau; (2) đích sau-lưu chưa chốt → mất dấu bài vừa lưu; (3) phạm vi bản đầu của hàng phụ (quên mật khẩu, thông báo, Premium, trợ giúp) chưa chốt → màn mồ côi hoặc thiếu màn đã hứa; (4) ví dụ nào giữ lại production chưa chốt → demo lọt bản thật hoặc màn trống trơn; (5) tokens/a11y mới đọc mã chưa kiểm độc lập → coi đã đạt sẽ lọt lỗi ra release.

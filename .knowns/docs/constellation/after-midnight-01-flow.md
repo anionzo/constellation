@@ -1,0 +1,64 @@
+---
+title: after-midnight-01 — Flow + màn hình + trạng thái
+description: 'Inventory 15 màn after-midnight: time-gate 00-05h, 8 không gian đêm, Void không lưu, thư niêm phong + trạng thái'
+createdAt: '2026-09-21T13:30:00.000Z'
+updatedAt: '2026-09-21T13:30:00.000Z'
+tags:
+  - constellation
+  - after-midnight
+---
+
+# after-midnight-01 — Flow + màn hình + trạng thái
+
+> Submodule `designs/after-midnight` @ `003f822`. Ngày đọc: 2026-09-21. File nguồn chính: `designs/after-midnight/readme.md`, `v1 after midnight - infinite canvas.html`, `v1 after midnight - interactive prototype.html`. Lưu ý: tiếng Việt có dấu trong 2 file HTML bị vỡ ký tự khi đọc thô — chỉ trích nguyên văn chuỗi ASCII đọc rõ + trỏ file.
+
+## §1 Screens — inventory 15 màn (cả 2 file liệt kê cùng thứ tự)
+
+| Màn | Vào từ đâu | Ra tới đâu | Dữ liệu vào (quan sát) | Dữ liệu ra (quan sát) | Bị chặn khi nào | Rỗng / Tải / Lỗi / Khóa |
+|---|---|---|---|---|---|---|
+| Ngày | Quan sát: mở app ngoài khung giờ đêm | Quan sát: Chạng vạng (khi tới giờ) | Quan sát: không nhập, chỉ xem | Quan sát: không tạo gì | Quan sát: màn khóa mặc định ban ngày; bản tin hẹn giờ đêm 00:00–05:00 | Khóa (ngoài giờ); không thấy rỗng/tải/lỗi |
+| Chạng vạng | Quan sát: từ Ngày | Quan sát: Nhà (nửa đêm) | Quan sát: không nhập, chỉ xem | Quan sát: không tạo gì; có nút mở sớm xem thử | Quan sát: chặn một phần tới nửa đêm, cho mở sớm thủ công | Khóa-mềm (vào được bằng nút mở sớm) |
+| Nhà (nửa đêm) | Quan sát: từ Chạng vạng / hết khóa giờ | Quan sát: Thành phố đêm | Quan sát: không nhập | Quan sát: cửa ngõ vào đêm | Quan sát: chỉ vào trong khung nửa đêm hoặc sau mở sớm | Khóa (ngoài giờ) |
+| Thành phố đêm | Quan sát: từ Nhà | Quan sát: 6 điểm (Café, Radio, Câu hỏi, Bưu cục, Đài thiên văn, Sân thượng) + The Void + Lưu trữ | Quan sát: bấm chọn địa điểm | Quan sát: lựa chọn điểm đến | Quan sát: ngoài giờ đêm | Không thấy rỗng/tải/lỗi |
+| Café | Quan sát: từ Thành phố đêm | Quan sát: về Thành phố đêm / tab Nhà | Quan sát: suy nghĩ ẩn danh gõ tay + chọn tâm trạng | Quan sát: suy nghĩ thành sao; bản thảo dưới tối thiểu (ít nhất 4 ký tự) báo lỗi, không gửi | Quan sát: ngoài giờ; bản thảo quá ngắn | Rỗng (chưa có), Tải (lúc gửi), Lỗi (quá ngắn / gửi thất bại có thử lại) |
+| Radio | Quan sát: từ Thành phố đêm / tab Radio | Quan sát: về Thành phố đêm | Quan sát: bấm phát/dừng; đồng hồ đếm thời gian phát | Quan sát: chỉ trạng thái phát/im, không nội dung | Quan sát: ngoài giờ đêm | 2 trạng thái phát/im; không thấy rỗng/tải/lỗi |
+| Câu hỏi của đêm | Quan sát: từ Thành phố đêm | Quan sát: về Thành phố đêm | Quan sát: câu trả lời riêng tư gõ tay | Quan sát: câu trả lời được giữ; dưới tối thiểu (ít nhất 3 ký tự) báo lỗi | Quan sát: ngoài giờ; trả lời quá ngắn | Rỗng (chưa trả lời), Lỗi (quá ngắn); không thấy tải |
+| Bưu cục | Quan sát: từ Thành phố đêm | Quan sát: Thư đã niêm phong | Quan sát: nội dung thư + chủ đề (ngày mai, 7 ngày, 30 ngày, 1 năm) + thời hạn gửi | Quan sát: thư niêm phong kèm ngày mở dự kiến | Quan sát: ngoài giờ; thư quá ngắn (ít nhất 10 ký tự) | Rỗng (chưa viết), Lỗi (quá ngắn); không thấy tải |
+| Thư đã niêm phong | Quan sát: từ Bưu cục (sau niêm phong) | Quan sát: về Thành phố đêm / Lưu trữ | Quan sát: không nhập | Quan sát: không tạo gì; thư khóa ngay khi rời đi | Quan sát: luôn chỉ-đọc sau niêm phong | Khóa (chỉ-đọc, không sửa) |
+| Gương (hồ sơ) | Quan sát: từ tab Hồ sơ | Quan sát: về các tab khác | Quan sát: không nhập | Quan sát: tóm tắt chủ đề chung người dùng | Quan sát: ngoài giờ (tab chỉ hiện trong đêm) | Rỗng (chưa dữ liệu) |
+| Đài thiên văn (bầu trời) | Quan sát: từ Thành phố đêm / tab Bầu trời | Quan sát: về Thành phố đêm | Quan sát: chọn sao / ghim sao vào chòm ("chòm sao của riêng bạn") | Quan sát: chòm sao cá nhân; sẵn 2 chòm mẫu trưng bày | Quan sát: ngoài giờ đêm | Rỗng (chưa ghim) + 2 chòm mẫu sẵn |
+| Sân thượng | Quan sát: từ Thành phố đêm | Quan sát: về Thành phố đêm | Quan sát: không nhập gì | Quan sát: không tạo gì; màn tĩnh lặng, không nút hành động | Quan sát: ngoài giờ đêm | Không rỗng/tải/lỗi — tĩnh theo thiết kế |
+| The Void | Quan sát: từ Thành phố đêm (luồng riêng) | Quan sát: Bình minh / viết lại | Quan sát: đoạn trút bỏ tối đa 400 ký tự, có đếm số | Quan sát: không có gì — tan biến, không lưu ("thả đi, không lưu") | Quan sát: ngoài giờ đêm | Rỗng (chưa viết); đã-tan-biến sau khi thả |
+| Bình minh | Quan sát: từ The Void / hết đêm (05:00) | Quan sát: Lưu trữ | Quan sát: không nhập | Quan sát: khép đêm, chào buổi sáng | Quan sát: chỉ xuất hiện khi đêm kết thúc | Không thấy rỗng/tải/lỗi |
+| Lưu trữ | Quan sát: từ Bình minh / Thành phố đêm / tab Lưu trữ | Quan sát: về các tab khác | Quan sát: chọn nhóm xem lại (đêm, thư, câu hỏi, bầu trời, suy nghĩ) | Quan sát: chỉ xem lại | Quan sát: ngoài giờ vẫn xem được (màn duy nhất sống sau đêm) | Rỗng (nhóm chưa có mục nào) |
+
+- Chưa rõ — hỏi Lead: readme ghi nguyên mẫu có "5 không gian ban đêm" nhưng § "Cách mở" liệt kê 8 điểm đến. Nếu đoán sai: đếm sai phạm vi kiểm thử, sót màn.
+- Chưa rõ — hỏi Lead: Lưu trữ có xem được ban ngày hay cũng khóa (thanh tab chỉ hiện trong đêm nhưng Bình minh dẫn tới Lưu trữ). Nếu đoán sai: nhốt kỷ niệm sau 05:00 hoặc lộ nội dung đêm sai giờ.
+
+## §2 Flows
+
+- Quan sát: luồng chính Ngày → Chạng vạng → Nhà (nửa đêm) → Thành phố đêm → 6 điểm → The Void → Bình minh → Lưu trữ (readme + thanh thời gian 4 nấc). Nếu đoán sai: cổng giờ sai, vào nhầm không gian sai thời điểm.
+- Quan sát: từ Thành phố đêm bấm từng địa điểm; thanh tab 5 lối tắt (Đêm, Radio, Lưu trữ, Bầu trời, Hồ sơ) chỉ hiện trong đêm. Nếu đoán sai: thiếu lối vào, kẹt trong màn.
+- Quan sát: Void viết → thả ("cứ để nó đi") → tan biến kèm thông báo, không lưu → viết lại được. Nếu đoán sai: lưu nhầm nội dung Void, vi phạm riêng tư cốt lõi.
+- Quan sát: thư viết + thời hạn → niêm phong → khóa chỉ-đọc → xem lại trong Lưu trữ theo nhóm. Nếu đoán sai: cho sửa sau niêm phong, phá niềm tin "thư cho tương lai".
+- Chưa rõ — hỏi Lead: bản thảo viết dở (Café/Câu hỏi/Thư) khi 05:00 tới thì giữ hay mất. Nếu đoán sai: mất chữ đúng lúc giao thời.
+
+## §3 Data — xem `constellation/after-midnight-02`
+
+## §4 States — xem bảng §1 + `constellation/after-midnight-02`
+
+## §5 Tokens — xem `constellation/after-midnight-02`
+
+## §6 Copy
+
+- Quan sát (chuỗi ASCII nguyên văn, nguyên mẫu): "ON AIR", "SEALED", "OPENING THE NIGHT", "GOOD MORNING.", "LET IT GO", "TOMORROW", "7 DAYS", "30 DAYS", "1 YEAR", "THE VOID", "THE THINGS I NEVER SAID", "THE PLACES I MISS", "After Midnight", "The city is asleep.", "Somewhere, someone is awake.", "Tomorrow feels strangely important.", "I saw the moon through my window tonight." Nếu đoán sai: sai giọng tạp chí văn chương, mất nhận diện.
+- Quan sát: lời thoại mỗi màn là tiếng Việt văn chương trầm/riêng tư, mỗi màn một khối riêng (readme § "Chỉnh sửa"); không trích nguyên văn vì HTML vỡ dấu. Nếu đoán sai: trích chữ vỡ dấu lên sản phẩm, sai chính tả hàng loạt.
+
+## §7 Rules
+
+- Quan sát: thế giới chỉ tồn tại 00:00–05:00; ban ngày im lìm (readme). Nếu đoán sai: mở sai giờ, phá ý tưởng cốt lõi.
+- Quan sát: nội dung Void không bao giờ lưu. Nếu đoán sai: vi phạm riêng tư, mất niềm tin.
+- Quan sát: thư niêm phong chỉ-đọc ("niêm phong ngay khi rời đi"). Nếu đoán sai: cho sửa thư, phá cam kết "thư cho tương lai".
+- Quan sát: Café ẩn danh — không ai biết của ai. Nếu đoán sai: lộ danh tính, phá không gian an toàn.
+- Quan sát: Sân thượng không nút hành động. Nếu đoán sai: thêm CTA, phá khoảng lặng.
+- Quan sát: vàng cũ/đỏ vang rất hiếm, chỉ điểm nhấn. Nếu đoán sai: lạm dụng màu nhấn, rẻ tiền hóa giao diện.

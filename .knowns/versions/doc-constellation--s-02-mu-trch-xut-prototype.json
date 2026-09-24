@@ -1,0 +1,41 @@
+{
+  "docPath": "constellation/s-02-mu-trch-xut-prototype",
+  "currentVersion": 1,
+  "versions": [
+    {
+      "id": "v1",
+      "docPath": "constellation/s-02-mu-trch-xut-prototype",
+      "version": 1,
+      "timestamp": "2026-09-19T07:53:26.7913706Z",
+      "changes": [
+        {
+          "field": "title",
+          "oldValue": null,
+          "newValue": "S-02 Mẫu trích xuất prototype"
+        },
+        {
+          "field": "description",
+          "oldValue": null,
+          "newValue": "Template trích xuất HTML prototype: bảng inventory màn hình, nhóm dữ liệu quan sát, quy tắc copy, tokens/a11y tham chiếu"
+        },
+        {
+          "field": "tags",
+          "oldValue": null,
+          "newValue": [
+            "constellation",
+            "template"
+          ]
+        }
+      ],
+      "snapshot": {
+        "content": "# S-02 Mẫu trích xuất prototype\n\nDùng chung cho 4 app. Đếm màn từ HTML thực tế, không copy số trong readme một cách mù quáng (readme astraea ghi 18, comment prototype ghi 13–14 — đã flag).\n\n## 1. Bảng inventory màn hình (cho `\u003capp\u003e-01`)\n\n| Màn | Vào từ đâu | Ra tới đâu | Dữ liệu vào (quan sát) | Dữ liệu ra (quan sát) | Bị chặn khi nào | Rỗng / Tải / Lỗi / Khóa |\n|---|---|---|---|---|---|---|\n\nCột điều kiện thời gian fold vào bảng (time-gate 00:00–05:00, nghi thức rút bài, vén 5 lớp, setting 4 tầng) — không tách doc temporal riêng.\n\n## 2. Nhóm dữ liệu quan sát (cho `\u003capp\u003e-02`)\n\nLiệt kê nhóm (vd \"bài đọc tarot\", \"giấc mơ + mảnh ghép\", \"khoảnh khắc ảnh + người nhận\") + vòng đời hiển thị quan sát được. Không tên field, không kiểu, không ràng buộc kỹ thuật.\n\n## 3. Copy\n\n- Chuỗi ngắn (CTA, empty/error text): trích toàn văn + file nguồn.\n- Văn dài: 1–2 quote giọng văn + trỏ file. Không copy-paste hàng loạt (rủi ro encoding vỡ dấu đã thấy ở title After Midnight/Astraea).\n\n## 4. Tokens / a11y / offline\n\nSSOT stays ở readme + `:root`. Doc chỉ ghi quy tắc dùng quan sát được (vd quire accent ≤2 lần/màn, wine/crimson hiếm) + claim nguyên văn + tag `chưa kiểm độc lập` (vd quire 15.67:1, dream 4.5:1, 44px, reduced-motion, quire offline fallback \"ô nền có nhãn\").\n\n## 5. Failure-mode (cho `\u003capp\u003e-02`, 3–5 dòng)\n\nMỗi dòng: `ambiguity → hậu quả nếu implement đoán sai`. Không BLOCKER pipeline trừ khi Lead chỉ định.\n",
+        "description": "Template trích xuất HTML prototype: bảng inventory màn hình, nhóm dữ liệu quan sát, quy tắc copy, tokens/a11y tham chiếu",
+        "tags": [
+          "constellation",
+          "template"
+        ],
+        "title": "S-02 Mẫu trích xuất prototype"
+      }
+    }
+  ]
+}

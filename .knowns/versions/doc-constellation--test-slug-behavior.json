@@ -1,0 +1,39 @@
+{
+  "docPath": "constellation/test-slug-behavior",
+  "currentVersion": 1,
+  "versions": [
+    {
+      "id": "v1",
+      "docPath": "constellation/test-slug-behavior",
+      "version": 1,
+      "timestamp": "2026-09-21T12:29:56.4003646Z",
+      "changes": [
+        {
+          "field": "title",
+          "oldValue": null,
+          "newValue": "test-slug-behavior"
+        },
+        {
+          "field": "description",
+          "oldValue": null,
+          "newValue": "test mo ta"
+        },
+        {
+          "field": "tags",
+          "oldValue": null,
+          "newValue": [
+            "test"
+          ]
+        }
+      ],
+      "snapshot": {
+        "content": "Noi dung ngan thu nghiem.",
+        "description": "test mo ta",
+        "tags": [
+          "test"
+        ],
+        "title": "test-slug-behavior"
+      }
+    }
+  ]
+}
