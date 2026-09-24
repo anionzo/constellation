@@ -10,6 +10,14 @@ out/
 .env
 .env.*
 !.env.example
+# docker & database data
+backend/supabase/volumes/db/data/
+backend/supabase/volumes/storage/
+volumes/db/data/
+volumes/storage/
+*.dump
+*.sql.gz
+*.erl_crash.dump
 # OS / editor
 .DS_Store
 Thumbs.db
