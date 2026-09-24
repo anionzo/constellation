@@ -1,8 +1,8 @@
 ---
-title: Ephemeral & Privacy Lifecycles — Vòng đời dữ liệu tạm thời & Cơ chế riêng tư cốt lõi
-description: 'Phân tích cơ chế và bất biến của dữ liệu tạm thời, The Void không lưu, thư niêm phong khóa thời gian, chu kỳ 30 ngày tự hủy và vòng tròn riêng tư hữu hạn trong 4 prototypes'
+title: 'Ephemeral & Privacy Lifecycles — Vòng đời dữ liệu tạm thời & Cơ chế riêng tư cốt lõi'
+description: Phân tích cơ chế và bất biến của dữ liệu tạm thời, The Void không lưu, thư niêm phong khóa thời gian, chu kỳ 30 ngày tự hủy và vòng tròn riêng tư hữu hạn trong 4 prototypes
 createdAt: '2026-09-24T00:00:00.000Z'
-updatedAt: '2026-09-24T00:00:00.000Z'
+updatedAt: '2026-09-24T16:26:55.832Z'
 tags:
   - constellation
   - patterns
@@ -35,20 +35,10 @@ graph TD
 
 ## 2. Cơ chế The Void: DOM Dissolve & Cam kết Không lưu (Non-Persistence Invariant)
 
-- **Nguồn quan sát**: `designs/after-midnight/v1 after midnight - interactive prototype.html#19F5:668-682, 764-784`
-- **Mục đích**: Cung cấp một nơi để người dùng trút bỏ gánh nặng tâm lý mà không để lại bất kỳ dấu vết nào trên thế giới số.
-
-### Cơ chế hoạt động kỹ thuật quan sát được:
-1. Người dùng nhập một đoạn suy nghĩ vào ô văn bản lớn tại không gian The Void.
-2. Khi bấm nút "Thả đi", giao diện kích hoạt animation phân rã:
-   - Các dòng chữ mờ dần (`opacity: 0`) và tan biến theo hiệu ứng khói bụi trong đúng `2100ms`.
-   - Khi animation hoàn tất, trường nhập liệu được reset về chuỗi rỗng `""`.
-3. **Bất biến Bất khả xâm phạm (Non-Persistence Invariant)**:
-   - Chuỗi văn bản nhập vào The Void **TUYỆT ĐỐI KHÔNG BAO GIỜ** được lưu vào `localStorage`, `sessionStorage`, hay gửi qua mạng tới máy chủ.
-   - Dữ liệu bị hủy hoàn toàn khỏi bộ nhớ RAM của trình duyệt ngay sau khi kết thúc animation.
-
----
-
+- **Quan sát prototype**: sau hiệu ứng `2100ms`, trường nhập được reset và nội dung biến mất khỏi DOM.
+- **Invariant**: không persist vào cookie/local/session storage, không gửi qua mạng, không telemetry, không đi vào AI/sync.
+- **Không overclaim**: không tuyên bố xóa được khỏi RAM của OS/browser, backup, swap hoặc bản sao ngoài prototype; physical deletion là `DEFERRED`.
+- **Test contract**: cold reload, network trace, storage inspection, DOM assertion và no-sync assertion trước khi coi là `APPROVED`.
 ## 3. Cơ chế Thư Niêm Phong: Khóa Thời Gian & Tính Bất biến (Time-Locked Immutability)
 
 - **Nguồn quan sát**: `designs/after-midnight/v1 after midnight - interactive prototype.html#19F5:27, 43, 61`
@@ -69,28 +59,15 @@ graph TD
 
 ## 4. Vòng tròn Hữu hạn & Cửa sổ Hoàn tác Gửi Quire (11-Person Circle & Grace Window)
 
-- **Nguồn quan sát**: `designs/quire/prototype.html` & `designs/quire/design-notes.md#BA1E:15-19`
-- **Mục đích**: Bảo vệ người dùng khỏi áp lực xã hội và ngăn ngừa chia sẻ nông nổi ngoài ý muốn.
-
-### Quy tắc quan sát được:
-1. **Giới hạn vòng bạn bè**: Một tài khoản Quire chỉ được kết nối tối đa từ 4 đến 12 người bạn thân (thiết kế mẫu chốt 11 người). Không có khái niệm mở rộng kết nối công chúng.
-2. **Cửa sổ hoàn tác gửi ảnh (Unsend Grace Period)**:
-   - Sau khi chọn ảnh và bấm gửi vào khoảnh khắc của nhóm, hệ thống cung cấp một thanh đếm thời gian từ 3 đến 5 giây kèm nút "Hoàn tác".
-   - Nếu người dùng bấm "Hoàn tác" trước khi thanh đếm chạy hết, hình ảnh bị hủy tức thì tại máy khách: *"Đã hủy gửi. Chưa có dữ liệu nào rời khỏi thiết bị."*
-
----
-
+- **Quan sát**: Quire giới hạn circle tối đa 12; fixture hiện dùng 11 người. Không có follower graph công khai.
+- **Privacy default**: read receipts mặc định tắt; không thu per-user read event nếu invariant cấm. Mọi activity/read-state còn lại phải có purpose, visibility và retention riêng.
+- **Unsend**: prototype hiển thị cửa sổ 3–5 giây và copy “chưa rời khỏi ứng dụng”. Network/upload timing, thu hồi sau khi đã xem và cancellation là `PROPOSED`; không coi copy là security guarantee.
+- Circle identity, storage ownership, authorization và effective deletion phải được duyệt riêng trước production.
 ## 5. Chu kỳ Tự hủy Hoạt động 30 Ngày (Activity Purge Lifecycle)
 
-- **Nguồn quan sát**: `designs/quire/README.md#7F8C:29`
-- **Mục đích**: Xóa bỏ gánh nặng quá khứ và ngăn chặn việc "đào bới" lại lịch sử tương tác cũ.
-
-### Quy tắc chu kỳ:
-- Toàn bộ nhật ký hoạt động (ai đã xem bài viết nào, ai đã phản hồi ảnh của ai) tự động bốc hơi hoàn toàn sau đúng 30 ngày.
-- Ứng dụng không duy trì kho lưu trữ lịch sử tương tác vĩnh viễn, giúp người dùng luôn cảm thấy nhẹ nhõm khi bắt đầu ngày mới.
-
----
-
+- **Quan sát**: activity log cũ tự biến mất sau 30 ngày; đây là scope purge, không phải xóa toàn bộ dữ liệu Quire.
+- **Privacy constraint**: nếu read receipts mặc định tắt và anti-tracking được duyệt, không thu per-user “ai đã xem” chỉ để tạo activity; mọi event còn lại phải có purpose/visibility/retention.
+- **Production**: storage owner, purge trigger, backup/cache expiry, recovery và deletion propagation là `PROPOSED/DEFERRED`; không tự thêm analytics để đo retention.
 ## 6. 5 Tầng Màn Che Riêng tư Nội tâm Dream Journal (Veil Layer Sanctum)
 
 - **Nguồn quan sát**: `designs/dream-journal/index.html` & `designs/dream-journal/canvas.html`
@@ -107,20 +84,16 @@ graph TD
 
 ## 7. Xóa Dữ liệu 2 Chạm Astraea (Local-Only Wipe)
 
-- **Nguồn quan sát**: `designs/astraea/V2 astraea-nguyên mẫu tương tác.html`
-- **Mục đích**: Cho phép người dùng giải phóng hoàn toàn dấu vết tâm linh/chiêm tinh bất cứ lúc nào.
-
-### Quy trình 2 chạm:
-1. Chạm 1: Vào mục Cài đặt tài khoản -> Bấm nút "Xóa toàn bộ dữ liệu".
-2. Chạm 2: Hộp thoại xác nhận xuất hiện giải thích rõ hậu quả -> Bấm "Xác nhận xóa". Toàn bộ lịch sử rút bài, ghi chú nhật ký và ngày sinh trong thiết bị bị xóa trắng ngay lập tức.
-
----
-
+- **Quan sát prototype**: người dùng xác nhận 2 chạm để xóa lịch sử rút bài, ghi chú và dữ liệu cá nhân trong phạm vi local.
+- **Không overclaim**: chưa có bằng chứng về cache, backup, sync hoặc thiết bị khác; không gọi là “xóa 100%” hay “xóa vật lý” trước khi có effective-deletion test.
+- **Production contract**: ownership, cascade scope, recovery, backup expiry và deletion propagation là `PROPOSED/DEFERRED`; The Void và dữ liệu non-eligible vẫn bị loại khỏi mọi sync.
 ## 8. Ma trận Vòng đời & Failure-Modes Rò rỉ Dữ liệu
 
-| Thành phần | Hành vi mong đợi | Failure-Mode nếu triển khai sai | Mức độ nghiêm trọng | Biện pháp phòng vệ |
-|---|---|---|---|---|
-| **The Void** | Hủy RAM trong 2100ms | Developer tự ý log văn bản vào hệ thống telemetry hoặc cache | CỰC KỲ NGUY HIỂM | Cấm toàn bộ logger trên component The Void |
-| **Thư Niêm Phong** | Đóng băng tới đúng ngày | Cho phép người dùng bấm "Xem trước" hoặc sửa ngày máy tính để mở | NGUY HIỂM | Khóa cứng trạng thái và cần nguồn thời gian đáng tin cậy |
-| **Quire Unsend** | Hủy tại client trong 5s | Ảnh đã kịp upload lên CDN trước khi hết 5 giây hoàn tác | NGUY HIỂM | Chỉ bắt đầu truyền tải sau khi cửa sổ đếm ngược kết thúc |
-| **Astraea Wipe** | Xóa sạch 100% | Chỉ xóa cờ hiển thị (soft-delete), dữ liệu vẫn nằm trong máy | CAO | Thực thi xóa vật lý triệt để toàn bộ keys liên quan |
+| Thành phần | Failure-mode | Mức độ | Contract/test cần trước khi chốt |
+|---|---|---|---|
+| **The Void** | Log, cache, telemetry hoặc sync nhận nội dung | Cực cao | Network/storage/DOM assertions; no persistence/no sync |
+| **Thư niêm phong** | Mở sớm, sửa thời hạn hoặc tin client clock | Cao | Trusted-time/recovery decision; không giả định NTP đã chốt |
+| **Quire Unsend** | Copy “đã hủy” trong khi asset đã rời thiết bị | Cao | Network timeline, cancellation boundary và quyền thu hồi; `PROPOSED` |
+| **Astraea Wipe** | Chỉ xóa UI nhưng còn cache/backup/sync | Cao | Effective-deletion test; scope và propagation `DEFERRED` |
+
+Không ghi tên logger, storage key, upload timing hay provider cụ thể như đã được chốt trong pattern; các chi tiết đó thuộc ADR/test.

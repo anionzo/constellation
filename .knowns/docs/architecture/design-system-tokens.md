@@ -1,8 +1,8 @@
 ---
-title: Design System & Token Architecture — Nền tảng thiết kế & Hệ thống Token
+title: 'Design System & Token Architecture — Nền tảng thiết kế & Hệ thống Token'
 description: 'Phân tích sâu hệ thống design tokens của 4 prototypes: 4 cặp typography đối lập, phân cấp token 4 tầng, chất liệu bề mặt và hàng rào tương phản WCAG'
 createdAt: '2026-09-24T00:00:00.000Z'
-updatedAt: '2026-09-24T00:00:00.000Z'
+updatedAt: '2026-09-24T16:17:42.135Z'
 tags:
   - constellation
   - architecture
@@ -51,17 +51,16 @@ graph TD
 
 ## 2. Phân tích 4 Cặp Typography Đối lập
 
-Mỗi nguyên mẫu thiết lập một cặp phông chữ đại diện cho sự giằng co giữa **Cảm xúc Thơ mộng / Tác giả (Display/Serif)** và **Dữ liệu / Kỹ thuật / Điều hướng (UI/Data/Sans/Mono)**:
+Typography quan sát từ source prototype tại commit đã pin; không tự thêm font chỉ vì một tài liệu tổng hợp khác nêu tên khác:
 
-| Ứng dụng | Phông Tiêu đề / Cảm xúc (Display) | Phông Dữ liệu / Điều hướng (UI & Data) | Nguồn tham chiếu HTML | Đặc tính quan sát được |
+| Ứng dụng | Phông tiêu đề / cảm xúc | Phông dữ liệu / điều hướng | Nguồn | Trạng thái |
 |---|---|---|---|---|
-| **Quire** | `Newsreader` (optical size 6..72, weights 300–600) | `JetBrains Mono` (cho số liệu, giờ '14:23', đếm '420 TỪ') | `designs/quire/prototype.html#600B:14, 23-25` | Đậm chất báo chí in ấn cao cấp, chân serif thanh lịch kết hợp monospace kỹ thuật chính xác. |
-| **Dream Journal** | `Cormorant Garamond` (serif biên tập cổ điển) | `Be Vietnam Pro` (sans tối ưu dấu tiếng Việt) | `designs/dream-journal/index.html#9FC4:10, 58-61` | Cormorant truyền tải ảo ảnh huyền bí, Be Vietnam Pro bảo toàn độ sắc nét của hệ thống dấu thanh tiếng Việt. |
-| **Astraea** | `Cormorant Garamond` & `Cinzel` (huyền bí, cổ xưa) | `Jost` (hình học thiên văn) + `JetBrains Mono` (tọa độ sao) | `designs/astraea/V2 astraea-nguyên mẫu tương tác.html#9352:30-32` | Sự kết hợp giữa ký tự La Mã cổ đại và phông hình học hiện đại của các thiết bị thiên văn. |
-| **After Midnight** | `Instrument Serif` (dáng vẻ sắc sảo, đêm tối) | `IBM Plex Sans` (giao diện) + `IBM Plex Mono` (bộ đếm giờ) | `designs/after-midnight/v1 after midnight - interactive prototype.html#19F5:47-50` | Serif thanh mảnh như ánh sáng lướt qua bóng đêm, font mono tái hiện nhịp đếm lạnh của đồng hồ số. |
+| **Quire** | Newsreader | JetBrains Mono | `designs/quire/prototype.html`, `index.html` | `OBSERVED` |
+| **Dream Journal** | Cormorant Garamond | Be Vietnam Pro | `designs/dream-journal/index.html` | `OBSERVED` |
+| **Astraea** | Cormorant Garamond | Jost + JetBrains Mono | `designs/astraea/V2 astraea-nguyên mẫu tương tác.html` | `OBSERVED`; không có Cinzel trong source hiện tại |
+| **After Midnight** | Instrument Serif | IBM Plex Sans + IBM Plex Mono | `designs/after-midnight/v1 after midnight - interactive prototype.html` | `OBSERVED` |
 
----
-
+Các font remote trong prototype là dependency `OBSERVED`; production phải bundle hoặc cung cấp license theo quyết định riêng. Không dùng font từ app này cho app khác.
 ## 3. Cấu trúc Phân cấp Token 4 Tầng (4-Tier Token Hierarchy)
 
 Hệ thống token trong mỗi nguyên mẫu được chuẩn hóa thành 4 tầng kiến trúc:
@@ -106,15 +105,10 @@ Hệ thống token trong mỗi nguyên mẫu được chuẩn hóa thành 4 tầ
 
 ## 5. Hàng rào Tương phản, Focus Ring & Khuyến nghị WCAG
 
-### Quy tắc tương phản đã kiểm chứng trong Prototype:
-- **Quire**: Đã ghi nhận chỉ số tương phản kiểm nghiệm sơ bộ đạt chuẩn WCAG 2.2 AA:
-  - Chữ chính trên nền giấy: `15.67:1`.
-  - Chữ phụ: `6.63:1`.
-  - Chữ bậc ba: `5.04:1`.
-  - Điểm nhấn trên nền: `7.09:1`.
-  - Nút bấm: `4.83:1` (sáng) và `6.91:1` (tối).
-  - Vòng lấy nét trực quan (focus ring): `3px solid var(--accent)` với viền ngoài cách `2px`.
-- **Dream Journal**: Thiết lập tương phản phân tầng rõ rệt: chữ chính đạt trên `12:1`, chữ phụ đạt xấp xỉ `8:1`, chữ mờ đạt `4.5:1`.
+Các số đo dưới đây là **claim quan sát/chưa kiểm độc lập**, không phải chứng nhận WCAG production:
 
-### Hàng rào kiểm định C-91 ("Chưa kiểm độc lập"):
-> **CẢNH BÁO QUẢN TRỊ**: Các token ánh sáng mờ khí quyển trong After Midnight (`--dust: #7A756D`) và Astraea (`--faint`) nằm sát ngưỡng `4.5:1`. Theo danh mục C-91, toàn bộ các chỉ số tương phản này được gắn nhãn **`Chưa kiểm độc lập`**. Trước khi tiến hành cắt mã production, bắt buộc phải đo đạc lại bằng thiết bị quang phổ kế và công cụ kiểm thử trợ năng chuyên dụng.
+- Quire ghi nhận các tỷ lệ tương phản trong prototype; cần đo lại trên từng theme, font, trạng thái focus/disabled và thiết bị thật.
+- Dream Journal ghi nhận tương phản phân tầng; mọi mức dưới ngưỡng hoặc token mờ phải được đánh dấu rõ.
+- Contract hệ thống là interactive target tối thiểu `44 × 44px`. Nếu một prototype đo 40px, ghi `observed deviation` và tạo issue/ADR; không tự hạ tiêu chuẩn.
+- Focus ring, keyboard navigation, screen-reader semantics, reduced-motion, safe area, dynamic type và touch/keyboard alternative đều cần test độc lập trước release.
+- C-91 giữ các hạng mục audit đầy đủ ở trạng thái `DEFERRED`; không dùng tên “đã kiểm chứng” trước khi có báo cáo audit.

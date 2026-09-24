@@ -1,8 +1,8 @@
 ---
-title: CONVENTIONS — Quy ước kỹ thuật, tài liệu & tiêu chuẩn Constellation
+title: 'CONVENTIONS — Quy ước kỹ thuật, tài liệu & tiêu chuẩn Constellation'
 description: 'Quy ước toàn dự án: Observe-only Anti-Minting contract, cấu trúc thư mục, chuẩn hóa metadata Knowns, UTF-8 safety trên Windows, và quy trình kiểm định'
 createdAt: '2026-09-24T00:00:00.000Z'
-updatedAt: '2026-09-24T00:00:00.000Z'
+updatedAt: '2026-09-24T16:08:34.345Z'
 tags:
   - constellation
   - conventions
@@ -18,27 +18,21 @@ tags:
 
 ## 1. Nguyên tắc Observe-Only & Anti-Minting (Kỷ luật S-01)
 
-Nguyên tắc cốt lõi điều chỉnh việc ghi chép tài liệu trong toàn bộ dự án là **chỉ ghi nhận những gì quan sát được trực tiếp từ nguyên mẫu thực tế (Observe-Only)**:
+Nguyên tắc **Observe-Only** áp dụng trực tiếp cho 8 app extraction docs (`constellation/<app>-01-flow` và `<app>-02-data`): chỉ ghi điều quan sát được từ prototype, kèm source, commit hash và ngày đọc. Tài liệu kiến trúc, pattern và guide ngoài phạm vi này có thể phân tích hoặc đề xuất hướng triển khai, nhưng phải ghi trạng thái rõ ràng.
 
-### Điều cấm tuyệt đối (Anti-Minting Invariants):
-1. **Cấm bịa mã nguồn (Zero Phantom Code)**: Tuyệt đối không viết code mẫu (sample code), snippet triển khai, controller, router, hay class TypeScript/Python dưới mọi hình thức trong tài liệu bóc tách.
-2. **Cấm bịa đặt hợp đồng kỹ thuật (Zero Phantom Schemas/APIs)**:
-   - Cấm đặt tên trường dữ liệu bằng tiếng Anh kỹ thuật (vd: `user_id: string`, `is_read: boolean`, `timestamp: number`).
-   - Cấm định nghĩa RESTful endpoints, GraphQL queries/mutations, hay HTTP verbs (`POST /api/dreams`).
-   - Dữ liệu chỉ được diễn đạt bằng **nhóm dữ liệu quan sát được + quy tắc nghiệp vụ văn xuôi tiếng Việt**.
-3. **Cấm suy diễn chức năng chưa có**:
-   - Khi gặp một màn hình chưa được nối dây (unwired), một nút chưa có tương tác hoặc hành vi chưa rõ ràng: **Gắn nhãn bắt buộc `Chưa rõ — hỏi Lead`**.
-   - Kèm theo 1 dòng phân tích hậu quả nếu đội ngũ triển khai tự ý đoán sai.
+### Status bắt buộc cho claim kiến trúc:
+- `OBSERVED`: quan sát trực tiếp từ source prototype.
+- `PROPOSED`: đề xuất triển khai, chưa được Lead/System Architect duyệt.
+- `APPROVED`: quyết định đã được duyệt và có nguồn/ADR.
+- `DEFERRED`: chủ động hoãn theo C-91.
+- `FIXTURE`: clock, seed data, remote asset hoặc dữ liệu mẫu chỉ dùng thử nghiệm.
+- `Chưa rõ — hỏi Lead`: ambiguity sản phẩm; không được đoán.
 
-```
-[Mẫu chuẩn khi gặp điểm mơ hồ]
-- Trạng thái: Chưa rõ — hỏi Lead
-- Quan sát: Bấm nút 'Hoàn tất' không thấy chuyển màn hình trên nguyên mẫu.
-- Hậu quả nếu đoán: Triển khai có thể tự ý lưu vào cơ sở dữ liệu làm hỏng tính chất tạm thời của luồng.
-```
-
----
-
+### Điều cấm tuyệt đối trong app extraction docs:
+1. **Cấm bịa mã nguồn (Zero Phantom Code)**: không sample code, controller, router, class, interface hoặc snippet triển khai.
+2. **Cấm bịa schema/API**: không tên field kỹ thuật, endpoint, REST/GraphQL hay HTTP verb; dữ liệu chỉ mô tả bằng nhóm quan sát + quy tắc văn xuôi.
+3. **Cấm suy diễn chức năng chưa có**: màn unwired hoặc hành vi mơ hồ phải gắn `Chưa rõ — hỏi Lead` và nêu hậu quả nếu đoán sai.
+4. **Cấm scope bleed**: không tự thêm auth, backend, sync, schema, AI prompt, visual redesign hoặc shared design system ngoài phạm vi được duyệt.
 ## 2. Cấu trúc Thư mục & Bản đồ Phân loại (.knowns/docs/)
 
 Mọi tài liệu phục vụ quản lý dự án, kiến trúc và bóc tách thiết kế **BẮT BUỘC** nằm trong thư mục `.knowns/docs/`. Tuyệt đối không tạo thư mục `docs/` ở gốc repository và không tạo file tài liệu bên trong các thư mục con của `designs/*`.
@@ -79,16 +73,12 @@ tags:
 
 ## 4. An toàn Bảng mã UTF-8 trên Windows (Memory w6kiug)
 
-Do đặc thù môi trường Windows và phiên bản công cụ Knowns CLI (0.18.3), việc xử lý ký tự tiếng Việt có dấu qua các tham số dòng lệnh (CLI arguments) có nguy cơ gây vỡ bảng mã (mojibake) hoặc sinh slug tệp tin lỗi từ nội dung:
+Do môi trường Windows và một số phiên bản CLI có nguy cơ làm hỏng dấu tiếng Việt khi truyền nội dung dài qua command line, quy trình chuẩn là:
 
-### Quy trình thao tác tệp an toàn:
-1. **Không dùng `knowns doc create -c "<nội dung tiếng Việt>"`**: Tránh truyền trực tiếp văn bản tiếng Việt dài qua tham số CLI.
-2. **Ghi tệp UTF-8 trực tiếp**: Sử dụng công cụ ghi file chuẩn (`write` / `fs.writeFile`) ghi thẳng tệp `.md` vào đúng vị trí thư mục trong `.knowns/docs/` với định dạng UTF-8 không BOM.
-3. **Giữ nguyên Frontmatter**: Đảm bảo tệp tạo mới có đầy đủ khối YAML frontmatter hợp lệ như quy định ở Mục 3.
-4. **Kiểm định sau khi tạo**: Chạy kiểm định ngay bằng công cụ `knowns validate` để đảm bảo hệ thống nhận diện tệp thành công.
-
----
-
+1. **Ưu tiên Knowns MCP** dùng `knowns_update_doc` để cập nhật doc; không truyền nội dung tiếng Việt dài qua tham số CLI.
+2. **Chỉ dùng ghi file trực tiếp khi MCP thực sự không khả dụng**: ghi UTF-8 không BOM, giữ nguyên frontmatter và ghi rõ đây là workaround tạm thời cho lỗi encoding.
+3. **Không dùng direct write như workflow mặc định** và không ghi đè tài liệu Knowns-managed ngoài phạm vi được yêu cầu.
+4. **Kiểm định ngay sau mọi cập nhật** bằng `knowns_validate`; nếu không thể chạy validator phải ghi rõ trạng thái chưa kiểm định.
 ## 5. Tính Bất biến của Submodule (`designs/*` Read-Only)
 
 Thư mục `designs/` chứa 4 nguyên mẫu HTML/CSS/JS tự chứa. Đây là tài sản gốc đại diện cho kết quả thiết kế:
@@ -101,15 +91,15 @@ Thư mục `designs/` chứa 4 nguyên mẫu HTML/CSS/JS tự chứa. Đây là 
 
 ## 6. Tiêu chuẩn Kiểm định Chất lượng (Validation Standards)
 
-Trước khi coi một tác vụ hoàn tất, bắt buộc phải chạy kiểm tra tính toàn vẹn của hệ thống tài liệu:
+Trước khi coi tài liệu hoàn tất, chạy validation cấu trúc và một lượt semantic audit riêng:
 
 ```json
-// Chạy kiểm tra toàn bộ tài liệu qua MCP
-mcp__knowns__validate({ "scope": "docs" })
+knowns_validate({ "scope": "docs", "strict": true })
 ```
 
 ### Tiêu chí nghiệm thu:
-- **0 Errors**: Không có bất kỳ lỗi cú pháp, thiếu description hay lỗi phân tích frontmatter nào.
-- **0 Warnings**: Không có cảnh báo cấu trúc nghiêm trọng.
-- **Tham chiếu hợp lệ**: Các liên kết tham chiếu tài liệu phải sử dụng cú pháp tham chiếu chính xác (ví dụ: @doc/constellation/quire-01-flow hoặc @doc/README).
-- **Tránh ký tự dính vào tham chiếu**: Khi trỏ tài liệu bằng tiền tố `@doc` (theo sau bởi dấu gạch chéo và tên tài liệu), tránh đặt sát dấu backtick hoặc dấu chấm câu khiến bộ phân tích regex nhận diện sai tên đường dẫn.
+- **0 Errors / 0 Warnings**: frontmatter, metadata và reference cấu trúc hợp lệ.
+- **Reference chính xác**: dùng `@doc/<path>`; không trỏ nhầm `-01-flow` thành `-02-data` hoặc để reference dạng plain text.
+- **Status rõ ràng**: claim phải phân biệt `OBSERVED`, `PROPOSED`, `APPROVED`, `DEFERRED`, `FIXTURE` và `Chưa rõ — hỏi Lead`.
+- **Semantic cross-check**: đối chiếu số panel/route/state, retention, network/offline, privacy, anti-merge, accessibility và stack giữa các doc; validator cấu trúc không tự phát hiện mâu thuẫn này.
+- **Provenance**: mọi claim quan sát phải có source path, commit hash/ngày đọc; claim kiểm định phải có phương pháp và trạng thái `chưa kiểm độc lập` nếu chưa audit.

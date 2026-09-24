@@ -1,11 +1,13 @@
 ---
 title: after-midnight-01 — Flow + màn hình + trạng thái
-description: 'Inventory 15 màn after-midnight: time-gate 00-05h, 8 không gian đêm, Void không lưu, thư niêm phong + trạng thái'
+description: 'Inventory 15 item của After Midnight: 6 điểm đến ban đêm + The Void/Lưu trữ, time-gate 00–05h, số không gian chưa canonical, The Void không lưu và thư niêm phong.'
 createdAt: '2026-09-21T13:30:00.000Z'
-updatedAt: '2026-09-21T13:30:00.000Z'
+updatedAt: '2026-09-24T16:28:39.367Z'
 tags:
   - constellation
   - after-midnight
+  - screen-inventory
+  - count-reconciliation
 ---
 
 # after-midnight-01 — Flow + màn hình + trạng thái
@@ -43,12 +45,9 @@ tags:
 - Quan sát: thư viết + thời hạn → niêm phong → khóa chỉ-đọc → xem lại trong Lưu trữ theo nhóm. Nếu đoán sai: cho sửa sau niêm phong, phá niềm tin "thư cho tương lai".
 - Chưa rõ — hỏi Lead: bản thảo viết dở (Café/Câu hỏi/Thư) khi 05:00 tới thì giữ hay mất. Nếu đoán sai: mất chữ đúng lúc giao thời.
 
-## §3 Data — xem `constellation/after-midnight-02`
-
-## §4 States — xem bảng §1 + `constellation/after-midnight-02`
-
-## §5 Tokens — xem `constellation/after-midnight-02`
-
+## §3 Data — xem `constellation/after-midnight-02-data`
+## §4 States — xem bảng §1 + `constellation/after-midnight-02-data`
+## §5 Tokens — xem `constellation/after-midnight-02-data`
 ## §6 Copy
 
 - Quan sát (chuỗi ASCII nguyên văn, nguyên mẫu): "ON AIR", "SEALED", "OPENING THE NIGHT", "GOOD MORNING.", "LET IT GO", "TOMORROW", "7 DAYS", "30 DAYS", "1 YEAR", "THE VOID", "THE THINGS I NEVER SAID", "THE PLACES I MISS", "After Midnight", "The city is asleep.", "Somewhere, someone is awake.", "Tomorrow feels strangely important.", "I saw the moon through my window tonight." Nếu đoán sai: sai giọng tạp chí văn chương, mất nhận diện.
@@ -62,3 +61,10 @@ tags:
 - Quan sát: Café ẩn danh — không ai biết của ai. Nếu đoán sai: lộ danh tính, phá không gian an toàn.
 - Quan sát: Sân thượng không nút hành động. Nếu đoán sai: thêm CTA, phá khoảng lặng.
 - Quan sát: vàng cũ/đỏ vang rất hiếm, chỉ điểm nhấn. Nếu đoán sai: lạm dụng màu nhấn, rẻ tiền hóa giao diện.
+
+
+## Reconciliation note (2026-09-24)
+
+- `15` là tổng inventory item của flow doc; `6 điểm đến + The Void + Lưu trữ` là phân loại hành vi.
+- `5` và `8` trong readme/pattern là hai nhãn nguồn khác nhau, chưa phải canonical count. Giữ `Chưa rõ — hỏi Lead` cho định nghĩa “không gian”.
+- `Lưu trữ` và hành vi draft lúc 05:00 vẫn là quyết định sản phẩm mở; không suy ra từ inventory.

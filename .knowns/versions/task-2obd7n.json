@@ -1,0 +1,115 @@
+{
+  "taskId": "2obd7n",
+  "currentVersion": 2,
+  "versions": [
+    {
+      "id": "v1",
+      "taskId": "2obd7n",
+      "version": 1,
+      "timestamp": "2026-09-24T16:45:31.0784111Z",
+      "changes": [
+        {
+          "field": "status",
+          "oldValue": null,
+          "newValue": "todo"
+        },
+        {
+          "field": "priority",
+          "oldValue": null,
+          "newValue": "high"
+        }
+      ],
+      "snapshot": {
+        "description": "Tách module độc lập packages/core/version_gate dùng chung cho toàn bộ app: Kiểm tra min_supported_version từ Supabase app_system_configs, so sánh SemVer, hiển thị màn hình khóa cứng ForceUpdateScreen khi app cũ, và cấu hình header chống cache Web/PWA. Xem @doc/architecture/backend-supabase-version-gating.",
+        "labels": [
+          "modular",
+          "reusable",
+          "client",
+          "versioning"
+        ],
+        "priority": "high",
+        "status": "todo",
+        "title": "Module Tái Sử Dụng: Version Gate \u0026 Chống Kẹt Cache (SemVer)"
+      }
+    },
+    {
+      "id": "v2",
+      "taskId": "2obd7n",
+      "version": 2,
+      "timestamp": "2026-09-24T16:51:33.4414706Z",
+      "changes": [
+        {
+          "field": "status",
+          "oldValue": "todo",
+          "newValue": "done"
+        },
+        {
+          "field": "acceptanceCriteria",
+          "oldValue": null,
+          "newValue": [
+            {
+              "text": "Khởi tạo package packages/version_gate độc lập",
+              "completed": true
+            },
+            {
+              "text": "Triển khai thuật toán so sánh SemVer 2.0.0 thuần Dart (semver.dart)",
+              "completed": true
+            },
+            {
+              "text": "Triển khai VersionGateManager lắng nghe boot và resume",
+              "completed": true
+            },
+            {
+              "text": "Triển khai ForceUpdateDelegate và giao diện khóa sync SyncLockListener",
+              "completed": true
+            },
+            {
+              "text": "Định nghĩa header Cache-Control no-cache, no-store cho Web/PWA và ServiceWorker listener",
+              "completed": true
+            }
+          ]
+        },
+        {
+          "field": "implementationNotes",
+          "oldValue": null,
+          "newValue": "Đã triển khai hoàn chỉnh package packages/version_gate dùng chung cho cả 4 app Constellation. Khi app phát hiện min_supported_version \u003e current_version hoặc maintenance_mode = true, module tự động khóa động cơ sync và kích hoạt ForceUpdateScreen. Đã có bộ unit test semver_test.dart và version_gate_manager_test.dart."
+        }
+      ],
+      "snapshot": {
+        "acceptanceCriteria": [
+          {
+            "text": "Khởi tạo package packages/version_gate độc lập",
+            "completed": true
+          },
+          {
+            "text": "Triển khai thuật toán so sánh SemVer 2.0.0 thuần Dart (semver.dart)",
+            "completed": true
+          },
+          {
+            "text": "Triển khai VersionGateManager lắng nghe boot và resume",
+            "completed": true
+          },
+          {
+            "text": "Triển khai ForceUpdateDelegate và giao diện khóa sync SyncLockListener",
+            "completed": true
+          },
+          {
+            "text": "Định nghĩa header Cache-Control no-cache, no-store cho Web/PWA và ServiceWorker listener",
+            "completed": true
+          }
+        ],
+        "description": "Tách module độc lập packages/core/version_gate dùng chung cho toàn bộ app: Kiểm tra min_supported_version từ Supabase app_system_configs, so sánh SemVer, hiển thị màn hình khóa cứng ForceUpdateScreen khi app cũ, và cấu hình header chống cache Web/PWA. Xem @doc/architecture/backend-supabase-version-gating.",
+        "implementationNotes": "Đã triển khai hoàn chỉnh package packages/version_gate dùng chung cho cả 4 app Constellation. Khi app phát hiện min_supported_version \u003e current_version hoặc maintenance_mode = true, module tự động khóa động cơ sync và kích hoạt ForceUpdateScreen. Đã có bộ unit test semver_test.dart và version_gate_manager_test.dart.",
+        "labels": [
+          "modular",
+          "reusable",
+          "client",
+          "versioning"
+        ],
+        "priority": "high",
+        "status": "done",
+        "title": "Module Tái Sử Dụng: Version Gate \u0026 Chống Kẹt Cache (SemVer)"
+      }
+    }
+  ]
+}

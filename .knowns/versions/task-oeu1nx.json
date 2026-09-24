@@ -1,0 +1,123 @@
+{
+  "taskId": "oeu1nx",
+  "currentVersion": 2,
+  "versions": [
+    {
+      "id": "v1",
+      "taskId": "oeu1nx",
+      "version": 1,
+      "timestamp": "2026-09-24T16:45:11.099345Z",
+      "changes": [
+        {
+          "field": "status",
+          "oldValue": null,
+          "newValue": "todo"
+        },
+        {
+          "field": "priority",
+          "oldValue": null,
+          "newValue": "high"
+        }
+      ],
+      "snapshot": {
+        "description": "Viết script SQL 01-init-schema.sql khởi tạo các bảng app_system_configs, profiles, quire_circles, quire_circle_members, quire_moments, quire_moment_recipients, dream_entries, dream_attachments. Tạo 3 storage buckets (avatars, quire-moments, dream-attachments), thiết lập Row-Level Security (RLS) và cấu hình pg_cron tự động dọn dẹp sau 30 ngày. Xem @doc/architecture/backend-supabase-version-gating và @doc/architecture/quire-photo-upload-logic.",
+        "labels": [
+          "backend",
+          "database",
+          "rls",
+          "sql"
+        ],
+        "priority": "high",
+        "status": "todo",
+        "title": "CSDL PostgreSQL Schema, Storage Buckets \u0026 RLS Policies"
+      }
+    },
+    {
+      "id": "v2",
+      "taskId": "oeu1nx",
+      "version": 2,
+      "timestamp": "2026-09-24T16:51:18.6808769Z",
+      "changes": [
+        {
+          "field": "status",
+          "oldValue": "todo",
+          "newValue": "done"
+        },
+        {
+          "field": "acceptanceCriteria",
+          "oldValue": null,
+          "newValue": [
+            {
+              "text": "Tạo bảng app_system_configs, profiles, quire_circles, quire_circle_members, quire_moments, quire_moment_recipients",
+              "completed": true
+            },
+            {
+              "text": "Tạo bảng dream_entries, dream_attachments",
+              "completed": true
+            },
+            {
+              "text": "Khởi tạo 3 storage buckets: avatars, quire-moments, dream-attachments",
+              "completed": true
+            },
+            {
+              "text": "Thiết lập 36 chính sách Row-Level Security (RLS) bảo vệ dữ liệu và file storage",
+              "completed": true
+            },
+            {
+              "text": "Thiết lập pg_cron và hàm purge_expired_quire_moments() tự hủy khoảnh khắc sau 30 ngày",
+              "completed": true
+            },
+            {
+              "text": "Khóa cứng vòng tròn bạn bè tối đa 12 người qua trigger check_quire_circle_member_limit",
+              "completed": true
+            }
+          ]
+        },
+        {
+          "field": "implementationNotes",
+          "oldValue": null,
+          "newValue": "Đã hoàn thành file migration backend/supabase/migrations/01-init-schema.sql gồm 645 dòng SQL chuẩn Postgres 15. Đã kích hoạt Row-Level Security trên toàn bộ 8 bảng dữ liệu và 3 bucket storage. Đảm bảo bất biến The Void (zero persistence), giới hạn vòng bạn bè 12 người, và tự hủy sau 30 ngày."
+        }
+      ],
+      "snapshot": {
+        "acceptanceCriteria": [
+          {
+            "text": "Tạo bảng app_system_configs, profiles, quire_circles, quire_circle_members, quire_moments, quire_moment_recipients",
+            "completed": true
+          },
+          {
+            "text": "Tạo bảng dream_entries, dream_attachments",
+            "completed": true
+          },
+          {
+            "text": "Khởi tạo 3 storage buckets: avatars, quire-moments, dream-attachments",
+            "completed": true
+          },
+          {
+            "text": "Thiết lập 36 chính sách Row-Level Security (RLS) bảo vệ dữ liệu và file storage",
+            "completed": true
+          },
+          {
+            "text": "Thiết lập pg_cron và hàm purge_expired_quire_moments() tự hủy khoảnh khắc sau 30 ngày",
+            "completed": true
+          },
+          {
+            "text": "Khóa cứng vòng tròn bạn bè tối đa 12 người qua trigger check_quire_circle_member_limit",
+            "completed": true
+          }
+        ],
+        "description": "Viết script SQL 01-init-schema.sql khởi tạo các bảng app_system_configs, profiles, quire_circles, quire_circle_members, quire_moments, quire_moment_recipients, dream_entries, dream_attachments. Tạo 3 storage buckets (avatars, quire-moments, dream-attachments), thiết lập Row-Level Security (RLS) và cấu hình pg_cron tự động dọn dẹp sau 30 ngày. Xem @doc/architecture/backend-supabase-version-gating và @doc/architecture/quire-photo-upload-logic.",
+        "implementationNotes": "Đã hoàn thành file migration backend/supabase/migrations/01-init-schema.sql gồm 645 dòng SQL chuẩn Postgres 15. Đã kích hoạt Row-Level Security trên toàn bộ 8 bảng dữ liệu và 3 bucket storage. Đảm bảo bất biến The Void (zero persistence), giới hạn vòng bạn bè 12 người, và tự hủy sau 30 ngày.",
+        "labels": [
+          "backend",
+          "database",
+          "rls",
+          "sql"
+        ],
+        "priority": "high",
+        "status": "done",
+        "title": "CSDL PostgreSQL Schema, Storage Buckets \u0026 RLS Policies"
+      }
+    }
+  ]
+}

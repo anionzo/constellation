@@ -1,0 +1,131 @@
+{
+  "taskId": "gs5zp9",
+  "currentVersion": 2,
+  "versions": [
+    {
+      "id": "v1",
+      "taskId": "gs5zp9",
+      "version": 1,
+      "timestamp": "2026-09-24T16:46:21.9620031Z",
+      "changes": [
+        {
+          "field": "status",
+          "oldValue": null,
+          "newValue": "todo"
+        },
+        {
+          "field": "priority",
+          "oldValue": null,
+          "newValue": "high"
+        }
+      ],
+      "snapshot": {
+        "description": "Xây dựng luồng gửi ảnh khoảnh khắc hoàn chỉnh của Quire: Chụp ảnh/Thư viện, Compose Sheet chọn bạn bè (bắt buộc \u003e= 1), khóa nút 'Đang gửi...', cửa sổ Hoàn tác 900ms ('Send cancelled. Nothing left the app.'), và đẩy ảnh lên quire-moments. Xem @doc/architecture/quire-photo-upload-logic.",
+        "labels": [
+          "quire",
+          "client",
+          "photo-upload",
+          "state-machine"
+        ],
+        "priority": "high",
+        "status": "todo",
+        "title": "Triển khai Quire Photo Upload Pipeline \u0026 900ms Undo State Machine"
+      }
+    },
+    {
+      "id": "v2",
+      "taskId": "gs5zp9",
+      "version": 2,
+      "timestamp": "2026-09-24T16:52:23.671701Z",
+      "changes": [
+        {
+          "field": "status",
+          "oldValue": "todo",
+          "newValue": "done"
+        },
+        {
+          "field": "acceptanceCriteria",
+          "oldValue": null,
+          "newValue": [
+            {
+              "text": "Khởi tạo app/feature apps/quire",
+              "completed": true
+            },
+            {
+              "text": "Triển khai PhotoUploadStateMachine với đầy đủ các trạng thái",
+              "completed": true
+            },
+            {
+              "text": "Triển khai xử lý lỗi quyền Camera và 2 lối thoát (PermissionDeniedState)",
+              "completed": true
+            },
+            {
+              "text": "Ràng buộc chọn \u003e= 1 bạn bè trong vòng 4-11 người mới kích hoạt nút gửi",
+              "completed": true
+            },
+            {
+              "text": "Khóa nút tức thì khi gửi (SendingState) để chống bấm đúp",
+              "completed": true
+            },
+            {
+              "text": "Cửa sổ Hoàn tác 900ms với nút 'Hoàn tác' hủy gửi và cam kết 'Không có gì rời khỏi ứng dụng'",
+              "completed": true
+            },
+            {
+              "text": "Đẩy ảnh lên bucket quire-moments và ghi DB quire_moments với thời hạn 30 ngày (expires_at)",
+              "completed": true
+            }
+          ]
+        },
+        {
+          "field": "implementationNotes",
+          "oldValue": null,
+          "newValue": "Đã triển khai hoàn chỉnh State Machine cho luồng gửi ảnh của Quire trong apps/quire. Đảm bảo đúng cam kết thiết kế của nguyên mẫu prototype.html và design-notes.md. Đã có bộ unit test photo_upload_state_machine_test.dart."
+        }
+      ],
+      "snapshot": {
+        "acceptanceCriteria": [
+          {
+            "text": "Khởi tạo app/feature apps/quire",
+            "completed": true
+          },
+          {
+            "text": "Triển khai PhotoUploadStateMachine với đầy đủ các trạng thái",
+            "completed": true
+          },
+          {
+            "text": "Triển khai xử lý lỗi quyền Camera và 2 lối thoát (PermissionDeniedState)",
+            "completed": true
+          },
+          {
+            "text": "Ràng buộc chọn \u003e= 1 bạn bè trong vòng 4-11 người mới kích hoạt nút gửi",
+            "completed": true
+          },
+          {
+            "text": "Khóa nút tức thì khi gửi (SendingState) để chống bấm đúp",
+            "completed": true
+          },
+          {
+            "text": "Cửa sổ Hoàn tác 900ms với nút 'Hoàn tác' hủy gửi và cam kết 'Không có gì rời khỏi ứng dụng'",
+            "completed": true
+          },
+          {
+            "text": "Đẩy ảnh lên bucket quire-moments và ghi DB quire_moments với thời hạn 30 ngày (expires_at)",
+            "completed": true
+          }
+        ],
+        "description": "Xây dựng luồng gửi ảnh khoảnh khắc hoàn chỉnh của Quire: Chụp ảnh/Thư viện, Compose Sheet chọn bạn bè (bắt buộc \u003e= 1), khóa nút 'Đang gửi...', cửa sổ Hoàn tác 900ms ('Send cancelled. Nothing left the app.'), và đẩy ảnh lên quire-moments. Xem @doc/architecture/quire-photo-upload-logic.",
+        "implementationNotes": "Đã triển khai hoàn chỉnh State Machine cho luồng gửi ảnh của Quire trong apps/quire. Đảm bảo đúng cam kết thiết kế của nguyên mẫu prototype.html và design-notes.md. Đã có bộ unit test photo_upload_state_machine_test.dart.",
+        "labels": [
+          "quire",
+          "client",
+          "photo-upload",
+          "state-machine"
+        ],
+        "priority": "high",
+        "status": "done",
+        "title": "Triển khai Quire Photo Upload Pipeline \u0026 900ms Undo State Machine"
+      }
+    }
+  ]
+}

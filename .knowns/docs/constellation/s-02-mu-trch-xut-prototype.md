@@ -2,7 +2,7 @@
 title: S-02 Mẫu trích xuất prototype
 description: 'Template trích xuất HTML prototype: bảng inventory màn hình, nhóm dữ liệu quan sát, quy tắc copy, tokens/a11y tham chiếu'
 createdAt: '2026-09-19T07:53:26.791Z'
-updatedAt: '2026-09-19T07:53:26.791Z'
+updatedAt: '2026-09-24T16:07:33.513Z'
 tags:
   - constellation
   - template
@@ -30,8 +30,9 @@ Liệt kê nhóm (vd "bài đọc tarot", "giấc mơ + mảnh ghép", "khoảnh
 
 ## 4. Tokens / a11y / offline
 
-SSOT stays ở readme + `:root`. Doc chỉ ghi quy tắc dùng quan sát được (vd quire accent ≤2 lần/màn, wine/crimson hiếm) + claim nguyên văn + tag `chưa kiểm độc lập` (vd quire 15.67:1, dream 4.5:1, 44px, reduced-motion, quire offline fallback "ô nền có nhãn").
-
+- **Nguồn quan sát (SSOT)**: source prototype tại `designs/*` và commit/ngày đọc. README và `architecture/design-system-tokens` là tài liệu tổng hợp/derived, không thay thế source.
+- App doc chỉ ghi rule/claim quan sát được và ghi rõ mức độ kiểm chứng: `đã quan sát`, `chưa kiểm độc lập` hoặc `DEFERRED`.
+- Các con số contrast, font fallback, offline và accessibility không được gọi là production certification. Nếu prototype có 40px nhưng hợp đồng hệ thống là 44px, ghi rõ đây là **observed deviation** và cần audit/ADR, không tự hạ contract xuống 40px.
 ## 5. Failure-mode (cho `<app>-02`, 3–5 dòng)
 
 Mỗi dòng: `ambiguity → hậu quả nếu implement đoán sai`. Không BLOCKER pipeline trừ khi Lead chỉ định.

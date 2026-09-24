@@ -1,8 +1,8 @@
 ---
 title: after-midnight-02 — Dữ liệu + quy tắc + failure
-description: 'Nhóm dữ liệu quan sát after-midnight, vòng đời hiển thị, tokens/a11y, copy giọng văn, cấm kỵ + 5 failure-mode'
+description: Nhóm dữ liệu quan sát after-midnight, vòng đời hiển thị, tokens/a11y, copy giọng văn, cấm kỵ + 5 failure-mode
 createdAt: '2026-09-21T13:30:00.000Z'
-updatedAt: '2026-09-21T13:30:00.000Z'
+updatedAt: '2026-09-24T16:29:36.635Z'
 tags:
   - constellation
   - after-midnight
@@ -12,14 +12,13 @@ tags:
 
 > Submodule `designs/after-midnight` @ `003f822`. Ngày đọc: 2026-09-21. File nguồn chính: `designs/after-midnight/readme.md` + quét chuỗi ASCII 2 file HTML. Không trích khối tiếng Việt dài vì vỡ dấu mã hóa.
 
-## §1 Screens — tóm tắt định hướng (chi tiết xem `constellation/after-midnight-01`)
+## §1 Screens — tóm tắt định hướng (chi tiết xem `constellation/after-midnight-01-flow`)
 
-- Quan sát: 15 màn chia 3 chặng — khóa (Ngày, Chạng vạng), đêm (Nhà, Thành phố đêm + 6 điểm + Void), khép (Bình minh, Lưu trữ) + 2 màn trung gian chỉ-đọc (Thư niêm phong, Gương). Nếu đoán sai: phân chặng sai, cổng giờ và điều hướng lệch.
+- Quan sát: 15 inventory item chia 3 chặng — khóa (Ngày, Chạng vạng), đêm (Nhà, Thành phố đêm + 6 điểm + Void), khép (Bình minh, Lưu trữ) + 2 màn trung gian chỉ-đọc (Thư niêm phong, Gương). Đây là cách gom inventory, không phải canonical definition của “không gian”.
+- Nếu đoán sai: phân chặng sai, cổng giờ và điều hướng lệch.
+## §2 Flows — vòng đời hiển thị (chi tiết xem `constellation/after-midnight-01-flow`)
 
-## §2 Flows — vòng đời hiển thị (chi tiết xem `constellation/after-midnight-01`)
-
-- Quan sát: dữ liệu chỉ sống trong đêm, trừ Lưu trữ xem lại sau đêm; Void ngoại lệ — sống lúc viết rồi xóa hẳn khi thả. Nếu đoán sai: giữ dữ liệu Void hoặc khóa Lưu trữ ban ngày, sai cả hai đầu.
-
+- Quan sát: dữ liệu chỉ sống trong đêm, trừ Lưu trữ xem lại sau đêm; Void ngoại lệ — sống lúc viết rồi bị gỡ khỏi DOM khi thả. Quyền xem Lưu trữ ban ngày và draft lúc 05:00 vẫn `Chưa rõ — hỏi Lead`.
 ## §3 Data — nhóm quan sát + vòng đời hiển thị (văn xuôi, không tên field/kiểu)
 
 - Quan sát: nhóm suy nghĩ ẩn danh (Café) = nội dung gõ tay + tâm trạng chọn sẵn (đang nghĩ, nhớ ai đó, đang làm việc, đang sáng tạo, nghĩ quá nhiều, trống rỗng) + mốc giờ; vòng đời: bản thảo → kiểm tra tối thiểu → gửi (có chờ) → thành sao → Lưu trữ nhóm suy nghĩ. Nếu đoán sai: thiếu tâm trạng/mốc giờ, suy nghĩ không vào lưu trữ.
@@ -39,11 +38,10 @@ tags:
 
 ## §5 Tokens / a11y / offline (nguyên văn + tag kiểm chứng)
 
-- Quan sát (bảng màu, readme): Obsidian `#080808` nền chính; Charcoal `#111111` nền phụ; Soft `#171717` bề mặt; Wine deep `#2A1014` nền đỏ tối; Dust `#7A756D` chi tiết mờ; Dim silver `#8A8A8A` chữ phụ; Silver `#C8C8C8` chữ chính; Ink `#E8E6E1` chữ sáng nhất; Muted gold `#8C7445` viền nhấn; Old gold `#C9A45C` nhấn chính; Wine `#6E2028` nhấn đỏ rất hiếm. Nếu đoán sai: lệch hex 1 nấc vỡ tương phản + nhận diện.
-- Quan sát (chữ, readme): tiêu đề lớn Instrument Serif; giao diện/nội dung IBM Plex Sans; giờ/số liệu/nhãn nhỏ IBM Plex Mono. Nếu đoán sai: sai font vai trò, mất chất editorial.
-- Khẳng định sau nguyên văn từ file, `chưa kiểm độc lập`: "Cả ba tải từ Google Fonts và đều có fallback hệ thống, nên file vẫn dùng được khi offline."; "HTML tự chứa: không thư viện ngoài, không ảnh ngoài, không gọi mạng (ngoài Google Fonts)."; "mọi chuyển động dịch chuyển bị tắt, chỉ giữ crossfade mờ" (giảm chuyển động); "Điểm chạm ≥ 44px, có viền focus khi điều hướng bằng bàn phím, nhãn cho trình đọc màn hình."; "Âm thanh nền trong nguyên mẫu được tổng hợp ngay trong trình duyệt (WebAudio), không cần file audio."; âm thanh tự chọn (opt-in), cần thao tác người dùng mới phát. Nếu đoán sai (coi là đã kiểm): ship không thử offline/trình đọc màn hình/giảm chuyển động, tuyên bố accessibility sai.
-- Quan sát: mọi thành phần trỏ về khối dùng chung đầu file, sửa ở đó đổi toàn cục (readme § "Chỉnh sửa"); vàng/đỏ chỉ điểm nhấn hiếm. Nếu đoán sai: hard-code màu từng màn, bảo trì vỡ vụn.
-
+- **Quan sát token**: bảng màu và typography After Midnight được ghi nhận từ source; mọi số đo contrast/touch/focus/screen-reader/reduced-motion là `chưa kiểm độc lập`.
+- **Quan sát asset**: prototype có thể dùng Google Fonts và fallback; không được gọi là zero-network tuyệt đối. Core flow, Void non-persistence và audio opt-in phải được test offline.
+- **Production contract**: bundle/provision font, license, cache, screen-reader/keyboard và audio interruption là `PROPOSED/DEFERRED`; không dùng claim HTML như certification.
+- Âm thanh chỉ phát sau opt-in; The Void không gửi dữ liệu qua mạng. Nếu đoán sai: mất accessibility/offline guarantee hoặc vi phạm privacy.
 ## §6 Copy — trích giọng
 
 - Voice quote 1 (ASCII nguyên văn, nguyên mẫu): "The city is asleep." + "Somewhere, someone is awake." — cặp mở đầu định vị thế giới.

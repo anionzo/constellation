@@ -1,0 +1,123 @@
+{
+  "taskId": "sc42wx",
+  "currentVersion": 2,
+  "versions": [
+    {
+      "id": "v1",
+      "taskId": "sc42wx",
+      "version": 1,
+      "timestamp": "2026-09-24T16:46:08.293694Z",
+      "changes": [
+        {
+          "field": "status",
+          "oldValue": null,
+          "newValue": "todo"
+        },
+        {
+          "field": "priority",
+          "oldValue": null,
+          "newValue": "medium"
+        }
+      ],
+      "snapshot": {
+        "description": "Tách module độc lập packages/core/local_sync: Interface trừu tượng cho lưu trữ ngoại tuyến SQLite/Drift và hàng đợi đồng bộ nền (pending_sync_queue) khi mất kết nối mạng. Xem @doc/architecture/modular-reusable-components.",
+        "labels": [
+          "modular",
+          "reusable",
+          "client",
+          "local-first"
+        ],
+        "priority": "medium",
+        "status": "todo",
+        "title": "Module Tái Sử Dụng: Local-First Sync Queue Base Adapter"
+      }
+    },
+    {
+      "id": "v2",
+      "taskId": "sc42wx",
+      "version": 2,
+      "timestamp": "2026-09-24T16:52:05.4618429Z",
+      "changes": [
+        {
+          "field": "status",
+          "oldValue": "todo",
+          "newValue": "done"
+        },
+        {
+          "field": "acceptanceCriteria",
+          "oldValue": null,
+          "newValue": [
+            {
+              "text": "Khởi tạo package packages/local_sync độc lập",
+              "completed": true
+            },
+            {
+              "text": "Triển khai SyncQueueItem hỗ trợ trạng thái pending, inProgress, completed, failed, deadLetter",
+              "completed": true
+            },
+            {
+              "text": "Triển khai LocalStoreAdapter interface và MemoryLocalStoreAdapter",
+              "completed": true
+            },
+            {
+              "text": "Triển khai SyncDispatcher với exponential backoff và random jitter",
+              "completed": true
+            },
+            {
+              "text": "Tích hợp Sync Lock ngắt đồng bộ khi ForceUpdate hoặc Maintenance được kích hoạt",
+              "completed": true
+            },
+            {
+              "text": "Triển khai TheVoidSyncGuard bảo vệ bất biến The Void",
+              "completed": true
+            }
+          ]
+        },
+        {
+          "field": "implementationNotes",
+          "oldValue": null,
+          "newValue": "Đã triển khai hoàn chỉnh package packages/local_sync trừu tượng hóa toàn bộ hàng đợi đồng bộ ngoại tuyến, hỗ trợ retry và ngắt đồng bộ theo tín hiệu VersionGate. Đã có bộ unit test sync_queue_test.dart."
+        }
+      ],
+      "snapshot": {
+        "acceptanceCriteria": [
+          {
+            "text": "Khởi tạo package packages/local_sync độc lập",
+            "completed": true
+          },
+          {
+            "text": "Triển khai SyncQueueItem hỗ trợ trạng thái pending, inProgress, completed, failed, deadLetter",
+            "completed": true
+          },
+          {
+            "text": "Triển khai LocalStoreAdapter interface và MemoryLocalStoreAdapter",
+            "completed": true
+          },
+          {
+            "text": "Triển khai SyncDispatcher với exponential backoff và random jitter",
+            "completed": true
+          },
+          {
+            "text": "Tích hợp Sync Lock ngắt đồng bộ khi ForceUpdate hoặc Maintenance được kích hoạt",
+            "completed": true
+          },
+          {
+            "text": "Triển khai TheVoidSyncGuard bảo vệ bất biến The Void",
+            "completed": true
+          }
+        ],
+        "description": "Tách module độc lập packages/core/local_sync: Interface trừu tượng cho lưu trữ ngoại tuyến SQLite/Drift và hàng đợi đồng bộ nền (pending_sync_queue) khi mất kết nối mạng. Xem @doc/architecture/modular-reusable-components.",
+        "implementationNotes": "Đã triển khai hoàn chỉnh package packages/local_sync trừu tượng hóa toàn bộ hàng đợi đồng bộ ngoại tuyến, hỗ trợ retry và ngắt đồng bộ theo tín hiệu VersionGate. Đã có bộ unit test sync_queue_test.dart.",
+        "labels": [
+          "modular",
+          "reusable",
+          "client",
+          "local-first"
+        ],
+        "priority": "medium",
+        "status": "done",
+        "title": "Module Tái Sử Dụng: Local-First Sync Queue Base Adapter"
+      }
+    }
+  ]
+}

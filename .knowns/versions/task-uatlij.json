@@ -1,0 +1,105 @@
+{
+  "taskId": "uatlij",
+  "currentVersion": 2,
+  "versions": [
+    {
+      "id": "v1",
+      "taskId": "uatlij",
+      "version": 1,
+      "timestamp": "2026-09-24T16:44:55.4303885Z",
+      "changes": [
+        {
+          "field": "status",
+          "oldValue": null,
+          "newValue": "todo"
+        },
+        {
+          "field": "priority",
+          "oldValue": null,
+          "newValue": "high"
+        }
+      ],
+      "snapshot": {
+        "description": "Thiết lập thư mục docker/supabase với docker-compose.yml hoàn chỉnh (Postgres 15, Kong, GoTrue, PostgREST, Realtime, Storage, Studio) và file .env.example chuẩn bảo mật. Xem @doc/architecture/backend-supabase-version-gating.",
+        "labels": [
+          "backend",
+          "docker",
+          "supabase"
+        ],
+        "priority": "high",
+        "status": "todo",
+        "title": "Hạ tầng Supabase Self-Hosted Docker Stack"
+      }
+    },
+    {
+      "id": "v2",
+      "taskId": "uatlij",
+      "version": 2,
+      "timestamp": "2026-09-24T16:51:03.4275553Z",
+      "changes": [
+        {
+          "field": "status",
+          "oldValue": "todo",
+          "newValue": "done"
+        },
+        {
+          "field": "acceptanceCriteria",
+          "oldValue": null,
+          "newValue": [
+            {
+              "text": "Khởi tạo backend/supabase/docker-compose.yml đầy đủ 8 services",
+              "completed": true
+            },
+            {
+              "text": "Khởi tạo backend/supabase/.env.example với cấu hình bảo mật",
+              "completed": true
+            },
+            {
+              "text": "Cấu hình API Gateway Kong (kong.yml)",
+              "completed": true
+            },
+            {
+              "text": "Xác thực cú pháp docker compose config thành công",
+              "completed": true
+            }
+          ]
+        },
+        {
+          "field": "implementationNotes",
+          "oldValue": null,
+          "newValue": "Hoàn tất triển khai Supabase Self-Hosted Docker Compose stack với 8 container: db (Postgres 15), kong (API Gateway), auth (GoTrue), rest (PostgREST), realtime, storage, meta, studio. Đã kiểm tra cú pháp thành công với lệnh: docker compose --env-file backend/supabase/.env.example -f backend/supabase/docker-compose.yml config --quiet (exit code 0)."
+        }
+      ],
+      "snapshot": {
+        "acceptanceCriteria": [
+          {
+            "text": "Khởi tạo backend/supabase/docker-compose.yml đầy đủ 8 services",
+            "completed": true
+          },
+          {
+            "text": "Khởi tạo backend/supabase/.env.example với cấu hình bảo mật",
+            "completed": true
+          },
+          {
+            "text": "Cấu hình API Gateway Kong (kong.yml)",
+            "completed": true
+          },
+          {
+            "text": "Xác thực cú pháp docker compose config thành công",
+            "completed": true
+          }
+        ],
+        "description": "Thiết lập thư mục docker/supabase với docker-compose.yml hoàn chỉnh (Postgres 15, Kong, GoTrue, PostgREST, Realtime, Storage, Studio) và file .env.example chuẩn bảo mật. Xem @doc/architecture/backend-supabase-version-gating.",
+        "implementationNotes": "Hoàn tất triển khai Supabase Self-Hosted Docker Compose stack với 8 container: db (Postgres 15), kong (API Gateway), auth (GoTrue), rest (PostgREST), realtime, storage, meta, studio. Đã kiểm tra cú pháp thành công với lệnh: docker compose --env-file backend/supabase/.env.example -f backend/supabase/docker-compose.yml config --quiet (exit code 0).",
+        "labels": [
+          "backend",
+          "docker",
+          "supabase"
+        ],
+        "priority": "high",
+        "status": "done",
+        "title": "Hạ tầng Supabase Self-Hosted Docker Stack"
+      }
+    }
+  ]
+}

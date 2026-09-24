@@ -2,7 +2,7 @@
 title: quire-01 — Flow + màn hình + trạng thái
 description: 'Inventory 19 màn quire: 4 tab + settings 4 tầng + luồng gửi/đáp ảnh + theme/ngôn ngữ + trạng thái'
 createdAt: '2026-09-21T13:00:00.000Z'
-updatedAt: '2026-09-21T13:00:00.000Z'
+updatedAt: '2026-09-24T16:35:30.086Z'
 tags:
   - constellation
   - quire
@@ -51,10 +51,10 @@ tags:
 - Quan sát: chạm chưa nối (tìm kiếm, dòng tab Bạn, đăng xuất, hàng cài đặt phụ) chỉ lời báo, không chuyển màn. Nếu coi lời báo là màn thật sẽ ghi "đạt" cho luồng chưa tồn tại.
 - Chưa rõ — hỏi Lead: sau nút chụp Capture đi đâu (board tĩnh, prototype ảnh mẫu cố định). Nếu đoán "vào thẳng chọn người" mà có màn xem lại/cắt sẽ thiếu màn.
 
-## §3 Data — xem `constellation/quire-02`
+Dữ liệu, quy tắc dùng và failure được ghi ở `constellation/quire-02-data`.
+## §4 States — xem bảng §1 + `constellation/quire-02-data`
 
-## §4 States — xem bảng §1 + `constellation/quire-02`
-
+Các state đã vẽ và state đã hứa được phân biệt trong flow; xem thêm §4 của `constellation/quire-02-data`.
 ## §5 Tokens — xem `constellation/quire-02`
 
 ## §6 Copy

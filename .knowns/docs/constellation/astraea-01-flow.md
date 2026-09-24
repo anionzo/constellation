@@ -1,11 +1,14 @@
 ---
 title: astraea-01 — Flow + màn hình + trạng thái
-description: 'Đối chiếu đếm màn astraea (18/16/14/13) + inventory luồng nghi thức tarot: hỏi, chọn trải, xòe, lật, kết quả, lưu'
+description: 'Inventory Astraea: 18 visual panels, 16 routes, 14 tên/13 label chưa hợp nhất; ritual Tarot 6 bước, dữ liệu 78 lá, nhật ký và failure states.'
 createdAt: '2026-09-21T13:30:00.000Z'
-updatedAt: '2026-09-21T13:30:00.000Z'
+updatedAt: '2026-09-24T16:30:51.035Z'
 tags:
   - constellation
   - astraea
+  - screen-inventory
+  - count-reconciliation
+  - ritual
 ---
 
 # astraea-01 — Flow + màn hình + trạng thái
@@ -52,12 +55,10 @@ tags:
 - Quan sát: rút mới từ tab xóa lựa chọn cũ (reset khi chạm tab rút bài). Nếu đoán sai: bài mới lẫn lá cũ, kết quả sai.
 - Chưa rõ — hỏi Lead: có lưu nháp giữa chừng (thoát ở Lật rồi quay lại) hay thoát là mất. Nếu đoán sai: mất bài đọc hoặc gánh cơ chế nháp không ai yêu cầu.
 
-## §3 Data — xem `constellation/astraea-02`
-
+## §3 Data — xem `constellation/astraea-02-data`
 ## §4 States — khóa nút khi thiếu thông tin (tạo tài khoản, đăng nhập, hoàn tất onboarding, tiếp tục sau hỏi, lật bài chưa đủ lá, thêm ghi chú); tải ngắn trước kết quả; rỗng Nhật ký có minh họa + nút rút bài; lỗi đỏ dưới form đăng nhập/đăng ký. Chưa rõ: 2 bài đọc ví dụ + 1 lá "hôm nay" bản production giữ gì — hỏi Lead (demo lọt bản thật nếu đoán sai).
 
-## §5 Tokens — xem `constellation/astraea-02`
-
+## §5 Tokens — xem `constellation/astraea-02-data`
 ## §6 Copy
 
 - Quan sát (readme nguyên văn): "studio Tarot trong túi" (dòng 3); "mỗi lá bài mang chòm sao hoàng đạo vẽ ngay bên trong tranh" (dòng 5); công tắc "Xuôi / Ngược" (dòng 26); lọc "Ẩn Chính / Ẩn Phụ / Đã lưu" (dòng 27). Nếu đoán sai: sai thuật ngữ signature.
@@ -65,7 +66,8 @@ tags:
 
 ## §7 Rules
 
-- Quan sát: toàn bộ lời thoại/diễn giải tiếng Việt; khung phản chiếu, không tiên tri, không gieo sợ (dòng 38). Nếu đoán sai: nội dung chệch định vị, rủi ro gieo sợ.
-- Quan sát: đây là thiết kế giao diện, không máy chủ, không tài khoản thật, bài đọc mẫu chỉ ví dụ (dòng 42). Nếu đoán sai: tưởng đã có backend/auth thật.
-- Quan sát: tranh lá vector đồng bộ 78 lá, không ảnh ngoài (dòng 35). Nếu đoán sai: ảnh rời lệch phong cách.
-- Chưa rõ — hỏi Lead: "quên mật khẩu", "cài đặt thông báo", "Premium sắp ra mắt", "trợ giúp & phản hồi" có thuộc bản đầu không. Nếu đoán sai: màn mồ côi không ai duyệt.
+- Giữ giọng phản chiếu tiếng Việt, không tiên tri/gieo sợ; UX/copy phản chiếu trong prototype không phải AI production.
+- Prototype không có máy chủ, tài khoản thật hay bài đọc production; các form auth chỉ là UI fixture.
+- Giữ 78 lá vector, 4 kiểu trải và ritual 6 bước; không thêm màn, trường, endpoint hoặc provider ngoài quan sát.
+- Bộ đếm “chuỗi ngày” trong prototype là **observed conflict** với Calm invariant; không được giữ như streak/điểm số production nếu chưa có Lead decision.
+- Các màn phụ (quên mật khẩu, thông báo, Premium, trợ giúp) và canonical screen count vẫn `Chưa rõ — hỏi Lead`; fixture phải được gắn nhãn.

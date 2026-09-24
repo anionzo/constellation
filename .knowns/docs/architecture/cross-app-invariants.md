@@ -1,8 +1,8 @@
 ---
-title: Cross-App Boundaries & Architectural Invariants — Ranh giới chéo & Bất biến hệ thống
-description: 'Ma trận ranh giới kiến trúc 4 ứng dụng, các bất biến Calm Computing, cơ chế hủy/xóa dữ liệu, và nguyên tắc bảo toàn tính độc lập không hợp nhất'
+title: 'Cross-App Boundaries & Architectural Invariants — Ranh giới chéo & Bất biến hệ thống'
+description: Ma trận ranh giới kiến trúc 4 ứng dụng, các bất biến Calm Computing, cơ chế hủy/xóa dữ liệu, và nguyên tắc bảo toàn tính độc lập không hợp nhất
 createdAt: '2026-09-24T00:00:00.000Z'
-updatedAt: '2026-09-24T00:00:00.000Z'
+updatedAt: '2026-09-24T16:16:56.009Z'
 tags:
   - constellation
   - architecture
@@ -19,40 +19,28 @@ tags:
 
 ## 1. Bất biến Kiến trúc Toàn hệ thống (Core Invariants)
 
-Hệ thống Constellation định nghĩa 5 bất biến kiến trúc mang tính ràng buộc bắt buộc:
+Hệ thống Constellation định nghĩa 5 bất biến, là ranh giới hành vi chung chứ không phải một lớp implementation dùng chung:
 
-```mermaid
-graph TD
-    subgraph Invariants["5 Bất biến Hệ thống Constellation"]
-        I1["1. Local-First: Tự chứa, Zero Backend"]
-        I2["2. Calm Anti-Retention: Không chỉ số ảo, Không thúc ép"]
-        I3["3. Anti-Merge: Độc lập tuyệt đối 4 bản sắc"]
-        I4["4. Ephemeral & Clean Wipe: Tự hủy, Xóa sạch tức thì"]
-        I5["5. Pacing & Ritual Order: Nhịp độ chậm, Nghi thức tuần tự"]
-    end
-```
+1. **Local-First**: prototype không gửi user data qua backend, không auth/sync thật; remote static asset là dependency riêng cần gắn `OBSERVED`/`DEFERRED`.
+2. **Calm**: không chủ động níu kéo, ép phản hồi hoặc biến ghi chép thành streak/điểm số.
+3. **Anti-Merge**: không trộn visual, navigation, domain, state hoặc data identity giữa bốn app.
+4. **Data Disposal**: mỗi app có retention, visibility và deletion contract riêng; `xóa 100%` chỉ được dùng sau khi kiểm tra storage/cache/backup/sync.
+5. **Ritual Pacing**: giữ thứ tự nghi thức và điểm dừng; không thêm CTA, notification hay transition làm thay đổi ý nghĩa.
 
-1. **Bất biến Cục bộ (Local-First Invariant)**: Không có luồng dữ liệu nào truyền qua mạng internet ở giai đoạn nguyên mẫu. Trạng thái người dùng được giam giữ an toàn trong phiên DOM hiện hành.
-2. **Bất biến Điềm tĩnh (Calm Invariant)**: Ứng dụng không bao giờ chủ động tìm cách níu kéo người dùng ở lại lâu hơn mức cần thiết.
-3. **Bất biến Chống Hợp nhất (Anti-Merge Invariant)**: Không trộn lẫn triết lý, màu sắc hay luồng nghiệp vụ giữa 4 ứng dụng.
-4. **Bất biến Dọn dẹp Dữ liệu (Sanitization Invariant)**: Mọi dữ liệu nhạy cảm đều có đường thoát hoặc cơ chế tự hủy rõ ràng.
-5. **Bất biến Trật tự Nghi thức (Ritual Pacing Invariant)**: Các thao tác mang tính nghi thức (bốc bài, vén màn che, gửi thư đêm) không cho phép nhảy cóc hoặc thực hiện tức thời một cách cẩu thả.
-
----
-
+Các invariant này được áp dụng như checklist governance; implementation adapter phải giữ domain ownership riêng.
 ## 2. Ma trận Ranh giới Tương tác & Dữ liệu Chéo
 
-Bảng ranh giới ngăn chặn sự thẩm thấu sai lệch giữa các miền chức năng:
+Bảng dưới đây là contract hành vi, không phải schema dùng chung:
 
 | Khía cạnh tương tác | Quire | Dream Journal | Astraea | After Midnight |
 |---|---|---|---|---|
-| **Chia sẻ xã hội** | Vòng bạn thân khép kín (4–12 người), chỉ gửi ảnh trực tiếp | Không có chia sẻ; kho lưu trữ nội tâm cá nhân | Không có mạng xã hội; xem bài đọc riêng tư | Thành phố đêm ẩn danh, không hồ sơ công khai |
-| **Tính bền vững của văn bản** | Bài viết dài lưu trữ; khoảnh khắc tạm thời | Giấc mơ chuyển hóa thành tác phẩm & chòm sao | Bài đọc lưu vào nhật ký; thư viện 78 lá cố định | Thư niêm phong khóa thời gian; Void bốc hơi tức thì |
-| **Xác thực đọc** | Mặc định tắt; người gửi không biết người nhận đã đọc hay chưa | Không áp dụng | Không áp dụng | Không áp dụng |
-| **Phản hồi bằng AI** | Không có trí tuệ nhân tạo | AI phản chiếu biểu tượng, không phán xét, không định danh | Diễn giải bài đọc mang tính gợi mở, cấm tiên tri | Không có trí tuệ nhân tạo |
+| **Chia sẻ xã hội** | Vòng hữu hạn tối đa 12; demo 11; chỉ gửi trực tiếp trong boundary đã duyệt | Không có chia sẻ; kho nội tâm cá nhân | Không có mạng xã hội; bài đọc riêng tư | Thành phố đêm ẩn danh, không hồ sơ công khai |
+| **Tính bền vững của văn bản** | Bài viết dài lưu trữ; moment có retention riêng | Giấc mơ chuyển hóa thành tác phẩm & chòm sao | Bài đọc lưu vào nhật ký; thư viện 78 lá cố định | Thư niêm phong khóa thời gian; Void không lưu |
+| **Xác nhận đọc** | Mặc định tắt; mọi dòng “read receipts ON” trong prototype là `Chưa rõ — hỏi Lead`, không phải production default | Không áp dụng | Không áp dụng | Không áp dụng |
+| **Phản hồi bằng AI** | Không có AI | UX/copy phản chiếu trong prototype; provider/prompt/guardrail `DEFERRED` | Diễn giải gợi mở trong prototype; không tiên tri; service production `DEFERRED` | Không có AI |
+| **Số liệu tương tác** | Không vanity metrics công khai; số liệu mẫu phải gắn `FIXTURE` | Không gamification/streak | Bộ đếm chỉ được giữ nếu không trở thành chuỗi/điểm số; nếu không rõ thì `Chưa rõ — hỏi Lead` | Không chỉ số thúc ép |
 
----
-
+Các khác biệt trên là chủ ý; không dùng chúng làm lý do để hợp nhất UI hoặc data model.
 ## 3. Triết lý Calm Computing & Danh mục Bất biến Âm tính (Negative Invariants)
 
 Nhằm bảo vệ sự tập trung của con người, hệ thống thiết lập một danh mục **những điều cấm tuyệt đối** xuất hiện trong bất kỳ ứng dụng nào:
@@ -72,37 +60,39 @@ Nhằm bảo vệ sự tập trung của con người, hệ thống thiết lậ
 
 ## 4. Cơ chế Hủy & Xóa Dữ liệu (Data Disposal Mechanisms)
 
-Mỗi ứng dụng cài đặt một cơ chế giải phóng dữ liệu riêng biệt phù hợp với bối cảnh:
+Mỗi ứng dụng có cơ chế riêng; đây là hành vi quan sát, chưa phải effective-deletion guarantee:
 
 ```mermaid
 stateDiagram-v2
-    state "Quire: 30-Day Purge" as Q
+    state "Quire: Activity purge 30d" as Q
     state "After Midnight: The Void" as M
     state "Astraea: 2-Tap Wipe" as A
     state "Dream: Sanctum Veil" as D
-    
-    [*] --> Q: Hết 30 ngày hoạt động -> Xóa âm thầm
-    [*] --> M: Thả suy nghĩ -> Bốc hơi RAM trong 2100ms
-    [*] --> A: Cài đặt -> Bấm 2 chạm -> Xóa sạch Local Storage
-    [*] --> D: Đóng ứng dụng -> Màn che phủ lại toàn bộ
+
+    [*] --> Q: Activity cũ -> hết 30 ngày -> xóa activity
+    [*] --> M: Thả suy nghĩ -> DOM reset sau 2100ms
+    [*] --> A: Xác nhận 2 chạm -> xóa dữ liệu local theo scope
+    [*] --> D: Đóng ứng dụng -> màn che phủ lại
 ```
 
-### 1. Quire — Chu kỳ tự hủy 30 ngày & Hoàn tác gửi:
-- **Chu kỳ 30 ngày**: Hoạt động trong dòng khoảnh khắc tự động bốc hơi sau 30 ngày kể từ ngày phát hành. Không lưu trữ vĩnh viễn dòng thời gian quá khứ.
-- **Cửa sổ hoàn tác**: Khi gửi ảnh, người dùng có 3–5 giây để bấm "Hoàn tác". Khi bấm hoàn tác, hình ảnh chưa bao giờ rời khỏi thiết bị cục bộ.
+### 1. Quire — Activity purge 30 ngày & hoàn tác gửi
+- Chu kỳ 30 ngày áp dụng cho **activity log**; không tự động xóa bài viết, moment hoặc toàn bộ vòng bạn.
+- Cửa sổ hoàn tác 3–5 giây là quan sát prototype; network/upload semantics là `PROPOSED` và phải có test.
 
-### 2. After Midnight — Cơ chế The Void:
-- **Cam kết không lưu trữ (Non-Persistence Invariant)**: Bất kỳ suy nghĩ nào gõ vào ô nhập liệu của The Void và bấm "Thả đi" sẽ kích hoạt animation tan rã trong `2100ms`. Ngay sau đó, chuỗi ký tự bị gán rỗng trong RAM, không ghi vào cookie hay bộ nhớ đệm.
+### 2. After Midnight — The Void
+- Quan sát được: sau hiệu ứng `2100ms`, nội dung bị gỡ khỏi DOM và không được persist/gửi mạng.
+- Không tuyên bố xóa được khỏi RAM của OS/browser, backup hoặc thiết bị khác; trusted-time và physical deletion là `DEFERRED`.
 
-### 3. Astraea — Xóa dữ liệu 2 chạm (2-Tap Wipe):
-- Trong mục Hồ sơ cá nhân, chỉ cần 2 thao tác chạm có xác nhận, toàn bộ lịch sử rút bài, ghi chép nhật ký và thông tin ngày sinh sẽ bị xóa sạch khỏi bộ nhớ thiết bị.
+### 3. Astraea — 2-Tap Wipe
+- Xóa theo scope local đã quan sát; chưa được gọi là “xóa 100%” khi chưa kiểm tra cache, backup, sync hoặc bản sao khác.
 
----
-
+Mọi thay đổi retention/deletion phải có owner, trigger, recovery test và deletion propagation trước khi chuyển `APPROVED`.
 ## 5. Bảo toàn Tính Độc lập Không Hợp nhất (Anti-Merge Enforcement)
 
-Để bảo vệ tính toàn vẹn nghệ thuật của từng tác phẩm thiết kế, mọi đề xuất tái cấu trúc mã nguồn trong tương lai phải vượt qua bài kiểm tra **Hàng rào Chống Hợp nhất**:
+Mọi đề xuất tái cấu trúc phải vượt qua checklist sau:
 
-1. **Không tạo Super-App**: Tuyệt đối không xây dựng một ứng dụng "cổng" chứa cả 4 app như 4 tab hay 4 chức năng con.
-2. **Không ép chung cơ sở dữ liệu**: Khi triển khai backend tương lai, mỗi sản phẩm phải có schema và dịch vụ tách biệt, ngăn chặn nguy cơ liên kết chéo hồ sơ người dùng giữa After Midnight (ẩn danh hoàn toàn) và Quire (vòng bạn thân).
-3. **Tôn trọng ranh giới bản sắc**: Giữ vững sự tương phản giữa nền giấy ngà của Quire và bóng tối obsidian của Dream Journal.
+1. **Không tạo Super-App**: không gom bốn app thành một portal chung.
+2. **Không hợp nhất identity hoặc domain**: không dùng shared user/activity/social model làm tiện lợi; có thể dùng hạ tầng kỹ thuật trung lập nếu ownership và policy vẫn tách biệt.
+3. **Không trộn visual/token/typography/navigation**: giữ namespace và design language riêng.
+4. **Không tự mở rộng deferred scope**: auth, sync, AI, analytics và shared backend phải qua ADR/C-90; The Void luôn ngoài sync.
+5. **Mọi thay đổi phải trace về invariant**: nếu không chỉ ra invariant được bảo toàn và test evidence, proposal bị hoãn.

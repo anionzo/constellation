@@ -1,8 +1,8 @@
 ---
-title: Offline Resilience & Ambient Fallbacks — Dự phòng ngoại tuyến & Suy giảm thẩm mỹ duyên dáng
-description: 'Phân tích kiến trúc tự chứa không CDN, đồ họa vector SVG nội tuyến, tổng hợp âm thanh WebAudio, chuỗi phông chữ dự phòng có dấu tiếng Việt và xử lý ảnh mất mạng'
+title: 'Offline Resilience & Ambient Fallbacks — Dự phòng ngoại tuyến & Suy giảm thẩm mỹ duyên dáng'
+description: Phân tích kiến trúc tự chứa không CDN, đồ họa vector SVG nội tuyến, tổng hợp âm thanh WebAudio, chuỗi phông chữ dự phòng có dấu tiếng Việt và xử lý ảnh mất mạng
 createdAt: '2026-09-24T00:00:00.000Z'
-updatedAt: '2026-09-24T00:00:00.000Z'
+updatedAt: '2026-09-24T16:23:49.399Z'
 tags:
   - constellation
   - patterns
@@ -20,22 +20,12 @@ tags:
 
 ## 1. Kiến trúc Tự Chứa (Self-Contained Single-File Deliverable)
 
-Một trong những thành tựu kỹ thuật quan sát được trong 4 nguyên mẫu là tính **Độc lập Tuyệt đối (Self-Sufficiency)**. Mỗi nguyên mẫu được cấu thành từ một tệp HTML duy nhất, có thể chạy trơn tru ngay cả khi tải về máy tính và ngắt hoàn toàn kết nối Wi-Fi:
+Prototype có phần lớn tài nguyên nội tuyến và có thể mở từ một file HTML, nhưng **không được gọi là zero-network tuyệt đối** khi vẫn có Google Fonts hoặc `picsum.photos`.
 
-```mermaid
-graph TD
-    Prototype[Nguyên mẫu HTML Độc lập]
-    Prototype --> SVG[Đồ họa: 100% Vector SVG nội tuyến, Zero PNG/JPG]
-    Prototype --> Audio[Âm thanh: Tổng hợp WebAudio thời gian thực, Zero MP3/WAV]
-    Prototype --> Fonts[Phông chữ: Chuỗi dự phòng hệ thống bảo toàn dấu tiếng Việt]
-    Prototype --> Layout[Bố cục: CSS Flexbox/Grid bản địa, Zero Framework]
-```
-
-- **Không dùng CDN bên thứ ba**: Không gọi jQuery, Tailwind CDN, Bootstrap hay FontAwesome. Toàn bộ mã điều khiển và kiểu dáng được nhúng trực tiếp trong tệp HTML.
-- **Khởi động tức thì (Zero Latency)**: Không tốn thời gian chờ tải các tài nguyên phụ thuộc qua mạng.
-
----
-
+- Không dùng third-party framework/CDN cho code hoặc UI primitives.
+- Google Fonts, ảnh placeholder và bất kỳ URL remote nào là dependency `OBSERVED`; production phải bundle/provision asset hoặc chấp nhận degraded mode theo ADR.
+- Core ritual, local draft và fallback UI phải giữ được khi mất mạng; offline không được làm mất raw user data hoặc The Void.
+- `WebAudio` là browser capability quan sát được, không phải production audio service.
 ## 2. Đồ họa Vector SVG Nội tuyến (78 Lá bài Tarot & Bầu trời Sao)
 
 - **Nguồn quan sát**: `designs/astraea/readme.md#8EDE:35` & `designs/dream-journal/README.md#B48F:76`
@@ -62,33 +52,14 @@ graph TD
 
 ## 4. Chuỗi Phông Chữ Dự Phòng & Bảo Toàn Dấu Tiếng Việt
 
-- **Nguồn quan sát**: `designs/dream-journal/README.md#B48F:99` & `designs/after-midnight/readme.md#B144:71`
-- Khi người dùng sử dụng ứng dụng trong điều kiện ngoại tuyến hoàn toàn (không tải được Google Fonts), bố cục và độ dễ đọc của tiếng Việt phải được bảo toàn:
-
-```css
-/* Chuỗi phông chữ dự phòng chuẩn hóa */
---font-display: "Cormorant Garamond", "Times New Roman", Times, "Palatino Linotype", serif;
---font-ui: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
---font-mono: "JetBrains Mono", "IBM Plex Mono", Menlo, Monaco, Consolas, "Courier New", monospace;
-```
-
-- **Quy tắc dấu tiếng Việt**: `Be Vietnam Pro` là phông được thiết kế riêng cho ngôn ngữ tiếng Việt. Chuỗi dự phòng ưu tiên các phông hệ thống hiện đại của iOS (`-apple-system`) và Windows (`Segoe UI`) để đảm bảo các ký tự có dấu phức tạp (`ở`, `ễ`, `ặ`, `ự`) không bị nhảy phông (font fallback glitch).
-
----
-
+- **Quan sát**: một số prototype dùng Google Fonts với fallback hệ thống; mất mạng không được làm mất khả năng đọc tiếng Việt.
+- **Production contract**: asset/font phải được bundle hoặc cung cấp qua license đã duyệt; fallback phải được test trên Windows/macOS/iOS/Android và dynamic type.
+- Chuỗi font, preload, license và cache strategy là `PROPOSED/DEFERRED`; không coi một `font-display` claim trong HTML là production guarantee.
 ## 5. Dự phòng Ảnh Mất Mạng (Graceful Image Degradation)
 
-- **Nguồn quan sát**: `designs/quire/README.md#7F8C:69`
-- Trong Quire, các hình ảnh minh họa bài viết được lấy từ dịch vụ `picsum.photos`. Để xử lý tình huống mất kết nối:
-
-### Cơ chế suy giảm thẩm mỹ:
-- Nếu thẻ `<img>` không tải được tài nguyên (sự kiện `onerror`), component tự động thay thế bằng một **Khung thẻ có viền nét đứt thanh lịch kèm nhãn mô tả**:
-  - Không hiển thị biểu tượng "ảnh vỡ" mặc định xấu xí của trình duyệt.
-  - Hiển thị tên bài viết hoặc nhãn thể loại trên nền màu giấy ngà dịu mắt.
-  - Giữ nguyên tỷ lệ khung hình (aspect ratio) để không làm nhảy bố cục trang văn bản.
-
----
-
+- **Quan sát**: Quire dùng ảnh remote `picsum.photos`; prototype có fallback thành khung nền có nhãn khi ảnh lỗi.
+- **Invariant**: UI không được vỡ layout, mất nhãn hoặc làm lộ dữ liệu khi asset lỗi; tỷ lệ khung hình và alt/semantic label phải được giữ.
+- **Production contract**: nguồn ảnh, license, cache, user-upload scope và offline cache là `PROPOSED/DEFERRED`; không tự coi placeholder remote là asset production-ready.
 ## 6. Hỗ trợ Giảm Chuyển Động (`prefers-reduced-motion`)
 
 - **Nguồn quan sát**: Toàn bộ 4 nguyên mẫu (`designs/*`)
@@ -97,10 +68,13 @@ graph TD
 
 ---
 
-## 7. Ma trận Rủi ro Ngoại tuyến & Biện pháp Khắc phục
+## 7. Ma trận Rủi ro Ngoại tuyến & Biện pháp Khắc Phục
 
-| Tài nguyên | Nguy cơ khi mất kết nối | Trải nghiệm suy giảm | Giải pháp khắc phục trong mã |
+| Tài nguyên | Rủi ro | Hành vi bắt buộc | Trạng thái quyết định |
 |---|---|---|---|
-| **Google Fonts** | Chậm hiển thị chữ (FOIT - Flash of Invisible Text) | Chữ bị giật khi nạp xong hoặc chữ mất dấu | Cài đặt thuộc tính `font-display: swap` và chuỗi font dự phòng kỹ lưỡng |
-| **WebAudio** | Trình duyệt chặn âm thanh do chính sách Autoplay | Không nghe thấy tiếng radio hoặc tiếng mưa | Chỉ khởi động `AudioContext` sau khi có tương tác chạm đầu tiên của người dùng |
-| **Ảnh bài viết** | Ảnh không tải được để lại ô trắng trống hoác | Trang tạp chí bị mất cân đối thẩm mỹ | Dùng khối placeholder nền giấy có viền hairline và nhãn chữ |
+| Google Fonts | FOIT, layout shift hoặc mất dấu | Có fallback đọc được; test cold-start offline | Asset strategy `DEFERRED` |
+| WebAudio | Autoplay/interruption/battery | Chỉ phát sau opt-in; có stop/fallback; không giữ audio nền khi rời surface | Production audio `DEFERRED` |
+| Ảnh bài viết | URL lỗi hoặc mất mạng | Giữ khung, alt/semantic label và layout ratio | Asset/license `DEFERRED` |
+| AI reflection | Mất mạng giữa raw input và kết quả | Raw input phải an toàn; manual fallback/retry là `PROPOSED` | AI contract `DEFERRED` |
+
+Không được coi placeholder đẹp là offline-first nếu chưa test data retention, request policy, keyboard fallback và recovery.

@@ -1,8 +1,8 @@
 ---
-title: Calm Computing & Anti-Social Mechanics — Cơ chế tương tác tĩnh & Chống thao túng tâm lý
-description: 'Phân tích các nguyên tắc Calm Computing, danh mục cấm tuyệt đối (Anti-Features), không gian tĩnh lặng phi hành động, mặc định im lặng và giọng đối thoại phản chiếu không phán xét'
+title: 'Calm Computing & Anti-Social Mechanics — Cơ chế tương tác tĩnh & Chống thao túng tâm lý'
+description: Phân tích các nguyên tắc Calm Computing, danh mục cấm tuyệt đối (Anti-Features), không gian tĩnh lặng phi hành động, mặc định im lặng và giọng đối thoại phản chiếu không phán xét
 createdAt: '2026-09-24T00:00:00.000Z'
-updatedAt: '2026-09-24T00:00:00.000Z'
+updatedAt: '2026-09-24T16:22:25.470Z'
 tags:
   - constellation
   - patterns
@@ -67,32 +67,22 @@ Ngược lại, Constellation xem công nghệ như **một công cụ tĩnh l�
 
 ## 4. Mặc định Im lặng (Quiet by Default)
 
-- **Trong Quire**:
-  - Không có trạng thái "Đang gõ..." (typing indicator).
-  - Không có thông báo "Đã nhận / Đã xem" (read receipts). Người gửi gửi đi một bức ảnh và an tâm rằng bạn mình sẽ xem khi họ thuận tiện, không tạo áp lực phải hồi đáp ngay lập tức.
-- **Trong After Midnight**:
-  - Âm thanh radio và tiếng mưa đêm luôn ở trạng thái **TẮT mặc định**. Chỉ khi người dùng chủ động chạm vào nút phát, âm thanh mới nhẹ nhàng vang lên.
-
----
-
+- **Quire**: read receipts mặc định tắt; mọi prototype copy/trạng thái ghi “ON” phải được đánh dấu `Chưa rõ — hỏi Lead`, không được dùng làm default production. Không thêm vanity metrics hoặc notification thúc quay lại.
+- **After Midnight**: âm thanh radio/mưa tắt mặc định và chỉ phát sau thao tác chủ động. Nhắc nghỉ trong prototype không được tự biến thành OS push hoặc retention notification.
+- **Chung**: mọi social signal hoặc activity log phải có retention, visibility và purpose riêng; “chỉ hiển thị trong Activity” không đồng nghĩa được phép thu thập read event nếu invariant cấm.
 ## 5. Giọng Đối thoại Phản chiếu (Reflective Voice, Non-Deterministic)
 
-- **Nguồn quan sát**: `designs/dream-journal/index.html#9FC4:582-583` & `designs/astraea/readme.md#8EDE:38`
-- Khi người dùng tương tác với các công cụ chiêm nghiệm bằng AI (như trò chuyện về giấc mơ trong Dream Journal hoặc đọc giải bài trong Astraea):
-
-### Quy chuẩn giọng văn bắt buộc:
-1. **Cấm Tiên tri (Zero Fortune-Telling)**: Không bao giờ khẳng định những câu như *"Tuần tới bạn sẽ gặp tai ương"* hay *"Người yêu cũ sắp quay lại"*.
-2. **Cấm Gieo Sợ hãi (Zero Fear-Mongering)**: Khi rút phải lá bài mang biểu tượng khó khăn (như The Tower hay Death), giọng văn tập trung vào sự chuyển hóa, buông bỏ cái cũ để tái sinh, thay vì cảnh báo tai họa.
-3. **Phản chiếu, Không Phán xét (Mirroring, Not Judgmental)**: Đặt ra các câu hỏi mở để người dùng tự kết nối với cảm xúc của chính họ:
-   - *"Hình ảnh mặt nước tĩnh lặng trong giấc mơ sáng nay làm bạn nhớ đến khoảng thời gian nào trong quá khứ?"*
-   - *"Có điều gì bạn đang níu giữ mà đã đến lúc cần thả trôi?"*
-
----
-
+- **Nguồn quan sát**: UX/copy prototype tại `designs/dream-journal/` và `designs/astraea/`; chưa có provider, prompt, guardrail hay dịch vụ AI production.
+- Khi có implementation được duyệt, Dream Journal và Astraea chỉ được phản chiếu, không phán xét, không tiên tri và không gieo sợ.
+- Mọi request model, dữ liệu gửi đi, retention và fallback local phải được đánh dấu `PROPOSED/DEFERRED`; nội dung tĩnh trong prototype không được gọi là AI production.
+- Câu hỏi mở và voice signature phải bảo toàn theo source; không tự dịch hoặc tạo prompt/guardrail trong docs-only.
 ## 6. Ma trận Nguy cơ Thoái hóa sang Dark Patterns (Risk Analysis)
 
-| Nguyên tắc | Nguy cơ bị phá vỡ (Dark Pattern Creep) | Hậu quả tâm lý | Biện pháp ngăn chặn |
+| Nguyên tắc | Nguy cơ | Hậu quả | Biện pháp governance |
 |---|---|---|---|
-| **Vòng bạn 12 người** | Product Manager đề xuất thêm nút "Mời toàn bộ danh bạ" | Biến không gian thân mật thành mạng spam ồn ào | Giới hạn cứng số lượng kết nối tối đa 12 |
-| **Không đếm ngày** | Thêm thanh "Bạn đã thức đêm 5 ngày liên tục!" | Khiến người dùng cảm thấy có lỗi nếu đi ngủ sớm | Xóa bỏ mọi hàm tính toán chuỗi liên tiếp |
-| **Giọng thơ phản chiếu** | Đổi prompt AI thành bói toán giật gân để tăng lượt xem | Làm suy giảm sự bình an và gây hoang mang | Cài đặt bộ lọc Guardrail từ chối mọi yêu cầu bói toán số phận |
+| Vòng bạn hữu hạn | Mở toàn bộ danh bạ hoặc biến thành follower graph | Mạng spam, mất riêng tư | Giữ tối đa 12; demo 11; không thêm social graph |
+| Không đếm ngày | Biến lịch sáng dần thành streak/điểm số | Tạo áp lực và cảm giác tội lỗi | Cấm streak, badge, leaderboard và vanity metrics |
+| Quiet defaults | Bật read receipt, push hoặc reminder theo mặc định | Theo dõi và níu kéo người dùng | Mặc định tắt; mọi exception phải được Lead duyệt |
+| Giọng phản chiếu | Biến reflection thành fortune-telling, phán xét hoặc AI upsell | Gieo sợ, mất niềm tin | Provider/prompt/guardrail `DEFERRED`; chỉ giữ voice invariant |
+
+Các biện pháp implementation cụ thể không được ghi như đã chốt trong pattern này; chúng thuộc ADR/test sau khi thoát docs-only.

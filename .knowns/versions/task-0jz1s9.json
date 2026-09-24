@@ -1,0 +1,115 @@
+{
+  "taskId": "0jz1s9",
+  "currentVersion": 2,
+  "versions": [
+    {
+      "id": "v1",
+      "taskId": "0jz1s9",
+      "version": 1,
+      "timestamp": "2026-09-24T16:45:51.2683288Z",
+      "changes": [
+        {
+          "field": "status",
+          "oldValue": null,
+          "newValue": "todo"
+        },
+        {
+          "field": "priority",
+          "oldValue": null,
+          "newValue": "high"
+        }
+      ],
+      "snapshot": {
+        "description": "Tách module độc lập packages/core/media_storage dùng chung cho Quire (Avatar/Moments) và Dream Journal (Dream Attachments): Chuỗi nén ảnh WebP 1:1/4:5 max 1440px/400px (\u003c350KB), upload Supabase Storage với đường dẫn timestamp chuẩn hóa ({user_id}/avatar_{timestamp}.webp), và dọn dẹp file cũ. Xem @doc/architecture/backend-supabase-version-gating và @doc/architecture/quire-photo-upload-logic.",
+        "labels": [
+          "modular",
+          "reusable",
+          "client",
+          "storage"
+        ],
+        "priority": "high",
+        "status": "todo",
+        "title": "Module Tái Sử Dụng: Media Storage Service \u0026 Nén Ảnh WebP Client"
+      }
+    },
+    {
+      "id": "v2",
+      "taskId": "0jz1s9",
+      "version": 2,
+      "timestamp": "2026-09-24T16:51:50.6999524Z",
+      "changes": [
+        {
+          "field": "status",
+          "oldValue": "todo",
+          "newValue": "done"
+        },
+        {
+          "field": "acceptanceCriteria",
+          "oldValue": null,
+          "newValue": [
+            {
+              "text": "Khởi tạo package packages/media_storage độc lập",
+              "completed": true
+            },
+            {
+              "text": "Triển khai ImageCompressor hỗ trợ 4 preset (avatarPreset 1:1, momentPortraitPreset 4:5, momentSquarePreset 1:1, dreamAttachmentPreset)",
+              "completed": true
+            },
+            {
+              "text": "Triển khai StoragePathGenerator chuẩn hóa đường dẫn {user_id}/avatar_{timestamp}.webp",
+              "completed": true
+            },
+            {
+              "text": "Triển khai TheVoidStorageGuard chặn dữ liệu The Void lên cloud",
+              "completed": true
+            },
+            {
+              "text": "Triển khai MediaStorageAdapter và SupabaseMediaStorageAdapter kèm hàm dọn avatar cũ cleanupPreviousAvatars",
+              "completed": true
+            }
+          ]
+        },
+        {
+          "field": "implementationNotes",
+          "oldValue": null,
+          "newValue": "Đã triển khai hoàn chỉnh package packages/media_storage dùng chung cho Quire (Moments/Avatars) và Dream Journal (Dream Attachments). Đã có bộ unit test image_compressor_test.dart."
+        }
+      ],
+      "snapshot": {
+        "acceptanceCriteria": [
+          {
+            "text": "Khởi tạo package packages/media_storage độc lập",
+            "completed": true
+          },
+          {
+            "text": "Triển khai ImageCompressor hỗ trợ 4 preset (avatarPreset 1:1, momentPortraitPreset 4:5, momentSquarePreset 1:1, dreamAttachmentPreset)",
+            "completed": true
+          },
+          {
+            "text": "Triển khai StoragePathGenerator chuẩn hóa đường dẫn {user_id}/avatar_{timestamp}.webp",
+            "completed": true
+          },
+          {
+            "text": "Triển khai TheVoidStorageGuard chặn dữ liệu The Void lên cloud",
+            "completed": true
+          },
+          {
+            "text": "Triển khai MediaStorageAdapter và SupabaseMediaStorageAdapter kèm hàm dọn avatar cũ cleanupPreviousAvatars",
+            "completed": true
+          }
+        ],
+        "description": "Tách module độc lập packages/core/media_storage dùng chung cho Quire (Avatar/Moments) và Dream Journal (Dream Attachments): Chuỗi nén ảnh WebP 1:1/4:5 max 1440px/400px (\u003c350KB), upload Supabase Storage với đường dẫn timestamp chuẩn hóa ({user_id}/avatar_{timestamp}.webp), và dọn dẹp file cũ. Xem @doc/architecture/backend-supabase-version-gating và @doc/architecture/quire-photo-upload-logic.",
+        "implementationNotes": "Đã triển khai hoàn chỉnh package packages/media_storage dùng chung cho Quire (Moments/Avatars) và Dream Journal (Dream Attachments). Đã có bộ unit test image_compressor_test.dart.",
+        "labels": [
+          "modular",
+          "reusable",
+          "client",
+          "storage"
+        ],
+        "priority": "high",
+        "status": "done",
+        "title": "Module Tái Sử Dụng: Media Storage Service \u0026 Nén Ảnh WebP Client"
+      }
+    }
+  ]
+}

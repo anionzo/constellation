@@ -1,21 +1,23 @@
 ---
 title: astraea-02 — Dữ liệu + quy tắc + failure
-description: 'Nhóm dữ liệu quan sát astraea: kiểu trải, bài đọc, 78 lá, hoàng đạo, nhật ký, chi tiết 4 lớp + failure-mode'
+description: 'Nhóm dữ liệu quan sát Astraea: 4 kiểu trải, 78 lá, 12 cung, nhật ký, phản chiếu không tiên tri, 2-tap wipe và failure unresolved.'
 createdAt: '2026-09-21T13:30:00.000Z'
-updatedAt: '2026-09-21T13:30:00.000Z'
+updatedAt: '2026-09-24T16:33:00.914Z'
 tags:
   - constellation
   - astraea
+  - data
+  - ritual
+  - privacy
 ---
 
 # astraea-02 — Dữ liệu + quy tắc + failure
 
 > Submodule `designs/astraea` @ `047351d`. Ngày đọc: 2026-09-21. File nguồn chính: `designs/astraea/readme.md` + quét 2 file HTML. HTML vỡ dấu nhiều đoạn — trích dài chỉ từ readme.
 
-## §1 Screens — tóm tắt định vị (chi tiết xem `constellation/astraea-01`)
+## §1 Screens — tóm tắt định vị (chi tiết xem `constellation/astraea-01-flow`)
 
-- Quan sát: "studio Tarot trong túi" cho người Việt; nghi thức rút bài chậm như buổi lễ riêng tư (readme dòng 3). Nếu đoán sai: dồn nhiều bước 1 màn, mất chất lễ nghi.
-
+- Quan sát: "studio Tarot trong túy" cho người Việt; nghi thức rút bài chậm như buổi lễ riêng tư (readme dòng 3). Nếu đoán sai: dồn nhiều bước 1 màn, mất chất lễ nghi.
 ## §2 Flows — vòng đời hiển thị (chi tiết xem `constellation/astraea-01`)
 
 - Quan sát: onboarding (chào → tài khoản → ngày sinh → quan tâm → trang chủ) rồi ritual → kết quả → lưu → nhật ký; hồ sơ giữ cung/ngày sinh/bộ đếm cá nhân hóa lần sau. Nếu đoán sai: rút trước onboarding, mất dữ liệu cá nhân hóa.

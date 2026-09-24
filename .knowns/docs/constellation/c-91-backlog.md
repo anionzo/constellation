@@ -1,26 +1,28 @@
 ---
 title: C-91 Backlog defer
-description: 'Danh sách hoãn显式: backend/auth, motion chi tiết, audit WCAG full, prompt AI, deploy — ngoài phạm vi docs-only'
+description: 'Danh sách công việc bị hoãn có chủ đích, trạng thái DEFERRED và ranh giới chưa được phê duyệt: backend/auth/sync, AI, accessibility, offline assets, motion, analytics, deploy và seed data.'
 createdAt: '2026-09-21T13:45:00.000Z'
-updatedAt: '2026-09-21T13:45:00.000Z'
+updatedAt: '2026-09-24T16:21:43.808Z'
 tags:
   - constellation
   - backlog
+  - deferred
+  - governance
 ---
-
-# C-91 Backlog defer
-
-> Các mục dưới đây KHÔNG thuộc đợt docs-only này. Ghi rõ để không ai tưởng đã có. Khi sang phase kiến trúc/implement, bốc từ đây ra.
 
 ## Defer có chủ đích
 
-1. **Backend / auth / sync**: cả 4 prototype đều không có máy chủ, tài khoản, đồng bộ (readme quire/astraea/dream ghi rõ). Đã chốt quyết định kiến trúc: Triển khai bằng **Flutter (Dart)** đa nền tảng (Mobile & Web), áp dụng chiến lược **Hybrid Local-First** (mặc định lưu cục bộ trên máy qua SQLite/Hive/Isar) + hỗ trợ tùy chọn đồng bộ hóa lên Database online của người dùng khi người dùng muốn đồng bộ đa thiết bị (xem memory `blhhrm` & @doc/ARCHITECTURE).
-2. **Toàn văn copywriting tiếng Việt**: docs chỉ giữ chuỗi ngắn + 1–2 quote giọng/app. Thu thập toàn văn (đặc biệt after-midnight/astraea vỡ dấu HTML) là việc biên tập riêng, phải đọc trên trình duyệt.
-3. **Motion spec chi tiết**: docs chỉ ghi quy tắc (chậm/tiết chế/reduced-motion). Thông số easing/duration từng hiệu ứng (vén lớp, nứt kính, chòm sao nối) để dành phase motion.
-4. **Audit WCAG đầy đủ**: mọi con số tương phản/chạm trong docs đều `chưa kiểm độc lập`. Cần đo lại bằng thiết bị + công cụ trước release.
-5. **Prompt design cho AI reflection** (dream chiêm nghiệm, astraea diễn giải): docs chỉ ghi khung phản chiếu + cấm tiên tri. Prompt thật, guardrail, đánh giá chất lượng là việc riêng.
-6. **Analytics**: cả 4 app đều cấm đo đếm hành vi theo triết lý (no streak, no follower, quiet). Mọi đề xuất analytics phải qua Lead + đối chiếu danh sách cấm từng app.
-7. **Chiến lược offline** (picsum/Google Fonts, font fallback, ảnh mẫu mã cố định): docs chỉ ghi fallback quan sát được. Quyết định self-host font/ảnh để dành phase kiến trúc.
-8. **Deploy Pages / phân phối**: readme quire/dream gợi ý GitHub Pages để xem demo. Pipeline build/release bản production để dành sau.
-9. **Dữ liệu hạt giống vs ví dụ**: nội dung mẫu sẵn trong prototype (suy nghĩ, chòm sao, bài đọc ví dụ, số liệu quire) chưa phân loại hạt-giống/ví-dụ — Lead chốt trước khi implement (xem failure từng app-02).
-10. **Nâng cấp knowns CLI**: bản 0.18.3 vỡ encoding UTF-8 + sinh slug từ content (xem memory `w6kiug`). Mọi docs đợt này ghi file trực tiếp UTF-8 + validate tay. Khi CLI sửa xong, kiểm tra lại pipeline tạo doc.
+Trạng thái chung của các mục dưới đây là **DEFERRED**: chưa được phép coi là đã thiết kế, đã kiểm định hoặc sẵn sàng triển khai. Khi rời phạm vi docs-only, mỗi mục phải có một quyết định/ADR và acceptance criteria riêng.
+
+1. **Backend / auth / sync**: Nền tảng backend/sync chính thức đã được chốt là **Supabase Self-Hosted (Docker)** theo quyết định người dùng ngày 2026-09-24 (xem @doc/architecture/backend-supabase-version-gating). Prototype giữ nguyên không backend; trên production, client Flutter chạy Local-First mặc định; Supabase cung cấp Auth (GoTrue), Sync (PostgREST/Realtime), Media/Avatar Storage và Version Gating chống kẹt cache. Chi tiết về consent, mã hóa đầu cuối và conflict resolution từng bảng dữ liệu sẽ được thiết lập trong phase triển khai. The Void tuyệt đối không đủ điều kiện để sync.
+2. **Toàn văn copywriting tiếng Việt**: docs chỉ giữ chuỗi ngắn và 1–2 quote đại diện. Toàn văn copy, đặc biệt phần vỡ dấu trong HTML, phải được biên tập lại từ nguồn sạch.
+3. **Motion spec chi tiết**: docs chỉ ghi nhịp chậm, tiết chế và reduced-motion; chưa chốt easing, duration hoặc motion blueprint.
+4. **Audit WCAG / accessibility đầy đủ**: mọi số đo tương phản, touch target, focus, screen reader và keyboard trong docs đều `chưa kiểm độc lập`. Hợp đồng production dùng mốc 44px, nhưng độ lệch ở prototype phải được đo lại trước release.
+5. **Prompt và dịch vụ AI reflection**: Dream Journal và Astraea chỉ có UX/copy phản chiếu trong prototype. Prompt, guardrail, provider, dữ liệu gửi đi, retention và đánh giá chất lượng chưa được chốt; không được gọi nội dung tĩnh là AI production.
+6. **Analytics**: không thêm analytics, telemetry hoặc event tracking mặc định; mọi đề xuất phải đối chiếu Calm/anti-retention và C-90.
+7. **Chiến lược offline và asset**: prototype có remote font/placeholder ở một số luồng; đây là dependency quan sát được, không phải production contract. Quyết định bundle font/asset, license và behavior khi mất mạng để dành phase kiến trúc.
+8. **Deploy / phân phối**: prototype có thể mở bằng Pages/local server; pipeline build, release và phân phối production chưa chốt.
+9. **Seed data vs fixture**: mọi nội dung mẫu phải được gắn nhãn `fixture` hoặc `production-approved`; không được tự chuyển dữ liệu designer thành dữ liệu người dùng.
+10. **Knowns CLI/encoding**: MCP `knowns_update_doc`/`knowns_validate` là đường chính. Workaround ghi file trực tiếp chỉ là biện pháp tạm thời khi MCP không khả dụng, phải ghi rõ và validate ngay sau đó.
+
+Mọi mục `Chưa rõ — hỏi Lead` trong C-90 và các app docs vẫn là câu hỏi sản phẩm, không được tự động chuyển thành quyết định khi sửa tài liệu.
