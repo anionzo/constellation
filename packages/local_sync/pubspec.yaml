@@ -1,0 +1,12 @@
+name: local_sync
+description: Reusable Local-First Offline Queue and Background Sync Dispatcher for Constellation apps.
+version: 1.0.0
+homepage: https://github.com/constellation/local_sync
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  meta: ^1.11.0
+
+dev_dependencies:
+  test: ^1.24.0

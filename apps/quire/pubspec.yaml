@@ -1,0 +1,20 @@
+name: quire
+description: Quire - Quiet Editorial & Private Moments Client App.
+version: 1.0.0
+homepage: https://github.com/constellation/quire
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  meta: ^1.11.0
+  version_gate:
+    path: ../../packages/version_gate
+  media_storage:
+    path: ../../packages/media_storage
+  local_sync:
+    path: ../../packages/local_sync
+
+dev_dependencies:
+  test: ^1.24.0
