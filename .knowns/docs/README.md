@@ -2,7 +2,7 @@
 title: 'Constellation Portfolio Overview & Documentation Index'
 description: 'Tổng quan Constellation: 4 prototype browser mobile-first độc lập, hướng Flutter/Dart production, taxonomy Knowns, canonical source chain và ranh giới anti-merge.'
 createdAt: '2026-09-24T00:00:00.000Z'
-updatedAt: '2026-09-24T16:10:17.432Z'
+updatedAt: '2026-09-26T05:03:40.916Z'
 tags:
   - constellation
   - overview
@@ -32,10 +32,11 @@ graph TD
 
 | Nguyên mẫu | Bản chất & Triết lý | Thẩm mỹ chủ đạo | Typography quan sát từ source | Cơ chế đặc trưng |
 |---|---|---|---|---|
-| **Quire** | Đọc bài dài kiểu tạp chí & chia sẻ ảnh trong vòng hữu hạn | Giấy ngà `#FBF9F5` / Than ấm `#1A1612` | Newsreader + JetBrains Mono | Tối đa 12 người; demo dùng 11; activity log tự hủa sau 30 ngày; hoàn tác gửi |
+| **Quire** | Đọc bài dài kiểu tạp chí & chia sẻ ảnh trong vòng thân mật | Giấy ngà `#FBF9F5` / Than ấm `#1A1612` | Newsreader + JetBrains Mono | Vòng thân mật (không trần cứng 12; demo dùng 11); activity log tự hủy sau 30 ngày; hoàn tác gửi |
 | **Dream Journal** | Kho lưu trữ giấc mơ điện ảnh, riêng tư tuyệt đối (Vietnamese-first) | Đen Obsidian `#05050A`, Vàng cổ, Đỏ thẫm | Cormorant Garamond + Be Vietnam Pro | 5 tầng màn che ảo ảnh, lịch âm & chòm sao giấc mơ |
 | **Astraea** | Studio Tarot & nghi thức chậm rãi như buổi lễ cá nhân | Tím than đêm `#0B0A12`, Vàng cổ `#C9A86A` | Cormorant Garamond + Jost + JetBrains Mono | 78 lá SVG, nghi thức 6 bước, xóa sạch 2 chạm |
 | **After Midnight** | Không gian kết nối cho người thức đêm, cửa mở 00:00–05:00 | Đen tuyền `#080808`, Bạc, Đỏ vang `#6E2028` | Instrument Serif + IBM Plex Sans/Mono | Cổng thời gian, The Void không lưu, thư niêm phong |
+
 ## 2. Bản đồ Taxonomy Tài liệu Knowns
 
 Hệ thống tài liệu được tổ chức theo 4 phân tầng trong `.knowns/docs/`:
@@ -57,10 +58,14 @@ Hệ thống tài liệu được tổ chức theo 4 phân tầng trong `.knowns
 │   ├── c-91-backlog.md                        # DEFERRED scope registry
 │   └── g-01-huong-dan-thiet-ke-impeccable.md  # Project-specific Impeccable overlay
 │
-├── architecture/                              # [Architecture] Contract xuyên app
+├── architecture/                              # [Architecture] Contract & thiết kế hệ thống
 │   ├── design-system-tokens.md                # Token/typography/surface inventory
 │   ├── cross-app-invariants.md                # Invariants & product boundaries
-│   └── modular-reusable-components.md         # PROPOSED modularity boundaries
+│   ├── modular-reusable-components.md         # Chuẩn module hóa SOLID & package tách rời
+│   ├── backend-supabase-version-gating.md     # Hạ tầng Supabase Docker, Storage & Version Gating
+│   ├── backend-golang-bff-wrapper.md          # Backend Golang (BFF), đóng cổng DB & quản lý nghiệp vụ
+│   ├── quire-photo-upload-logic.md            # Đặc tả luồng gửi ảnh Quire & 900ms Undo
+│   └── supabase-postgrest-security-model.md   # Giải mã Database-as-Backend, PostgREST & RLS Security
 ├── patterns/                                  # [Patterns] Hành vi và lifecycle
 │   ├── ephemeral-privacy-lifecycles.md
 │   ├── temporal-ritual-state-machines.md
@@ -72,6 +77,7 @@ Hệ thống tài liệu được tổ chức theo 4 phân tầng trong `.knowns
 ```
 
 Source prototype tại `designs/*` tại commit đã pin là **nguồn quan sát cuối cùng**; các app docs, patterns và architecture docs là tài liệu derived hoặc đề xuất, không được gọi là production SSOT nếu chưa có `APPROVED`/ADR.
+
 ## 3. Khởi động Agent Workflow (kn-init)
 
 Khi agent bắt đầu phiên, đọc theo thứ tự sau:
@@ -83,6 +89,7 @@ Khi agent bắt đầu phiên, đọc theo thứ tự sau:
 5. Với implementation/UI review: đọc source `designs/*` đã pin, sau đó mới dùng `architecture/*`, `patterns/*`, `guides/*` và G-01 như overlay.
 
 Không coi memory, README hay app doc là nguồn quan sát cuối cùng khi source prototype đã pin đã ghi nguồn khác.
+
 ## 4. Bốn Ranh giới Bất biến (Core Invariants)
 
 Mọi đóng góp vào tài liệu phải ghi rõ ranh giới và trạng thái:

@@ -423,7 +423,7 @@
     chip.textContent = f.name;
     chip.onclick = () => {
       if (selectedFriends.has(f.id)) {
-        selectedFriends.remove(f.id);
+        selectedFriends.delete(f.id);
         chip.classList.remove('active');
       } else {
         selectedFriends.add(f.id);

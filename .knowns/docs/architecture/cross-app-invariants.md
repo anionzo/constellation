@@ -34,7 +34,7 @@ Bảng dưới đây là contract hành vi, không phải schema dùng chung:
 
 | Khía cạnh tương tác | Quire | Dream Journal | Astraea | After Midnight |
 |---|---|---|---|---|
-| **Chia sẻ xã hội** | Vòng hữu hạn tối đa 12; demo 11; chỉ gửi trực tiếp trong boundary đã duyệt | Không có chia sẻ; kho nội tâm cá nhân | Không có mạng xã hội; bài đọc riêng tư | Thành phố đêm ẩn danh, không hồ sơ công khai |
+| **Chia sẻ xã hội** | Vòng thân mật (không trần cứng 12; demo 11); chỉ gửi trực tiếp trong circle đã duyệt | Không có chia sẻ; kho nội tâm cá nhân | Không có mạng xã hội; bài đọc riêng tư | Thành phố đêm ẩn danh, không hồ sơ công khai |
 | **Tính bền vững của văn bản** | Bài viết dài lưu trữ; moment có retention riêng | Giấc mơ chuyển hóa thành tác phẩm & chòm sao | Bài đọc lưu vào nhật ký; thư viện 78 lá cố định | Thư niêm phong khóa thời gian; Void không lưu |
 | **Xác nhận đọc** | Mặc định tắt; mọi dòng “read receipts ON” trong prototype là `Chưa rõ — hỏi Lead`, không phải production default | Không áp dụng | Không áp dụng | Không áp dụng |
 | **Phản hồi bằng AI** | Không có AI | UX/copy phản chiếu trong prototype; provider/prompt/guardrail `DEFERRED` | Diễn giải gợi mở trong prototype; không tiên tri; service production `DEFERRED` | Không có AI |

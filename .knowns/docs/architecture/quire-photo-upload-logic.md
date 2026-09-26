@@ -23,7 +23,7 @@ tags:
 
 Khác với các mạng xã hội thông thường (Instagram, BeReal, Facebook), Quire là ứng dụng **Đọc biên tập & Chia sẻ khoảnh khắc thân mật (Quiet Editorial & Private Moments)**:
 * **Không có mạng xã hội (Zero Social Graph)**: Không có follower, không có bảng tin công khai, không có nút khám phá ảnh người lạ.
-* **Vòng kết nối giới hạn (Finite Circle)**: Mỗi người dùng chỉ chia sẻ trong vòng tròn thân thiết cố định từ **4 đến 11 người** (tối đa 12 người).
+* **Vòng kết nối thân mật (Intimate Circle)**: Mỗi người dùng chia sẻ trong vòng tròn thân thiết riêng (không áp trần cứng 12 người; giao diện nguyên mẫu minh họa với 11 người).
 * **Vòng đời tự hủy 30 ngày (30-day Ephemeral)**: Mọi khoảnh khắc (Moments) và nhật ký hoạt động tự động hết hạn và xóa sạch sau 30 ngày.
 * **Xác nhận xem (Read receipts) mặc định TẮT**: Để việc xem ảnh không biến thành gánh nặng hay nghĩa vụ phải phản hồi ngay lập tức.
 

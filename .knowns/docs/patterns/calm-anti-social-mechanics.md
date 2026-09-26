@@ -80,7 +80,7 @@ Ngược lại, Constellation xem công nghệ như **một công cụ tĩnh l�
 
 | Nguyên tắc | Nguy cơ | Hậu quả | Biện pháp governance |
 |---|---|---|---|
-| Vòng bạn hữu hạn | Mở toàn bộ danh bạ hoặc biến thành follower graph | Mạng spam, mất riêng tư | Giữ tối đa 12; demo 11; không thêm social graph |
+| Vòng bạn thân mật | Mở toàn bộ danh bạ hoặc biến thành follower graph | Mạng spam, mất riêng tư | Giữ vòng thân mật (không trần cứng 12; demo 11); không thêm follower graph |
 | Không đếm ngày | Biến lịch sáng dần thành streak/điểm số | Tạo áp lực và cảm giác tội lỗi | Cấm streak, badge, leaderboard và vanity metrics |
 | Quiet defaults | Bật read receipt, push hoặc reminder theo mặc định | Theo dõi và níu kéo người dùng | Mặc định tắt; mọi exception phải được Lead duyệt |
 | Giọng phản chiếu | Biến reflection thành fortune-telling, phán xét hoặc AI upsell | Gieo sợ, mất niềm tin | Provider/prompt/guardrail `DEFERRED`; chỉ giữ voice invariant |

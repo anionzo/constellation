@@ -57,9 +57,9 @@ graph TD
 
 ---
 
-## 4. Vòng tròn Hữu hạn & Cửa sổ Hoàn tác Gửi Quire (11-Person Circle & Grace Window)
+## 4. Vòng tròn Thân mật & Cửa sổ Hoàn tác Gửi Quire (Intimate Circle & Grace Window)
 
-- **Quan sát**: Quire giới hạn circle tối đa 12; fixture hiện dùng 11 người. Không có follower graph công khai.
+- **Quan sát**: Quire hướng đến vòng tròn thân mật không public graph; fixture prototype minh họa 11 người bạn demo (không áp đặt trần cứng 12 người trong production).
 - **Privacy default**: read receipts mặc định tắt; không thu per-user read event nếu invariant cấm. Mọi activity/read-state còn lại phải có purpose, visibility và retention riêng.
 - **Unsend**: prototype hiển thị cửa sổ 3–5 giây và copy “chưa rời khỏi ứng dụng”. Network/upload timing, thu hồi sau khi đã xem và cancellation là `PROPOSED`; không coi copy là security guarantee.
 - Circle identity, storage ownership, authorization và effective deletion phải được duyệt riêng trước production.

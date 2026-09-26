@@ -53,7 +53,7 @@ Mỗi app là một target/surface riêng. Không chạy Impeccable ở portfoli
 - **Nguồn**: `designs/quire/prototype.html`, `design-board.html`, `index.html`.
 - **Tài liệu tham chiếu**: @doc/constellation/quire-01-flow và @doc/constellation/quire-02-data.
 - **Surface trọng tâm**: `/distill`, `/layout`, `/clarify`, `/harden` theo nhu cầu.
-- **Guard**: giữ Newsreader + JetBrains Mono, circle tối đa 12, activity log purge 30 ngày; read receipts mặc định tắt, vanity metrics/follower graph không được tự thêm.
+- **Guard**: giữ Newsreader + JetBrains Mono, circle thân mật (không áp trần cứng 12; prototype demo 11), activity log purge 30 ngày; read receipts mặc định tắt, vanity metrics/follower graph không được tự thêm.
 
 ### 3.3. After Midnight — 15 inventory items, số không gian chưa canonical
 - **Nguồn**: `designs/after-midnight/v1 after midnight - interactive prototype.html` và canvas.

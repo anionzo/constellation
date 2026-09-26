@@ -273,7 +273,7 @@ CREATE TRIGGER on_auth_user_created
 
 
 -- =============================================================================
--- 3. QUIRE CIRCLES & FINITE CIRCLE MEMBERS (4 to 11 Friends, Max 12)
+-- 3. QUIRE CIRCLES & INTIMATE CIRCLE MEMBERS
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS public.quire_circles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -283,7 +283,7 @@ CREATE TABLE IF NOT EXISTS public.quire_circles (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE public.quire_circles IS 'Quire intimacy circles (Zero Public Graph: restricted to 4-11 close friends, max 12).';
+COMMENT ON TABLE public.quire_circles IS 'Quire intimacy circles (Zero Public Graph: intimate friends circle managed by Backend, no hardcoded database ceiling).';
 
 ALTER TABLE public.quire_circles ENABLE ROW LEVEL SECURITY;
 
@@ -294,32 +294,11 @@ CREATE TABLE IF NOT EXISTS public.quire_circle_members (
     PRIMARY KEY (circle_id, user_id)
 );
 
-COMMENT ON TABLE public.quire_circle_members IS 'Membership list for Quire circles. Max 12 members enforced via database trigger.';
+COMMENT ON TABLE public.quire_circle_members IS 'Membership list for Quire circles. Membership limits managed flexibly at Backend layer.';
 
 ALTER TABLE public.quire_circle_members ENABLE ROW LEVEL SECURITY;
 
--- Invariant Enforcement: Max 12 members per Quire circle
-CREATE OR REPLACE FUNCTION public.check_quire_circle_member_limit()
-RETURNS TRIGGER AS $$
-DECLARE
-    v_count INT;
-BEGIN
-    SELECT COUNT(*) INTO v_count
-    FROM public.quire_circle_members
-    WHERE circle_id = NEW.circle_id;
-
-    IF v_count >= 12 THEN
-        RAISE EXCEPTION 'Quire Invariant Violation: Circle member limit reached (max 12 members allowed per circle).';
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS enforce_circle_member_limit ON public.quire_circle_members;
-CREATE TRIGGER enforce_circle_member_limit
-    BEFORE INSERT ON public.quire_circle_members
-    FOR EACH ROW EXECUTE FUNCTION public.check_quire_circle_member_limit();
-
+-- Note: Hardcoded 12-member trigger dropped per architecture update. Limit/policy managed at Golang Backend.
 -- Trigger: Automatically add circle creator as first member
 CREATE OR REPLACE FUNCTION public.handle_new_circle_creator()
 RETURNS TRIGGER AS $$

@@ -72,7 +72,7 @@ Các bất biến áp dụng xuyên suốt gồm **5 nhóm**, khớp với `arch
 |---|---|---|---|---|
 | **Vị trí nguồn** | `designs/quire/` | `designs/dream-journal/` | `designs/astraea/` | `designs/after-midnight/` |
 | **Mục đích sử dụng** | Đọc bài dài & trao đổi khoảnh khắc thân mật | Ghi nhận và chiêm nghiệm chiều sâu giấc mơ | Nghi thức rút bài Tarot & tham chiếu chiêm tinh | Kết nối và suy tư trong không gian đêm muội |
-| **Đối tượng / boundary** | Vòng hữu hạn tối đa 12; demo 11 | Cá nhân hướng nội | Người tìm kiếm định hướng nội tâm | Người thức đêm (00:00–05:00) |
+| **Đối tượng / boundary** | Vòng thân mật (không trần cứng 12; demo 11) | Cá nhân hướng nội | Người tìm kiếm định hướng nội tâm | Người thức đêm (00:00–05:00) |
 | **Cơ chế thời gian** | Không giới hạn thời gian | Lịch âm & bản đồ bầu trời | Chu kỳ ngày sinh & cung hoàng đạo | Cửa thời gian 4 nấc (Ngày/Chạng vạng/Đêm/Rạng đông) |
 | **Cơ chế riêng tư** | Activity log tự hủa sau 30 ngày; không tự hiểu là xóa cả dữ liệu bài/moment | 5 tầng màn che ảo ảnh | Xóa sạch dữ liệu sau 2 chạm | The Void không lưu; thư niêm phong |
 

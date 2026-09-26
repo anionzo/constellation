@@ -99,7 +99,7 @@ knowns_validate({ "scope": "docs", "strict": true })
 
 ### Tiêu chí nghiệm thu:
 - **0 Errors / 0 Warnings**: frontmatter, metadata và reference cấu trúc hợp lệ.
-- **Reference chính xác**: dùng `@doc/<path>`; không trỏ nhầm `-01-flow` thành `-02-data` hoặc để reference dạng plain text.
+- **Reference chính xác**: dùng cú pháp tham chiếu tài liệu chuẩn của Knowns; không trỏ nhầm `-01-flow` thành `-02-data` hoặc để reference dạng plain text.
 - **Status rõ ràng**: claim phải phân biệt `OBSERVED`, `PROPOSED`, `APPROVED`, `DEFERRED`, `FIXTURE` và `Chưa rõ — hỏi Lead`.
 - **Semantic cross-check**: đối chiếu số panel/route/state, retention, network/offline, privacy, anti-merge, accessibility và stack giữa các doc; validator cấu trúc không tự phát hiện mâu thuẫn này.
 - **Provenance**: mọi claim quan sát phải có source path, commit hash/ngày đọc; claim kiểm định phải có phương pháp và trạng thái `chưa kiểm độc lập` nếu chưa audit.

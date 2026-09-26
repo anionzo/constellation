@@ -1,0 +1,50 @@
+{
+  "docPath": "architecture/backend-golang-bff-wrapper",
+  "currentVersion": 1,
+  "versions": [
+    {
+      "id": "v1",
+      "docPath": "architecture/backend-golang-bff-wrapper",
+      "version": 1,
+      "timestamp": "2026-09-26T05:06:09.3111464Z",
+      "changes": [
+        {
+          "field": "title",
+          "oldValue": null,
+          "newValue": "backend-golang-bff-wrapper"
+        },
+        {
+          "field": "description",
+          "oldValue": null,
+          "newValue": "Golang BFF Wrapper \u0026 Business Logic Engine Architecture"
+        },
+        {
+          "field": "tags",
+          "oldValue": null,
+          "newValue": [
+            "constellation",
+            "architecture",
+            "backend",
+            "golang",
+            "bff",
+            "security",
+            "api"
+          ]
+        }
+      ],
+      "snapshot": {
+        "description": "Golang BFF Wrapper \u0026 Business Logic Engine Architecture",
+        "tags": [
+          "constellation",
+          "architecture",
+          "backend",
+          "golang",
+          "bff",
+          "security",
+          "api"
+        ],
+        "title": "backend-golang-bff-wrapper"
+      }
+    }
+  ]
+}
