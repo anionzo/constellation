@@ -1,22 +1,22 @@
 ---
-title: 'Supabase PostgREST & Database-as-Backend Security Model — Cơ Chế Tự Động Sinh API, Row-Level Security (RLS) & Mô Hình Bảo Mật Toàn Diện'
-description: 'Giải mã chuyên sâu kiến trúc Database-as-the-Backend với Supabase Self-Hosted: Cơ chế PostgREST tự sinh REST API, mô hình 2 khóa anon/service_role, bảo mật hạt nhân RLS, triggers nghiệp vụ và ma trận phòng thủ.'
+title: '[SUPERSEDED] Supabase PostgREST & Database-as-Backend Security Model (Lưu trữ lịch sử)'
+description: '[SUPERSEDED] Tài liệu lưu trữ lịch sử: Phân tích mô hình Direct PostgREST ban đầu, đã được thay thế chính thức bởi Golang BFF Wrapper'
 createdAt: '2026-09-26T05:01:55.517Z'
-updatedAt: '2026-09-26T05:09:39.083Z'
+updatedAt: '2026-09-26T05:25:00.000Z'
 tags:
   - constellation
   - architecture
   - backend
   - supabase
   - postgrest
-  - rls
-  - security
+  - superseded
+  - history
 ---
 
-# Architecture: Supabase PostgREST & Database-as-Backend Security Model — Cơ Chế Tự Động Sinh API, Row-Level Security (RLS) & Mô Hình Bảo Mật Toàn Diện
+# [SUPERSEDED] Architecture: Supabase PostgREST & Database-as-Backend Security Model
 
-> **Tài liệu tham chiếu SSOT**: Giải mã toàn diện kiến trúc **Database-as-the-Backend** (Thick Database, Thin Client). Trả lời chi tiết thắc mắc cốt lõi: *"Tại sao không cần viết backend CRUD bằng code tay (Node.js/Go/Java) mà hệ thống vẫn chạy được, cực nhanh và bảo mật tuyệt đối?"*
-
+> **TRẠNG THÁI: SUPERSEDED (ĐÃ BỊ THAY THẾ)**  
+> **Lưu ý kiến trúc**: Tài liệu này lưu trữ thiết kế prototype ban đầu (mô hình Direct PostgREST). Toàn bộ hệ thống sản xuất chính thức đã chuyển sang sử dụng mô hình **Golang BFF Wrapper** làm cổng truy cập duy nhất theo @doc/architecture/backend-golang-bff-wrapper để đóng hoàn toàn cổng database công cộng và quản lý logic nghiệp vụ tập trung. Tài liệu này chỉ được lưu trữ nhằm phục vụ mục đích tra cứu lịch sử kỹ thuật.
 ---
 
 ## 1. Trực Giác Kỹ Thuật: "Thật hả? Backend chơi vậy được á?"

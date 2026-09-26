@@ -63,15 +63,16 @@ Hệ thống tài liệu được tổ chức theo 4 phân tầng trong `.knowns
 │   ├── cross-app-invariants.md                # Invariants & product boundaries
 │   ├── modular-reusable-components.md         # Chuẩn module hóa SOLID & package tách rời
 │   ├── backend-supabase-version-gating.md     # Hạ tầng Supabase Docker, Storage & Version Gating
-│   ├── backend-golang-bff-wrapper.md          # Backend Golang (BFF), đóng cổng DB & quản lý nghiệp vụ
+│   ├── backend-golang-bff-wrapper.md          # [CANONICAL SSOT] Backend Golang BFF, đóng DB & quản lý nghiệp vụ
 │   ├── quire-photo-upload-logic.md            # Đặc tả luồng gửi ảnh Quire & 900ms Undo
-│   └── supabase-postgrest-security-model.md   # Giải mã Database-as-Backend, PostgREST & RLS Security
+│   └── supabase-postgrest-security-model.md   # [SUPERSEDED] Lưu trữ mô hình Direct PostgREST cũ
 ├── patterns/                                  # [Patterns] Hành vi và lifecycle
 │   ├── ephemeral-privacy-lifecycles.md
 │   ├── temporal-ritual-state-machines.md
 │   ├── calm-anti-social-mechanics.md
 │   └── offline-ambient-fallbacks.md
-└── guides/                                    # [Guides] Inspection & handoff
+└── guides/                                    # [Guides] Inspection, handoff & quickstart
+    ├── client-developer-quickstart.md         # Khởi động nhanh Monorepo Flutter & packages
     ├── prototype-navigation-inspection.md
     └── prototype-to-implementation-boundary.md
 ```

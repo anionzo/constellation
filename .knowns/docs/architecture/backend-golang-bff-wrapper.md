@@ -15,7 +15,8 @@ tags:
 
 # Backend Architecture: Golang BFF Wrapper & Business Logic Engine — Kiến trúc Backend Golang bọc ngoài Supabase
 
-> Quyết định kiến trúc kỹ thuật (ADR): Xây dựng một dịch vụ Backend độc lập bằng **Golang** đóng vai trò Backend-For-Frontend (BFF) và API Gateway bọc ngoài toàn bộ hạ tầng Supabase (PostgreSQL, Storage). Đóng kín quyền truy cập database trực tiếp từ Internet, tập trung hóa toàn bộ logic nghiệp vụ vào mã nguồn Go, và **xóa bỏ hoàn toàn giả định giới hạn cứng 12 bạn bè** trong hệ thống.
+> **TRẠNG THÁI: APPROVED / CANONICAL SSOT (CHUẨN KIẾN TRÚC DUY NHẤT)**  
+> Quyết định kiến trúc kỹ thuật (ADR): Xây dựng một dịch vụ Backend độc lập bằng **Golang** đóng vai trò Backend-For-Frontend (BFF) và API Gateway bọc ngoài toàn bộ hạ tầng Supabase (PostgreSQL, Storage). Thay thế hoàn toàn mô hình Direct PostgREST cũ (@doc/architecture/supabase-postgrest-security-model). Đóng kín quyền truy cập database trực tiếp từ Internet, tập trung hóa toàn bộ logic nghiệp vụ vào mã nguồn Go, và **xóa bỏ hoàn toàn giả định giới hạn cứng 12 bạn bè** trong hệ thống.
 
 ---
 
