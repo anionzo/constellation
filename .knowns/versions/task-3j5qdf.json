@@ -1,0 +1,110 @@
+{
+  "taskId": "3j5qdf",
+  "currentVersion": 2,
+  "versions": [
+    {
+      "id": "v1",
+      "taskId": "3j5qdf",
+      "version": 1,
+      "timestamp": "2026-09-26T05:13:32.334645Z",
+      "changes": [
+        {
+          "field": "status",
+          "oldValue": null,
+          "newValue": "done"
+        },
+        {
+          "field": "priority",
+          "oldValue": null,
+          "newValue": "high"
+        }
+      ],
+      "snapshot": {
+        "description": "Tạo tài liệu guides/client-developer-quickstart hướng dẫn lập trình viên Flutter/Dart mới thiết lập môi trường, kết nối 3 package lõi qua path dependency, cấu hình file .env, và chạy unit test. Xem @doc/guides/client-developer-quickstart.",
+        "labels": [
+          "client",
+          "guides",
+          "documentation",
+          "flutter"
+        ],
+        "priority": "high",
+        "status": "done",
+        "title": "Cẩm nang Lập trình viên Client: Monorepo, Path Dependencies \u0026 Test Checklist"
+      }
+    },
+    {
+      "id": "v2",
+      "taskId": "3j5qdf",
+      "version": 2,
+      "timestamp": "2026-09-26T05:14:01.6707984Z",
+      "changes": [
+        {
+          "field": "acceptanceCriteria",
+          "oldValue": null,
+          "newValue": [
+            {
+              "text": "Khởi tạo tài liệu guides/client-developer-quickstart",
+              "completed": true
+            },
+            {
+              "text": "Mô tả cấu trúc Monorepo và path dependencies cho 3 core packages",
+              "completed": true
+            },
+            {
+              "text": "Hướng dẫn cấu hình biến môi trường client (.env)",
+              "completed": true
+            },
+            {
+              "text": "Tổng hợp lệnh chạy unit test cho packages và Flutter app",
+              "completed": true
+            },
+            {
+              "text": "Cung cấp checklist 5 bước khởi tạo app mới tuân thủ C-90 Anti-Merge",
+              "completed": true
+            }
+          ]
+        },
+        {
+          "field": "implementationNotes",
+          "oldValue": null,
+          "newValue": "Đã hoàn thành tài liệu guides/client-developer-quickstart tinh gọn, thực chiến và thẩm định 0 errors."
+        }
+      ],
+      "snapshot": {
+        "acceptanceCriteria": [
+          {
+            "text": "Khởi tạo tài liệu guides/client-developer-quickstart",
+            "completed": true
+          },
+          {
+            "text": "Mô tả cấu trúc Monorepo và path dependencies cho 3 core packages",
+            "completed": true
+          },
+          {
+            "text": "Hướng dẫn cấu hình biến môi trường client (.env)",
+            "completed": true
+          },
+          {
+            "text": "Tổng hợp lệnh chạy unit test cho packages và Flutter app",
+            "completed": true
+          },
+          {
+            "text": "Cung cấp checklist 5 bước khởi tạo app mới tuân thủ C-90 Anti-Merge",
+            "completed": true
+          }
+        ],
+        "description": "Tạo tài liệu guides/client-developer-quickstart hướng dẫn lập trình viên Flutter/Dart mới thiết lập môi trường, kết nối 3 package lõi qua path dependency, cấu hình file .env, và chạy unit test. Xem @doc/guides/client-developer-quickstart.",
+        "implementationNotes": "Đã hoàn thành tài liệu guides/client-developer-quickstart tinh gọn, thực chiến và thẩm định 0 errors.",
+        "labels": [
+          "client",
+          "guides",
+          "documentation",
+          "flutter"
+        ],
+        "priority": "high",
+        "status": "done",
+        "title": "Cẩm nang Lập trình viên Client: Monorepo, Path Dependencies \u0026 Test Checklist"
+      }
+    }
+  ]
+}
