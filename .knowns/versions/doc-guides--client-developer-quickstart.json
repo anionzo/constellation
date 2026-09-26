@@ -1,0 +1,47 @@
+{
+  "docPath": "guides/client-developer-quickstart",
+  "currentVersion": 1,
+  "versions": [
+    {
+      "id": "v1",
+      "docPath": "guides/client-developer-quickstart",
+      "version": 1,
+      "timestamp": "2026-09-26T04:57:57.0832207Z",
+      "changes": [
+        {
+          "field": "title",
+          "oldValue": null,
+          "newValue": "client-developer-quickstart"
+        },
+        {
+          "field": "description",
+          "oldValue": null,
+          "newValue": "Client Developer Quickstart Guide for Constellation Flutter Workspace"
+        },
+        {
+          "field": "tags",
+          "oldValue": null,
+          "newValue": [
+            "constellation",
+            "guides",
+            "client",
+            "flutter",
+            "quickstart"
+          ]
+        }
+      ],
+      "snapshot": {
+        "content": "# Client Developer Quickstart\n",
+        "description": "Client Developer Quickstart Guide for Constellation Flutter Workspace",
+        "tags": [
+          "constellation",
+          "guides",
+          "client",
+          "flutter",
+          "quickstart"
+        ],
+        "title": "client-developer-quickstart"
+      }
+    }
+  ]
+}
