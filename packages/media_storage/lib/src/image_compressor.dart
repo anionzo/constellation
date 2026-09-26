@@ -119,3 +119,36 @@ abstract interface class ImageCompressor {
     CropAspectRatio cropRatio = CropAspectRatio.portrait4x5,
   });
 }
+
+/// Default in-memory/passthrough ImageCompressor implementation.
+class DefaultImageCompressor implements ImageCompressor {
+  const DefaultImageCompressor();
+
+  @override
+  Future<CompressedImageResult> compress({
+    required Uint8List rawBytes,
+    required CompressOptions options,
+  }) async {
+    return CompressedImageResult(
+      bytes: rawBytes,
+      width: options.maxWidth,
+      height: options.maxHeight,
+      format: options.format,
+    );
+  }
+
+  @override
+  Future<CompressedImageResult> compressAvatar(Uint8List rawBytes) =>
+      compress(rawBytes: rawBytes, options: CompressOptions.avatarPreset);
+
+  @override
+  Future<CompressedImageResult> compressMoment({
+    required Uint8List rawBytes,
+    CropAspectRatio cropRatio = CropAspectRatio.portrait4x5,
+  }) {
+    final options = cropRatio == CropAspectRatio.square1x1
+        ? CompressOptions.momentSquarePreset
+        : CompressOptions.momentPortraitPreset;
+    return compress(rawBytes: rawBytes, options: options);
+  }
+}

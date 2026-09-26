@@ -57,7 +57,10 @@ class _QuireComposeSheetState extends State<QuireComposeSheet> {
       }
     });
 
-    widget.stateMachine.process(StartPhotoUploadEvent(widget.input));
+    widget.stateMachine.startComposeWithPhoto(
+      photo: widget.input.toRawPhotoFile(),
+      context: const PhotoUploadContext(circleId: 'default-circle-id'),
+    );
   }
 
   void _startUndoAnimation() {
@@ -87,16 +90,14 @@ class _QuireComposeSheetState extends State<QuireComposeSheet> {
   }
 
   void _toggleFriend(String id) {
-    if (_currentState is PhotoUploadComposeState) {
-      setState(() {
-        if (_selectedFriends.contains(id)) {
-          _selectedFriends.remove(id);
-        } else {
-          _selectedFriends.add(id);
-        }
-      });
-      widget.stateMachine.process(SelectRecipientFriendsEvent(_selectedFriends.toList()));
-    }
+    setState(() {
+      if (_selectedFriends.contains(id)) {
+        _selectedFriends.remove(id);
+      } else {
+        _selectedFriends.add(id);
+      }
+    });
+    widget.stateMachine.toggleFriend(id);
   }
 
   @override
@@ -164,7 +165,7 @@ class _QuireComposeSheetState extends State<QuireComposeSheet> {
                   hintStyle: TextStyle(fontFamily: QuireTokens.fontSerif, color: QuireTokens.ink3Light),
                   border: InputBorder.none,
                 ),
-                onChanged: (text) => widget.stateMachine.process(UpdateMomentCaptionEvent(text)),
+                onChanged: (text) => widget.stateMachine.updateCaption(text),
               ),
             ),
           ],
@@ -214,7 +215,7 @@ class _QuireComposeSheetState extends State<QuireComposeSheet> {
           ),
           onPressed: canSend
               ? () {
-                  widget.stateMachine.process(const ConfirmSendMomentEvent());
+                  widget.stateMachine.submitSend();
                 }
               : null,
           child: Text(
@@ -270,7 +271,7 @@ class _QuireComposeSheetState extends State<QuireComposeSheet> {
           ),
           onPressed: () {
             _undoTimer?.cancel();
-            widget.stateMachine.process(const TriggerUndoSendEvent());
+            widget.stateMachine.triggerUndo();
           },
           child: Text(
             'Hoàn tác',

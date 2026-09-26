@@ -23,12 +23,16 @@ class PhotoUploadStateMachine {
   bool _isUndoTriggered = false;
 
   PhotoUploadStateMachine({
-    required this.cameraGalleryService,
-    required this.imageCompressor,
+    CameraGalleryService? cameraGalleryService,
+    ImageCompressor? imageCompressor,
     required this.uploader,
-    required this.currentUserId,
-    required this.fetchCircleFriends,
-  });
+    String? currentUserId,
+    Future<List<FriendChip>> Function(String circleId)? fetchCircleFriends,
+    String? circleId,
+  })  : cameraGalleryService = cameraGalleryService ?? const DefaultCameraGalleryService(),
+        imageCompressor = imageCompressor ?? const DefaultImageCompressor(),
+        currentUserId = currentUserId ?? 'current-user-id',
+        fetchCircleFriends = fetchCircleFriends ?? ((_) async => const []);
 
   PhotoUploadState get state => _state;
   Stream<PhotoUploadState> get stateStream => _stateController.stream;
@@ -36,6 +40,38 @@ class PhotoUploadStateMachine {
   void _transition(PhotoUploadState newState) {
     _state = newState;
     _stateController.add(newState);
+  }
+
+  /// Directly open compose with an already acquired photo.
+  Future<void> startComposeWithPhoto({
+    required RawPhotoFile photo,
+    required PhotoUploadContext context,
+  }) async {
+    await _processPhotoAndOpenCompose(photo: photo, context: context);
+  }
+
+  /// Processes input events adhering to the PhotoUploadEvent contract.
+  Future<void> process(PhotoUploadEvent event) async {
+    switch (event) {
+      case CaptureFromCameraRequested(:final context):
+        await startCaptureFromCamera(context: context);
+      case SelectFromGalleryRequested(:final context):
+        await startSelectionFromGallery(context: context);
+      case PhotoRawAcquired(:final rawPhoto, :final context):
+        await startComposeWithPhoto(photo: rawPhoto, context: context);
+      case FriendToggled(:final friendId):
+        toggleFriend(friendId);
+      case CaptionChanged(:final newCaption):
+        updateCaption(newCaption);
+      case SendTapped():
+        await submitSend();
+      case UndoTapped():
+        triggerUndo();
+      case ResetToIdle():
+        reset();
+      default:
+        break;
+    }
   }
 
   /// Entry Point: Initiate capture from camera.

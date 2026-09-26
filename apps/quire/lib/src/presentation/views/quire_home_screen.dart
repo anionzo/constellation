@@ -54,7 +54,7 @@ class _QuireHomeScreenState extends State<QuireHomeScreen> {
   void _openComposeSheet() {
     final stateMachine = PhotoUploadStateMachine(
       uploader: widget.momentUploader,
-      circleId: 'default-circle-id',
+      fetchCircleFriends: (_) async => _friends,
     );
 
     // Placeholder mock 1x1 png image bytes for compose

@@ -21,3 +21,23 @@ abstract interface class CameraGalleryService {
   /// Returns `null` if user dismissed without selection.
   Future<RawPhotoFile?> pickFromGallery();
 }
+
+/// Default/fallback implementation of CameraGalleryService for demo and headless environments.
+class DefaultCameraGalleryService implements CameraGalleryService {
+  const DefaultCameraGalleryService();
+
+  @override
+  Future<bool> hasCameraPermission() async => true;
+
+  @override
+  Future<bool> requestCameraPermission() async => true;
+
+  @override
+  Future<void> openAppSettings() async {}
+
+  @override
+  Future<RawPhotoFile?> capturePhoto() async => null;
+
+  @override
+  Future<RawPhotoFile?> pickFromGallery() async => null;
+}

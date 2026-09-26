@@ -7,6 +7,9 @@ enum PhotoInputSource {
   gallery,
 }
 
+/// Alias for backwards compatibility / ergonomic UI usage.
+typedef PhotoSource = PhotoInputSource;
+
 /// Contextual metadata if moment is created from article or reply.
 @immutable
 class PhotoUploadContext {
@@ -36,4 +39,24 @@ class RawPhotoFile {
     required this.source,
     this.originalFileName,
   });
+}
+
+/// Input model passed to Quire Compose Sheet.
+@immutable
+class PhotoUploadInput {
+  final Uint8List rawBytes;
+  final PhotoInputSource source;
+  final String? originalFileName;
+
+  PhotoUploadInput({
+    required List<int> rawBytes,
+    required this.source,
+    this.originalFileName,
+  }) : rawBytes = rawBytes is Uint8List ? rawBytes : Uint8List.fromList(rawBytes);
+
+  RawPhotoFile toRawPhotoFile() => RawPhotoFile(
+    bytes: rawBytes,
+    source: source,
+    originalFileName: originalFileName,
+  );
 }

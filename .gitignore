@@ -26,6 +26,7 @@ Thumbs.db
 # flutter
 .flutter-plugins
 .flutter-plugins-dependencies
+packages/**/pubspec.lock
 *.apk
 *.ipa
 # logs
