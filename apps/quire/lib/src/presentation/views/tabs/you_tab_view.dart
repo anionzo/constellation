@@ -471,7 +471,7 @@ class _YouTabViewState extends State<YouTabView> {
               Divider(height: 1, indent: 68, color: ruleColor),
               _buildQuickRow('Lịch sử đọc', 'Bốn bài tháng này', 'https://picsum.photos/seed/history_thumb/120/120', ruleColor, isDark, onTap: _openHistorySheet),
               Divider(height: 1, indent: 68, color: ruleColor),
-              _buildQuickRow('Mời bạn thân', 'Còn ba lời mời kết nối', 'https://picsum.photos/seed/invite_thumb/120/120', ruleColor, isDark, onTap: _openInviteSheet),
+              _buildQuickRow('Mời bạn thân', 'Tạo link & Lời mời kết bạn', 'https://picsum.photos/seed/invite_thumb/120/120', ruleColor, isDark, onTap: _openInviteSheet),
             ],
           ),
         ),
@@ -873,61 +873,210 @@ class _YouTabViewState extends State<YouTabView> {
   }
 
   void _openInviteSheet() {
+    String inviteCode = 'QUIRE-${widget.currentUserName.replaceAll(' ', '').toUpperCase()}-8921';
+    final List<Map<String, String>> receivedRequests = [
+      {'id': 'req_1', 'name': 'Lan Hương', 'initials': 'LH', 'time': 'Hôm qua', 'bio': 'Đà Lạt · Bạn cùng lớp'},
+      {'id': 'req_2', 'name': 'Đức Minh', 'initials': 'DM', 'time': '3 giờ trước', 'bio': 'Hà Nội · Thích nhiếp ảnh'},
+    ];
+
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        final bgColor = isDark ? QuireTokens.paperDark : QuireTokens.paperLight;
-        final ruleColor = isDark ? QuireTokens.ruleDark : QuireTokens.ruleLight;
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final isDark = Theme.of(ctx).brightness == Brightness.dark;
+            final bgColor = isDark ? QuireTokens.paperDark : QuireTokens.paperLight;
+            final surfaceColor = isDark ? QuireTokens.surfaceDark : QuireTokens.surfaceLight;
+            final ruleColor = isDark ? QuireTokens.ruleDark : QuireTokens.ruleLight;
+            final inviteUrl = 'https://quire.app/join/$inviteCode';
 
-        return Container(
-          padding: const EdgeInsets.all(24.0),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(QuireTokens.rSheet)),
-            border: Border.all(color: ruleColor),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            return Container(
+              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+              padding: const EdgeInsets.all(24.0),
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(QuireTokens.rSheet)),
+                border: Border.all(color: ruleColor),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('KẾT NỐI VÒNG BẠN BÈ', style: QuireTokens.eyebrow(isDark: isDark)),
-                  IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(ctx)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('KẾT NỐI BẠN BÈ', style: QuireTokens.eyebrow(isDark: isDark)),
+                      IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(ctx)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text('Liên kết & Lời mời kết bạn', style: QuireTokens.title(isDark: isDark)),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Chia sẻ riêng tư trong vòng kết nối của bạn, không giới hạn số lượng thành viên.',
+                    style: QuireTokens.body(isDark: isDark),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Section 1: Personal Invite Link
+                  Text('LIÊN KẾT KẾT BẠN CỦA BẠN', style: QuireTokens.eyebrow(isDark: isDark)),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: surfaceColor,
+                      borderRadius: BorderRadius.circular(QuireTokens.rField),
+                      border: Border.all(color: ruleColor),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.link_rounded, size: 20, color: QuireTokens.accentLight),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                inviteUrl,
+                                style: TextStyle(
+                                  fontFamily: QuireTokens.fontMono,
+                                  fontSize: 12,
+                                  color: isDark ? QuireTokens.inkDark : QuireTokens.inkLight,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: QuireTokens.accentLight,
+                                  foregroundColor: QuireTokens.onAccentLight,
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(QuireTokens.rBtn)),
+                                  elevation: 0,
+                                ),
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Đã sao chép liên kết mời: $inviteUrl')),
+                                  );
+                                },
+                                icon: const Icon(Icons.copy_rounded, size: 16),
+                                label: const Text('Sao chép liên kết'),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: ruleColor),
+                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(QuireTokens.rBtn)),
+                              ),
+                              onPressed: () {
+                                setSheetState(() {
+                                  inviteCode = 'QUIRE-${widget.currentUserName.replaceAll(' ', '').toUpperCase()}-${DateTime.now().millisecond}';
+                                });
+                              },
+                              child: const Icon(Icons.refresh, size: 18),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Section 2: Received Friend Requests
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('LỜI MỜI ĐÃ NHẬN (${receivedRequests.length})', style: QuireTokens.eyebrow(isDark: isDark)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (receivedRequests.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: Text('Không có lời mời kết bạn nào đang chờ.', style: QuireTokens.meta(isDark: isDark)),
+                    )
+                  else
+                    ...receivedRequests.map((req) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: surfaceColor,
+                          borderRadius: BorderRadius.circular(QuireTokens.rCard),
+                          border: Border.all(color: ruleColor),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundColor: isDark ? QuireTokens.s2Dark : QuireTokens.s2Light,
+                              child: Text(
+                                req['initials']!,
+                                style: TextStyle(fontFamily: QuireTokens.fontMono, fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(req['name']!, style: QuireTokens.h3(isDark: isDark).copyWith(fontSize: 14.5)),
+                                  Text('${req['bio']} · ${req['time']}', style: QuireTokens.meta(isDark: isDark).copyWith(fontSize: 9.5)),
+                                ],
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                setSheetState(() {
+                                  receivedRequests.removeWhere((r) => r['id'] == req['id']);
+                                });
+                              },
+                              child: Text('Bỏ qua', style: QuireTokens.meta(isDark: isDark)),
+                            ),
+                            const SizedBox(width: 4),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: QuireTokens.accentLight,
+                                foregroundColor: QuireTokens.onAccentLight,
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(QuireTokens.rBtn)),
+                                elevation: 0,
+                              ),
+                              onPressed: () {
+                                final newChip = FriendChip(
+                                  id: req['id']!,
+                                  name: req['name']!,
+                                  initials: req['initials']!,
+                                );
+                                widget.onAddFriend?.call(newChip);
+                                setSheetState(() {
+                                  receivedRequests.removeWhere((r) => r['id'] == req['id']);
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Đã thêm ${req['name']} vào vòng bạn bè!')),
+                                );
+                              },
+                              child: const Text('Đồng ý', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  const SizedBox(height: 16),
                 ],
               ),
-              const SizedBox(height: 4),
-              Text('Mời bạn thân gia nhập', style: QuireTokens.title(isDark: isDark)),
-              const SizedBox(height: 8),
-              Text('Vòng tròn thân mật giới hạn từ 4 đến 11 người. Bạn còn 3 lời mời kết nối.', style: QuireTokens.body(isDark: isDark)),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: isDark ? QuireTokens.surfaceDark : QuireTokens.surfaceLight,
-                  borderRadius: BorderRadius.circular(QuireTokens.rField),
-                  border: Border.all(color: ruleColor),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('QUIRE-LISBON-2026', style: TextStyle(fontFamily: QuireTokens.fontMono, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã sao chép mã mời vào bộ nhớ tạm!')));
-                      },
-                      child: const Text('Sao chép'),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
+            );
+          },
         );
       },
     );

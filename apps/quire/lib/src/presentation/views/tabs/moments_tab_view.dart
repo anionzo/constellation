@@ -485,7 +485,7 @@ class _MomentsTabViewState extends State<MomentsTabView> {
           ],
         ),
         const SizedBox(height: 4),
-        Text('Chỉ 11 người trong vòng thân thiết xem được.', style: QuireTokens.body(isDark: isDark)),
+        Text('Chỉ những người trong vòng thân thiết của bạn xem được.', style: QuireTokens.body(isDark: isDark)),
         const SizedBox(height: 16),
 
         // Circle Avatars Row
