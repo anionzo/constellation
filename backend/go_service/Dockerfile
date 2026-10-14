@@ -9,7 +9,7 @@ RUN go mod download || true
 
 # Copy source code and compile statically linked binary
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /bin/bff ./cmd/server
+RUN go mod tidy && CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /bin/bff ./cmd/server
 
 # Stage 2: Minimal runtime image (< 20MB)
 FROM alpine:3.19

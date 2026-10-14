@@ -13,7 +13,7 @@ class BffApiClient {
   BffApiClient({
     String? baseUrl,
     http.Client? client,
-  })  : baseUrl = baseUrl ?? 'http://127.0.0.1:8000',
+  })  : baseUrl = baseUrl ?? 'http://127.0.0.1:8088',
         _client = client ?? http.Client();
 
   /// Set the Supabase JWT token for authenticated requests.

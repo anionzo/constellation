@@ -11,15 +11,34 @@ UPDATE public.profiles
 SET username = LOWER(REPLACE(display_name, ' ', '.'))
 WHERE username IS NULL;
 
--- 2. Extend articles with is_public visibility flag
-ALTER TABLE public.articles
-    ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT true;
+-- 2. Create articles table (Magazine 2-Tier Content)
+CREATE TABLE IF NOT EXISTS public.articles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    author_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    category VARCHAR(64) NOT NULL DEFAULT 'Ghi chép',
+    excerpt TEXT,
+    full_content TEXT,
+    cover_image_path TEXT,
+    likes_count INT NOT NULL DEFAULT 0,
+    is_public BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
--- 3. Extend moments with auto-purge duration and soft-purge timestamp
-ALTER TABLE public.moments
-    ADD COLUMN IF NOT EXISTS auto_purge_duration_seconds INT DEFAULT 2592000, -- 30 days default
-    ADD COLUMN IF NOT EXISTS purged_at TIMESTAMPTZ,
-    ADD COLUMN IF NOT EXISTS is_archived BOOLEAN NOT NULL DEFAULT false;
+-- 3. Create moments table (Visual Feed with Soft-Purge)
+CREATE TABLE IF NOT EXISTS public.moments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sender_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    circle_id VARCHAR(64) NOT NULL DEFAULT 'circle_1',
+    image_path TEXT NOT NULL,
+    caption TEXT,
+    likes_count INT NOT NULL DEFAULT 0,
+    auto_purge_duration_seconds INT DEFAULT 2592000, -- 30 days default
+    purged_at TIMESTAMPTZ,
+    is_archived BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
 -- 4. Create circle_invites table (Personal Invite Link Generator)
 CREATE TABLE IF NOT EXISTS public.circle_invites (
@@ -81,10 +100,30 @@ CREATE INDEX IF NOT EXISTS idx_circle_requests_recipient
     ON public.circle_requests (recipient_id, status, created_at DESC);
 
 -- 9. Row Level Security (RLS) Policies
+ALTER TABLE public.articles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.moments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.circle_invites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.circle_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.saved_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+
+-- articles policies
+CREATE POLICY "Public articles are readable by everyone"
+    ON public.articles FOR SELECT
+    USING (is_public = true OR auth.uid() = author_id);
+
+CREATE POLICY "Authors can manage their own articles"
+    ON public.articles FOR ALL
+    USING (auth.uid() = author_id);
+
+-- moments policies
+CREATE POLICY "Moments are visible to active users"
+    ON public.moments FOR SELECT
+    USING (is_archived = false OR auth.uid() = sender_id);
+
+CREATE POLICY "Senders can manage their own moments"
+    ON public.moments FOR ALL
+    USING (auth.uid() = sender_id);
 
 -- circle_invites policies
 CREATE POLICY "Users can create their own invites"
