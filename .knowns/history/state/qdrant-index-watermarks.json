@@ -65,8 +65,8 @@
   "doc:doc-bfa6466f9e4ef355c21886028d5d13d6": {
     "entityType": "doc",
     "entityId": "doc-bfa6466f9e4ef355c21886028d5d13d6",
-    "canonicalHash": "b580776bd064a6824729bb19ba4a2bb802cead01cbe44c0df98232b6a5ed1597",
-    "revision": 4,
+    "canonicalHash": "353ee5c25c6d359302cb373d71c708a3e16689b1a309a9fc509c178e3f5253b7",
+    "revision": 6,
     "path": "docs/architecture/quire-app-implementation.md",
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true

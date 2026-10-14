@@ -9,6 +9,7 @@ import '../../../features/photo_upload/machine/photo_upload_state_machine.dart';
 import '../../../features/photo_upload/services/quire_moment_uploader.dart';
 import '../../../features/photo_upload/services/camera_gallery_service.dart';
 import '../../../features/photo_upload/services/native_camera_gallery_service.dart';
+import '../chat/circle_chat_sheet.dart';
 
 class MomentsTabView extends StatefulWidget {
   final List<FriendChip> friends;
@@ -174,6 +175,15 @@ class _MomentsTabViewState extends State<MomentsTabView> {
           });
         },
       ),
+    );
+  }
+
+  void _openChatWith(FriendChip friend) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => CircleChatSheet(friend: friend),
     );
   }
 
@@ -419,9 +429,24 @@ class _MomentsTabViewState extends State<MomentsTabView> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 22.0, vertical: 12.0),
       children: [
-        Text('QUIRE · KHOẢNH KHẮC', style: QuireTokens.eyebrow(isDark: isDark)),
-        const SizedBox(height: 4),
-        Text('Từ những người bạn quen', style: QuireTokens.title(isDark: isDark)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('QUIRE · KHOẢNH KHẮC', style: QuireTokens.eyebrow(isDark: isDark)),
+                const SizedBox(height: 4),
+                Text('Từ những người bạn quen', style: QuireTokens.title(isDark: isDark)),
+              ],
+            ),
+            IconButton(
+              icon: const Icon(Icons.camera_alt_outlined, size: 24),
+              tooltip: 'Chụp ảnh nhanh',
+              onPressed: _openPhotoSourceSelector,
+            ),
+          ],
+        ),
         const SizedBox(height: 4),
         Text('Chỉ 11 người trong vòng thân thiết xem được.', style: QuireTokens.body(isDark: isDark)),
         const SizedBox(height: 16),
@@ -566,9 +591,23 @@ class _MomentsTabViewState extends State<MomentsTabView> {
                       ),
                       const Spacer(),
                       TextButton.icon(
+                        onPressed: () {
+                          final authorName = moment['author'] as String;
+                          final authorInitials = moment['authorInitials'] as String;
+                          final friend = widget.friends.firstWhere(
+                            (f) => f.name == authorName,
+                            orElse: () => FriendChip(id: 'temp', name: authorName, initials: authorInitials),
+                          );
+                          _openChatWith(friend);
+                        },
+                        icon: const Icon(Icons.chat_bubble_outline, size: 16),
+                        label: Text('Nhắn tin', style: QuireTokens.meta(isDark: isDark)),
+                      ),
+                      const SizedBox(width: 6),
+                      TextButton.icon(
                         onPressed: _openPhotoSourceSelector,
                         icon: const Icon(Icons.camera_alt_outlined, size: 16),
-                        label: Text('Đáp lại bằng ảnh', style: QuireTokens.meta(isDark: isDark)),
+                        label: Text('Đáp lại', style: QuireTokens.meta(isDark: isDark)),
                       ),
                     ],
                   ),

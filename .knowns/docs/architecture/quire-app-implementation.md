@@ -3,7 +3,7 @@ id: doc-bfa6466f9e4ef355c21886028d5d13d6
 title: Quire App Implementation
 description: 'Bản đồ triển khai app Quire: cấu trúc module, state machine 8 trạng thái, uploader online/offline, presentation, theme tokens + 10 gap DEFERRED đã chứng minh.'
 createdAt: '2026-09-29T10:07:06.956Z'
-updatedAt: '2026-09-29T10:42:39.613Z'
+updatedAt: '2026-10-14T08:13:52.245Z'
 tags:
   - constellation
   - quire
@@ -91,24 +91,37 @@ apps/quire/lib/
 - Font: `Newsreader` (serif) + `JetBrains Mono` (eyebrow/meta).
 - Style factory: `title()`, `h3()`, `body()`, `eyebrow()`, `meta()`, `button()` — có tham số `isDark` (chưa được dùng vì chưa có dark theme wiring).
 
-## 6. Gap đã chứng minh (DEFERRED)
+## 6. Hiện trạng các Gap kỹ thuật (Cập nhật 2026-10-14)
 
-| # | Gap | Bằng chứng |
-|---|---|---|
-| 1 | `main.dart:47` gắn `MockQuireMomentUploader` — chưa có uploader thật (Supabase) | đọc main.dart |
-| 2 | `DefaultCameraGalleryService.capturePhoto()` trả `null` luôn →luồng capture thật chưa tồn tại | `camera_gallery_service.dart:39` |
-| 3 | `version_gate` khai báo trong pubspec nhưng không import trong app | grep `package:version_gate` → 0 match |
-| 4 | `SyncDispatcher` không được khởi tạo trong app; handler `upload_quire_moment` chưa `registerHandler` → queue offline không bao giờ được replay | không có trong main.dart |
-| 5 | Dark palette tồn tại nhưng `main.dart` chỉ gắn light `ThemeData` | main.dart:36-44 |
-| 6 | Nút Gửi `Colors.white` trên nền `#E76136` ≈ 3.4:1 → fail WCAG AA (cần ≥4.5) | compose_sheet:208,231 |
-| 7 | `FilterChip` mặc định ≈32px < 44px touch target | compose_sheet:182 |
-| 8 | String UI hardcode tiếng Việt trong state/widget (prototype có sẵn i18n 126 key EN/VI nhưng chưa map) | photo_upload_state.dart, compose_sheet |
-| 9 | Feed dùng ảnh `picsum.photos` fixture | home_screen:48 |
-| 10 | `MemoryLocalStoreAdapter` là adapter duy nhất được nối (mất queue khi restart process) | main.dart:59 |
+| # | Gap kỹ thuật ban đầu | Trạng thái hiện tại | Giải pháp đã triển khai |
+|---|---|---|---|
+| 1 | `main.dart` gắn Mock uploader | DEFERRED | Giữ cấu trúc Adapter DIP; sẵn sàng nối Supabase/BFF sau |
+| 2 | `capturePhoto()` trả `null` | **RESOLVED** | Đã triển khai `NativeCameraGalleryService` dùng `image_picker` trên cả Web & Mobile |
+| 3 | `version_gate` chưa import | **RESOLVED** | Đã tích hợp `VersionGateManager`, hook boot/resume và `ForceUpdateView` trong `main.dart` |
+| 4 | `SyncDispatcher` chưa nối handler | **RESOLVED** | Đã khởi tạo `SyncDispatcher`, đăng ký `handleReplaySync` và nối `DispatcherSyncLockBridge` |
+| 5 | Dark theme chưa wiring | **RESOLVED** | Đã triển khai `QuireTheme.dark()` và `ThemeController` chuyển đổi theme trực tiếp trên UI |
+| 6 | Nút Gửi fail WCAG AA (3.4:1) | **RESOLVED** | Đã đổi nhãn nút sang `QuireTokens.onAccentLight` (#241E19) đạt tương phản **4.83:1** (đạt chuẩn AA) |
+| 7 | `FilterChip` < 44px | **RESOLVED** | Đã cấu hình `MaterialTapTargetSize.padded` và padding vertical 10.0 đạt chuẩn ≥ 44px |
+| 8 | UI string đa ngữ | PROPOSED | Sẵn sàng cho wave i18n tiếp theo |
+| 9 | Feed ảnh mẫu | **RESOLVED** | Đã hỗ trợ hiển thị ảnh thật từ `image_picker` qua `Image.memory` ngay khi gửi |
+| 10 | Local store persistence | PROPOSED | Giữ `LocalStoreAdapter` trừu tượng, sẵn sàng cắm SQLite/Drift |
 
-## 7. Test hiện có
+### Các tính năng bổ sung mới (2026-10-14)
+- **Xuất bản bài viết tạp chí (`PublishArticleSheet`)**: Hỗ trợ người dùng viết bài mới với tiêu đề, chủ đề, ảnh bìa từ máy và nội dung dài.
+- **Nhắn tin riêng tư (`CircleChatSheet`)**: Khung chat yên tĩnh 1-1 giữa bạn bè, gửi tin nhắn và ảnh khoảnh khắc.
+- **Tự huỷ khoảnh khắc linh hoạt**: Công tắc Bật/Tắt tự hủy, tùy chọn thời gian 24h, 7 ngày, 30 ngày từ thời điểm đăng hoặc giữ vĩnh viễn.
+- **Chỉnh sửa hồ sơ (`ProfileEditSheet`)**: Đổi tên, bio và ảnh đại diện từ thiết bị.
+- **Quản lý vòng bạn bè**: Thêm bạn mới và gỡ bạn bè khỏi vòng thân thiết.
 
-Một file: `apps/quire/test/photo_upload_state_machine_test.dart` — 5 test (permission denied, compose invariant ≥1 friend, gửi khóa nút + UndoGrace, Undo hủy + không upload gì, hết 900ms → dispatch). Chạy bằng `package:test` (không phải flutter_test) với mock tự viết.
+## 7. Test hiện có (Cập nhật 2026-10-14)
+
+Hiện có **3 file test / 14 tests** chạy bằng `package:test` (thuần Dart VM, không phụ thuộc engine `dart:ui`), đạt tỷ lệ **pass 100%**:
+
+1. `apps/quire/test/photo_upload_state_machine_test.dart` (5 tests): Permission denied, compose invariant, khóa nút tức thì, cửa sổ hoàn tác 900ms, dispatch sau timer.
+2. `apps/quire/test/quire_client_hardening_test.dart` (5 tests): Tính toán độ tương phản WCAG AA (4.83:1), VersionGate Force Update & Maintenance evaluation, DispatcherSyncLockBridge lock/unlock, và offline queue replay qua SyncDispatcher.
+3. `apps/quire/test/photo_auth_flow_test.dart` (4 tests): Hợp đồng CameraGalleryService, tính toàn vẹn của RawPhotoFile, cấu trúc dữ liệu Feed Injection sau khi đăng ảnh, và logic xác thực email Calm Auth.
+
+Toàn bộ mã nguồn Quire đạt chuẩn `flutter analyze` với **0 errors, 0 warnings**.
 
 Xem thêm: `guides/testing-verification-strategy` (kế hoạch test đầy đủ).
 

@@ -61,9 +61,9 @@
       "entityType": "doc",
       "entityId": "doc-bfa6466f9e4ef355c21886028d5d13d6",
       "path": "docs/architecture/quire-app-implementation.md",
-      "hash": "b580776bd064a6824729bb19ba4a2bb802cead01cbe44c0df98232b6a5ed1597",
-      "revision": 4,
-      "headHash": "b580776bd064a6824729bb19ba4a2bb802cead01cbe44c0df98232b6a5ed1597"
+      "hash": "353ee5c25c6d359302cb373d71c708a3e16689b1a309a9fc509c178e3f5253b7",
+      "revision": 6,
+      "headHash": "353ee5c25c6d359302cb373d71c708a3e16689b1a309a9fc509c178e3f5253b7"
     },
     "doc:doc-d01c2d8cf93b6e1eaabf3c7471bac766": {
       "entityType": "doc",

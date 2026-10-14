@@ -1,5 +1,7 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../../theme/quire_tokens.dart';
+import '../reading/publish_article_sheet.dart';
 
 class ArticleItem {
   final String id;
@@ -10,7 +12,10 @@ class ArticleItem {
   final String readTime;
   final String date;
   final String imageUrl;
+  final Uint8List? coverBytes;
   bool isBookmarked;
+  int likes;
+  bool isLiked;
 
   ArticleItem({
     required this.id,
@@ -21,7 +26,10 @@ class ArticleItem {
     required this.readTime,
     required this.date,
     required this.imageUrl,
+    this.coverBytes,
     this.isBookmarked = false,
+    this.likes = 12,
+    this.isLiked = false,
   });
 }
 
@@ -48,6 +56,7 @@ Nhưng điều kỳ diệu hơn cả là sự yên tĩnh mà chúng mang lại c
       readTime: '7 phút đọc',
       date: 'Thứ Ba 14/09',
       imageUrl: 'https://picsum.photos/seed/lisbon/800/500',
+      likes: 24,
     ),
     ArticleItem(
       id: 'art_2',
@@ -62,6 +71,7 @@ Không có tiếng chuông điện thoại, không có tiếng gõ bàn phím g�
       readTime: '5 phút đọc',
       date: 'Hôm qua',
       imageUrl: 'https://picsum.photos/seed/kyoto/800/500',
+      likes: 18,
     ),
     ArticleItem(
       id: 'art_3',
@@ -76,109 +86,198 @@ Vilhelm Hammershøi vẽ những căn phòng vắng ở Copenhagen với gam mà
       readTime: '8 phút đọc',
       date: '10 tháng 9',
       imageUrl: 'https://picsum.photos/seed/nordic/800/500',
+      likes: 31,
     ),
   ];
 
+  void _openPublishSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => PublishArticleSheet(
+        onArticlePublished: (newArticle) {
+          setState(() {
+            _articles.insert(0, newArticle);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Bài viết đã được xuất bản lên Quire!', style: TextStyle(fontFamily: QuireTokens.fontSerif)),
+              backgroundColor: QuireTokens.accentLight,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   void _openArticleDetail(ArticleItem article) {
+    double fontSize = 16.0;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        final bgColor = isDark ? QuireTokens.paperDark : QuireTokens.paperLight;
-        final surfaceColor = isDark ? QuireTokens.surfaceDark : QuireTokens.surfaceLight;
-        final ruleColor = isDark ? QuireTokens.ruleDark : QuireTokens.ruleLight;
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final isDark = Theme.of(ctx).brightness == Brightness.dark;
+            final bgColor = isDark ? QuireTokens.paperDark : QuireTokens.paperLight;
+            final surfaceColor = isDark ? QuireTokens.surfaceDark : QuireTokens.surfaceLight;
+            final ruleColor = isDark ? QuireTokens.ruleDark : QuireTokens.ruleLight;
 
-        return DraggableScrollableSheet(
-          initialChildSize: 0.92,
-          minChildSize: 0.5,
-          maxChildSize: 0.96,
-          builder: (_, scrollController) {
-            return Container(
-              decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(QuireTokens.rSheet)),
-                border: Border.all(color: ruleColor),
-              ),
-              child: Column(
-                children: [
-                  // Grabber & Top Navigation
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back, size: 20),
-                          onPressed: () => Navigator.pop(ctx),
-                        ),
-                        Text(article.readTime.toUpperCase(), style: QuireTokens.meta(isDark: isDark)),
-                        IconButton(
-                          icon: Icon(
-                            article.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                            color: article.isBookmarked ? QuireTokens.accentLight : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              article.isBookmarked = !article.isBookmarked;
-                            });
-                            Navigator.pop(ctx);
-                            _openArticleDetail(article);
-                          },
-                        ),
-                      ],
-                    ),
+            return DraggableScrollableSheet(
+              initialChildSize: 0.94,
+              minChildSize: 0.5,
+              maxChildSize: 0.98,
+              builder: (_, scrollController) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(QuireTokens.rSheet)),
+                    border: Border.all(color: ruleColor),
                   ),
-                  Divider(height: 1, color: ruleColor),
-
-                  // Article Content Body
-                  Expanded(
-                    child: ListView(
-                      controller: scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-                      children: [
-                        Text(
-                          article.title,
-                          style: QuireTokens.title(isDark: isDark).copyWith(fontSize: 26, height: 1.25),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
+                  child: Column(
+                    children: [
+                      // Grabber & Top Navigation
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(article.author, style: QuireTokens.meta(isDark: isDark)),
-                            Text(' · ', style: TextStyle(color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light)),
-                            Text(article.date, style: QuireTokens.meta(isDark: isDark)),
+                            IconButton(
+                              icon: const Icon(Icons.arrow_back, size: 20),
+                              onPressed: () => Navigator.pop(ctx),
+                            ),
+                            // Font Size Adjuster (14px - 16px - 19px)
+                            Row(
+                              children: [
+                                TextButton(
+                                  style: TextButton.styleFrom(minimumSize: const Size(32, 32), padding: EdgeInsets.zero),
+                                  onPressed: () => setSheetState(() => fontSize = 14.0),
+                                  child: Text('A', style: TextStyle(fontSize: 13, fontWeight: fontSize == 14.0 ? FontWeight.bold : FontWeight.normal, color: fontSize == 14.0 ? QuireTokens.accentLight : (isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light))),
+                                ),
+                                TextButton(
+                                  style: TextButton.styleFrom(minimumSize: const Size(32, 32), padding: EdgeInsets.zero),
+                                  onPressed: () => setSheetState(() => fontSize = 16.0),
+                                  child: Text('A', style: TextStyle(fontSize: 16, fontWeight: fontSize == 16.0 ? FontWeight.bold : FontWeight.normal, color: fontSize == 16.0 ? QuireTokens.accentLight : (isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light))),
+                                ),
+                                TextButton(
+                                  style: TextButton.styleFrom(minimumSize: const Size(32, 32), padding: EdgeInsets.zero),
+                                  onPressed: () => setSheetState(() => fontSize = 19.0),
+                                  child: Text('A', style: TextStyle(fontSize: 19, fontWeight: fontSize == 19.0 ? FontWeight.bold : FontWeight.normal, color: fontSize == 19.0 ? QuireTokens.accentLight : (isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light))),
+                                ),
+                              ],
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                article.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                                color: article.isBookmarked ? QuireTokens.accentLight : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  article.isBookmarked = !article.isBookmarked;
+                                });
+                                setSheetState(() {});
+                              },
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 20),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(QuireTokens.rPhoto),
-                          child: Image.network(
-                            article.imageUrl,
-                            height: 220,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              height: 220,
-                              color: surfaceColor,
-                              child: const Icon(Icons.image, size: 48),
+                      ),
+                      Divider(height: 1, color: ruleColor),
+
+                      // Article Content Body
+                      Expanded(
+                        child: ListView(
+                          controller: scrollController,
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+                          children: [
+                            Text(
+                              article.title,
+                              style: QuireTokens.title(isDark: isDark).copyWith(fontSize: 26, height: 1.25),
                             ),
-                          ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Text(article.author, style: QuireTokens.meta(isDark: isDark)),
+                                Text(' · ', style: TextStyle(color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light)),
+                                Text(article.date, style: QuireTokens.meta(isDark: isDark)),
+                                Text(' · ', style: TextStyle(color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light)),
+                                Text(article.readTime, style: QuireTokens.meta(isDark: isDark)),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(QuireTokens.rPhoto),
+                              child: article.coverBytes != null
+                                  ? Image.memory(article.coverBytes!, height: 220, width: double.infinity, fit: BoxFit.cover)
+                                  : Image.network(
+                                      article.imageUrl,
+                                      height: 220,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Container(
+                                        height: 220,
+                                        color: surfaceColor,
+                                        child: const Icon(Icons.image, size: 48),
+                                      ),
+                                    ),
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              article.fullContent,
+                              style: QuireTokens.body(isDark: isDark).copyWith(
+                                fontSize: fontSize,
+                                height: 1.7,
+                                color: isDark ? QuireTokens.inkDark : QuireTokens.inkLight,
+                              ),
+                            ),
+                            const SizedBox(height: 36),
+
+                            // In-Article 4 Action Buttons
+                            Row(
+                              children: [
+                                TextButton.icon(
+                                  onPressed: () {
+                                    setSheetState(() {
+                                      article.isLiked = !article.isLiked;
+                                      article.likes = article.isLiked ? article.likes + 1 : article.likes - 1;
+                                    });
+                                    setState(() {});
+                                  },
+                                  icon: Icon(
+                                    article.isLiked ? Icons.favorite : Icons.favorite_border,
+                                    size: 18,
+                                    color: article.isLiked ? const Color(0xFFC13832) : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+                                  ),
+                                  label: Text('${article.likes} tim', style: QuireTokens.meta(isDark: isDark)),
+                                ),
+                                const SizedBox(width: 8),
+                                TextButton.icon(
+                                  onPressed: () {
+                                    setState(() {
+                                      article.isBookmarked = !article.isBookmarked;
+                                    });
+                                    setSheetState(() {});
+                                  },
+                                  icon: Icon(
+                                    article.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                                    size: 18,
+                                    color: article.isBookmarked ? QuireTokens.accentLight : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+                                  ),
+                                  label: Text(article.isBookmarked ? 'Đã lưu' : 'Lưu', style: QuireTokens.meta(isDark: isDark)),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 48),
+                          ],
                         ),
-                        const SizedBox(height: 24),
-                        Text(
-                          article.fullContent,
-                          style: QuireTokens.body(isDark: isDark).copyWith(
-                            fontSize: 16.0,
-                            height: 1.7,
-                            color: isDark ? QuireTokens.inkDark : QuireTokens.inkLight,
-                          ),
-                        ),
-                        const SizedBox(height: 48),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             );
           },
         );
@@ -204,9 +303,28 @@ Vilhelm Hammershøi vẽ những căn phòng vắng ở Copenhagen với gam mà
             Text('Thứ Ba 14/09', style: QuireTokens.meta(isDark: isDark)),
           ],
         ),
-        const SizedBox(height: 4),
-        Text('5 bài mới hôm nay', style: QuireTokens.title(isDark: isDark)),
+        const SizedBox(height: 6),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('${_articles.length} bài viết', style: QuireTokens.title(isDark: isDark)),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isDark ? QuireTokens.accentDark : QuireTokens.accentLight,
+                foregroundColor: isDark ? QuireTokens.onAccentDark : QuireTokens.onAccentLight,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(QuireTokens.rBtn)),
+                elevation: 0,
+              ),
+              onPressed: _openPublishSheet,
+              icon: const Icon(Icons.edit_note_rounded, size: 18),
+              label: const Text('Viết bài', style: TextStyle(fontFamily: QuireTokens.fontSerif, fontWeight: FontWeight.bold, fontSize: 13)),
+            ),
+          ],
+        ),
         const SizedBox(height: 12),
+
+        // Filter Chips
         Row(
           children: [
             ChoiceChip(
@@ -257,18 +375,20 @@ Vilhelm Hammershøi vẽ những căn phòng vắng ở Copenhagen với gam mà
                 children: [
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(QuireTokens.rCard)),
-                    child: Image.network(
-                      article.imageUrl,
-                      height: 180,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        height: 180,
-                        color: isDark ? QuireTokens.s2Dark : QuireTokens.s2Light,
-                        alignment: Alignment.center,
-                        child: const Icon(Icons.menu_book, size: 36),
-                      ),
-                    ),
+                    child: article.coverBytes != null
+                        ? Image.memory(article.coverBytes!, height: 180, width: double.infinity, fit: BoxFit.cover)
+                        : Image.network(
+                            article.imageUrl,
+                            height: 180,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              height: 180,
+                              color: isDark ? QuireTokens.s2Dark : QuireTokens.s2Light,
+                              alignment: Alignment.center,
+                              child: const Icon(Icons.menu_book, size: 36),
+                            ),
+                          ),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(18.0),
@@ -296,19 +416,25 @@ Vilhelm Hammershøi vẽ những căn phòng vắng ở Copenhagen với gam mà
                               '${article.author} · ${article.readTime}'.toUpperCase(),
                               style: QuireTokens.meta(isDark: isDark),
                             ),
-                            IconButton(
-                              icon: Icon(
-                                article.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                                size: 18,
-                                color: article.isBookmarked
-                                    ? QuireTokens.accentLight
-                                    : (isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light),
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  article.isBookmarked = !article.isBookmarked;
-                                });
-                              },
+                            Row(
+                              children: [
+                                Text('${article.likes} tim', style: QuireTokens.meta(isDark: isDark)),
+                                const SizedBox(width: 6),
+                                IconButton(
+                                  icon: Icon(
+                                    article.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                                    size: 18,
+                                    color: article.isBookmarked
+                                        ? QuireTokens.accentLight
+                                        : (isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      article.isBookmarked = !article.isBookmarked;
+                                    });
+                                  },
+                                ),
+                              ],
                             ),
                           ],
                         ),
