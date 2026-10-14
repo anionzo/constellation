@@ -3,7 +3,7 @@ id: doc-c7681defdbceda03bc7b25cc2d298cdc
 title: 'Backend API Requirements & Data Contract (Derived from Quire Client)'
 description: 'Backend API Requirements and Data Contract derived from Quire Client features: Auth, Circle, Soft-Purge Moments, Articles visibility, and Chat'
 createdAt: '2026-10-14T09:04:26.466Z'
-updatedAt: '2026-10-14T09:16:19.518Z'
+updatedAt: '2026-10-14T09:21:41.311Z'
 tags:
   - backend
   - api
@@ -154,3 +154,136 @@ tags:
 - `GET /api/v1/chat/inbox`: Lấy danh sách cuộc trò chuyện với các bạn bè.
 - `GET /api/v1/chat/:friendId/messages`: Lấy lịch sử tin nhắn 1-1.
 - `POST /api/v1/chat/:friendId/messages`: Gửi tin nhắn mới (hỗ trợ `quoted_moment_id` và đính kèm ảnh).
+
+---
+
+## 4. Chuẩn Mực Phân Trang Dùng Chung Đa Ứng Dụng (Cross-App Cursor Pagination & Infinite Scroll Standard)
+
+> **Mục đích:** Đây là chuẩn kiến trúc phân trang bắt buộc dùng chung cho toàn bộ các ứng dụng trong hệ sinh thái Constellation (**Quire, Dream Journal, Astraea, After Midnight**) ở cả tầng Backend (Golang BFF / SQL) và Client (Flutter), ngăn chặn hoàn toàn việc tải ồ ạt toàn bộ dữ liệu cùng lúc.
+
+### 4.1. Lựa Chọn Công Nghệ: Cursor-based Pagination (Thay vì Offset-based)
+
+1. **Kháng hoàn toàn lỗi nhảy/trùng dữ liệu (Anti-Duplication)**:
+   - Khi phân trang bằng số trang truyền thống (`page=1, page=2`), nếu có bạn bè vừa đăng một khoảnh khắc mới lên đầu bảng tin, toàn bộ dữ liệu bị dịch chuyển xuống 1 nấc. Khi người dùng cuộn xuống trang 2, họ sẽ bị xem lại một bài viết đã xem ở trang 1.
+   - **Cursor-based** sử dụng con trỏ thời gian cố định của bản ghi cuối cùng (`(created_at, id)`). Dù có bao nhiêu bài mới chèn vào đầu trang, trang tiếp theo vẫn luôn lấy chính xác từ điểm dừng trước đó.
+2. **Tối ưu hóa hiệu năng CSDL O(log N)**:
+   - Khi dữ liệu lên đến hàng trăm ngàn bài viết, lệnh `OFFSET 50000` của SQL sẽ buộc PostgreSQL phải duyệt qua 50,000 dòng rồi mới trả về kết quả (gây chậm chạp và tốn CPU).
+   - Cursor Pagination dùng mệnh đề `WHERE (created_at, id) < ($cursor_time, $cursor_id)` kết hợp với Composite Index `(created_at DESC, id DESC)`, cho phép PostgreSQL nhảy thẳng đến bản ghi cần lấy với độ phức tạp **O(log N)**.
+
+### 4.2. Cấu Trúc Tham Số Yêu Cầu (Query Parameters)
+
+Mọi API danh sách hỗ trợ cuộn tải thêm đều tuân theo chuẩn query:
+
+```http
+GET /api/v1/{resource}?limit=20&cursor=eyJ0IjoiMjAyNi0xMC0xNFQxNTozMDowMFoiLCJpZCI6ImFiYyJ9&direction=next
+```
+
+- `limit` (int, tùy chọn): Số lượng bản ghi mỗi trang. Mặc định: `20`. Tối đa cho phép: `50`.
+- `cursor` (string, tùy chọn): Chuỗi mã hóa Base64 không để lộ cấu trúc nội bộ (opaque string). Trang đầu tiên truyền `null` hoặc bỏ trống.
+- `direction` (string, tùy chọn): `next` (mặc định — cuộn xuống lấy dữ liệu cũ hơn) hoặc `prev` (lấy dữ liệu mới hơn khi ở giữa danh sách).
+
+### 4.3. Cấu Trúc Phong Bì Phản Hồi Chuẩn (Universal Paginated Envelope)
+
+Mọi response phân trang trên toàn bộ các app Constellation bắt buộc phải bọc trong Envelope chuẩn:
+
+```json
+{
+  "data": [
+    {
+      "id": "mom_8921",
+      "title": "...",
+      "created_at": "2026-10-14T15:30:00Z"
+    }
+  ],
+  "pagination": {
+    "has_more": true,
+    "next_cursor": "eyJ0IjoiMjAyNi0xMC0xNFQxNTozMDowMFoiLCJpZCI6Im1vbV84OTIxIn0=",
+    "prev_cursor": null,
+    "limit": 20,
+    "total_count": 142
+  }
+}
+```
+
+- `has_more` (boolean): Báo hiệu cho Client biết còn dữ liệu phía sau hay không. Nếu `false`, Client dừng lắng nghe sự kiện cuộn xuống đáy.
+- `next_cursor` (string | null): Con trỏ để truyền vào request kế tiếp. Nếu `has_more == false`, trả về `null`.
+- `total_count` (int, tùy chọn): Tổng số bản ghi (chỉ trả về khi cần hiển thị trên giao diện như số bài đã lưu).
+
+### 4.4. Yêu Cầu Chỉ Mục CSDL PostgreSQL (Database Indexing Blueprint)
+
+Trong file migration SQL tiếp theo, toàn bộ các bảng danh sách phải được tạo Composite Index hai cột theo thứ tự giảm dần:
+
+```sql
+-- Index tối ưu cho Feed khoảnh khắc & Tự hủy
+CREATE INDEX idx_moments_cursor ON public.moments (circle_id, is_archived, created_at DESC, id DESC);
+
+-- Index tối ưu cho Danh sách bài viết tạp chí
+CREATE INDEX idx_articles_cursor ON public.articles (is_public, created_at DESC, id DESC);
+
+-- Index tối ưu cho Lịch sử chat 1-1
+CREATE INDEX idx_chat_messages_cursor ON public.chat_messages (sender_id, recipient_id, sent_at DESC, id DESC);
+
+-- Index tối ưu cho Danh sách đã lưu (Bookmarks)
+CREATE INDEX idx_saved_items_cursor ON public.saved_items (user_id, created_at DESC, id DESC);
+```
+
+### 4.5. Mẫu Hình Triển Khai Phía Client Flutter (Infinite Scroll Pattern)
+
+Phía Client (Flutter) áp dụng mẫu hình chuẩn tự động kích hoạt tải thêm khi người dùng cuộn gần tới đáy:
+
+```dart
+class PagingScrollManager {
+  final ScrollController scrollController;
+  final Future<void> Function() onLoadMore;
+  final double thresholdPixels;
+
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
+
+  PagingScrollManager({
+    required this.scrollController,
+    required this.onLoadMore,
+    this.thresholdPixels = 200.0,
+  }) {
+    scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_isLoadingMore || !_hasMore) return;
+    final maxScroll = scrollController.position.maxScrollExtent;
+    final currentScroll = scrollController.position.pixels;
+
+    // Kích hoạt tải thêm khi còn cách đáy danh sách 200px
+    if (maxScroll - currentScroll <= thresholdPixels) {
+      _executeLoadMore();
+    }
+  }
+
+  Future<void> _executeLoadMore() async {
+    _isLoadingMore = true;
+    try {
+      await onLoadMore();
+    } finally {
+      _isLoadingMore = false;
+    }
+  }
+
+  void updateHasMore(bool hasMore) => _hasMore = hasMore;
+  void dispose() => scrollController.removeListener(_onScroll);
+}
+```
+
+- **Trải nghiệm Calm tĩnh lặng**:
+  - Không hiện pop-up phiền toái.
+  - Ở đáy danh sách khi `isLoadingMore == true`: chỉ hiển thị một vạch xoay nhẹ nhàng `SizedBox(height: 24, child: CircularProgressIndicator(strokeWidth: 2))`.
+  - Khi `hasMore == false`: hiển thị dòng kết thúc tĩnh lặng: *"Đã đọc hết nội dung gần đây · Không còn mục cũ hơn."*
+  - Kéo từ trên xuống (Pull-to-refresh) bằng `RefreshIndicator` để làm mới danh sách và đưa cursor về đầu trang.
+
+### 4.6. Bảng Ma Trận Tái Sử Dụng Trên Cả 4 Ứng Dụng Constellation
+
+| Ứng dụng | Danh mục áp dụng phân trang Lazy Load | Khóa con trỏ (Cursor Key) | Hạn mức trang (Page Limit) |
+|---|---|---|---|
+| **Quire** | Bảng tin Khoảnh khắc, Danh sách bài viết Đọc, Kệ sách Khám phá, Hộp thư Chat, Danh sách Đã lưu | `(created_at, id)` | 15–20 mục |
+| **Dream Journal** | Dòng thời gian Giấc mơ (Dream Timeline), Danh sách tệp đính kèm âm thanh/hình ảnh | `(recorded_date, id)` | 10–15 giấc mơ |
+| **Astraea** | Lịch sử trải bài Tarot (Tarot Reading Logs), Danh sách câu hỏi chiêm nghiệm | `(spread_date, id)` | 12 phiên trải bài |
+| **After Midnight** | Khoảng không tản văn đêm (00:00–05:00), Kho lưu trữ thư niêm phong | `(midnight_timestamp, id)` | 10 tản văn |

@@ -69,9 +69,9 @@
       "entityType": "doc",
       "entityId": "doc-c7681defdbceda03bc7b25cc2d298cdc",
       "path": "docs/architecture/backend-api-requirements-data-contract-derived-from-quire-client.md",
-      "hash": "19e9350d14f8a799f958cbd044a11d89a0cbef70e68c1b86e67cff6e6aa97f62",
-      "revision": 1,
-      "headHash": "19e9350d14f8a799f958cbd044a11d89a0cbef70e68c1b86e67cff6e6aa97f62"
+      "hash": "a6cbb335366d212147f567d3b2dc50d26c43f0a5aa3da8c40bb2f0daa1a97cb1",
+      "revision": 2,
+      "headHash": "a6cbb335366d212147f567d3b2dc50d26c43f0a5aa3da8c40bb2f0daa1a97cb1"
     },
     "doc:doc-d01c2d8cf93b6e1eaabf3c7471bac766": {
       "entityType": "doc",
