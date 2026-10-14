@@ -229,6 +229,31 @@ services:
     networks:
       - supabase-net
 
+  # ---------------------------------------------------------------------------
+  # Golang BFF Wrapper & Business Logic Engine
+  # ---------------------------------------------------------------------------
+  bff:
+    build:
+      context: ../go_service
+      dockerfile: Dockerfile
+    container_name: supabase-bff
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${BFF_PORT:-8000}:8000"
+    environment:
+      PORT: "8000"
+      DATABASE_URL: "postgres://postgres:${POSTGRES_PASSWORD}@db:5432/postgres?sslmode=disable"
+      JWT_SECRET: ${JWT_SECRET}
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_KEY: ${SERVICE_ROLE_KEY}
+      STORAGE_BUCKET: quire-moments
+    networks:
+      - supabase-net
 networks:
   supabase-net:
     name: supabase-net

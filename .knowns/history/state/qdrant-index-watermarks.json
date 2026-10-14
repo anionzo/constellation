@@ -35,6 +35,15 @@
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true
   },
+  "doc:doc-649a9b7e9cf60c17080bdd94ba1a8c83": {
+    "entityType": "doc",
+    "entityId": "doc-649a9b7e9cf60c17080bdd94ba1a8c83",
+    "canonicalHash": "40331906f64027c6ab101fad68005e68c102aba3f68ec34ee486c055e821db8d",
+    "revision": 4,
+    "path": "docs/specs/2026-10-14/golang-bff-service-implementation-supabase-extended-schema.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
   "doc:doc-79f050e92aaee5305383558ed0ca66d4": {
     "entityType": "doc",
     "entityId": "doc-79f050e92aaee5305383558ed0ca66d4",
@@ -98,6 +107,15 @@
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true
   },
+  "task:DFA-04305S": {
+    "entityType": "task",
+    "entityId": "DFA-04305S",
+    "canonicalHash": "ba228f671ed4a82b7193bbfaf371e43847a3efb3bca3b72092ee26a995714c36",
+    "revision": 4,
+    "path": "tasks/DFA-04305S.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
   "task:DFA-25QN1F": {
     "entityType": "task",
     "entityId": "DFA-25QN1F",
@@ -134,6 +152,15 @@
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true
   },
+  "task:DFA-DZ8N53": {
+    "entityType": "task",
+    "entityId": "DFA-DZ8N53",
+    "canonicalHash": "2956c08a24067ef594fdea01c5645f87545fcd1ad2729d11d0b6efa1728006b3",
+    "revision": 4,
+    "path": "tasks/DFA-DZ8N53.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
   "task:DFA-GG2JT0": {
     "entityType": "task",
     "entityId": "DFA-GG2JT0",
@@ -149,6 +176,24 @@
     "canonicalHash": "b4d519cfc2a01771353c1b243c249b8d1813b46a9d55c9457a7a9e545265695c",
     "revision": 4,
     "path": "tasks/DFA-GYPHZQ.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:DFA-JHW64Y": {
+    "entityType": "task",
+    "entityId": "DFA-JHW64Y",
+    "canonicalHash": "ff1a16a4c055c414fb48dfc1249aeeae7152251896fc7ad29b0d6b249c827d1c",
+    "revision": 4,
+    "path": "tasks/DFA-JHW64Y.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:DFA-M1267Q": {
+    "entityType": "task",
+    "entityId": "DFA-M1267Q",
+    "canonicalHash": "174e69d6817bd87d889b24d40eed2182df58ab59b575ac0f5bedbe3b143f56e3",
+    "revision": 5,
+    "path": "tasks/DFA-M1267Q.md",
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true
   },
