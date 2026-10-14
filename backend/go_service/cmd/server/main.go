@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"constellation/backend/go_service/internal/config"
 	"constellation/backend/go_service/internal/handler"
@@ -18,8 +21,20 @@ import (
 func main() {
 	cfg := config.LoadConfig()
 
-	// Initialize repository layer (MemoryRepository baseline, ready for pgx connection)
-	repo := repository.NewMemoryRepository()
+	// Initialize repository: attempt PostgreSQL first, fallback to MemoryRepository gracefully
+	var repo repository.Repository
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	if err == nil && pool.Ping(ctx) == nil {
+		log.Println("[Constellation BFF] Connected successfully to PostgreSQL database pool.")
+		repo = repository.NewPostgresRepository(pool)
+	} else {
+		log.Println("[Constellation BFF] PostgreSQL unavailable, using in-memory repository baseline.")
+		repo = repository.NewMemoryRepository()
+	}
+
 	h := handler.NewHandler(repo, cfg)
 
 	r := chi.NewRouter()
