@@ -24,6 +24,7 @@ class _PublishArticleSheetState extends State<PublishArticleSheet> {
   String _selectedCategory = 'Tản văn';
   final List<String> _categories = ['Tản văn', 'Kiến trúc', 'Nội thất', 'Du lịch', 'Nghệ thuật', 'Triết học'];
   Uint8List? _coverBytes;
+  bool _isPublic = true;
   String _errorMessage = '';
 
   @override
@@ -71,6 +72,7 @@ class _PublishArticleSheetState extends State<PublishArticleSheet> {
       date: 'Vừa xong',
       imageUrl: _coverBytes != null ? '' : 'https://picsum.photos/seed/article_${DateTime.now().millisecond}/800/500',
       coverBytes: _coverBytes,
+      isPublic: _isPublic,
     );
 
     widget.onArticlePublished(newArticle);
@@ -199,6 +201,53 @@ class _PublishArticleSheetState extends State<PublishArticleSheet> {
                 ),
                 const SizedBox(height: 20),
 
+                // Audience Scope Selector (Public vs Close Friends)
+                Text('PHẠM VI NGƯỜI ĐỌC', style: QuireTokens.eyebrow(isDark: isDark)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  children: [
+                    ChoiceChip(
+                      avatar: Icon(_isPublic ? Icons.public : Icons.public_outlined, size: 16),
+                      label: const Text('Tất cả mọi người (Công khai)'),
+                      selected: _isPublic,
+                      onSelected: (_) => setState(() => _isPublic = true),
+                      backgroundColor: surfaceColor,
+                      selectedColor: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
+                      labelStyle: TextStyle(
+                        fontFamily: QuireTokens.fontMono,
+                        fontSize: 11,
+                        fontWeight: _isPublic ? FontWeight.bold : FontWeight.normal,
+                        color: _isPublic ? QuireTokens.accentInkLight : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999), side: BorderSide(color: _isPublic ? QuireTokens.accentLight : ruleColor)),
+                    ),
+                    ChoiceChip(
+                      avatar: Icon(!_isPublic ? Icons.people : Icons.people_outline, size: 16),
+                      label: const Text('Chỉ vòng bạn bè (Riêng tư)'),
+                      selected: !_isPublic,
+                      onSelected: (_) => setState(() => _isPublic = false),
+                      backgroundColor: surfaceColor,
+                      selectedColor: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
+                      labelStyle: TextStyle(
+                        fontFamily: QuireTokens.fontMono,
+                        fontSize: 11,
+                        fontWeight: !_isPublic ? FontWeight.bold : FontWeight.normal,
+                        color: !_isPublic ? QuireTokens.accentInkLight : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999), side: BorderSide(color: !_isPublic ? QuireTokens.accentLight : ruleColor)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _isPublic
+                      ? '🌐 Tất cả mọi người (kể cả chưa kết bạn) đều có thể tìm và đọc bài viết này.'
+                      : '🔒 Chỉ những người bạn trong vòng thân thiết của bạn mới đọc được.',
+                  style: QuireTokens.meta(isDark: isDark).copyWith(fontSize: 10),
+                ),
+                const SizedBox(height: 20),
                 // Title Input
                 Text('TIÊU ĐỀ BÀI VIẾT', style: QuireTokens.eyebrow(isDark: isDark)),
                 const SizedBox(height: 6),

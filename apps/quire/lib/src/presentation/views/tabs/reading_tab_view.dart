@@ -16,6 +16,7 @@ class ArticleItem {
   bool isBookmarked;
   int likes;
   bool isLiked;
+  final bool isPublic;
 
   ArticleItem({
     required this.id,
@@ -30,6 +31,7 @@ class ArticleItem {
     this.isBookmarked = false,
     this.likes = 12,
     this.isLiked = false,
+    this.isPublic = true,
   });
 }
 
@@ -41,7 +43,7 @@ class ReadingTabView extends StatefulWidget {
 }
 
 class _ReadingTabViewState extends State<ReadingTabView> {
-  bool _showOnlyBookmarked = false;
+  int _filterIndex = 0; // 0: Tất cả, 1: Công khai, 2: Vòng bạn bè, 3: Đã lưu
   final List<ArticleItem> _articles = [
     ArticleItem(
       id: 'art_1',
@@ -364,42 +366,80 @@ Vilhelm Hammershøi vẽ những căn phòng vắng ở Copenhagen với gam mà
         ),
         const SizedBox(height: 4),
 
-        // Filter Chips
-        Row(
-          children: [
-            ChoiceChip(
-              label: const Text('Tất cả'),
-              selected: !_showOnlyBookmarked,
-              onSelected: (_) => setState(() => _showOnlyBookmarked = false),
-              selectedColor: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
-              labelStyle: TextStyle(
-                fontFamily: QuireTokens.fontMono,
-                fontSize: 11,
-                fontWeight: !_showOnlyBookmarked ? FontWeight.bold : FontWeight.normal,
-                color: !_showOnlyBookmarked ? QuireTokens.accentInkLight : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+        // Filter Chips (All / Public / Circle / Saved)
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              ChoiceChip(
+                label: const Text('Tất cả'),
+                selected: _filterIndex == 0,
+                onSelected: (_) => setState(() => _filterIndex = 0),
+                selectedColor: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
+                labelStyle: TextStyle(
+                  fontFamily: QuireTokens.fontMono,
+                  fontSize: 11,
+                  fontWeight: _filterIndex == 0 ? FontWeight.bold : FontWeight.normal,
+                  color: _filterIndex == 0 ? QuireTokens.accentInkLight : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999), side: BorderSide(color: ruleColor)),
               ),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999), side: BorderSide(color: ruleColor)),
-            ),
-            const SizedBox(width: 8),
-            ChoiceChip(
-              label: Text('Đã lưu (${_articles.where((a) => a.isBookmarked).length})'),
-              selected: _showOnlyBookmarked,
-              onSelected: (_) => setState(() => _showOnlyBookmarked = true),
-              selectedColor: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
-              labelStyle: TextStyle(
-                fontFamily: QuireTokens.fontMono,
-                fontSize: 11,
-                fontWeight: _showOnlyBookmarked ? FontWeight.bold : FontWeight.normal,
-                color: _showOnlyBookmarked ? QuireTokens.accentInkLight : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                avatar: Icon(_filterIndex == 1 ? Icons.public : Icons.public_outlined, size: 14),
+                label: const Text('Công khai'),
+                selected: _filterIndex == 1,
+                onSelected: (_) => setState(() => _filterIndex = 1),
+                selectedColor: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
+                labelStyle: TextStyle(
+                  fontFamily: QuireTokens.fontMono,
+                  fontSize: 11,
+                  fontWeight: _filterIndex == 1 ? FontWeight.bold : FontWeight.normal,
+                  color: _filterIndex == 1 ? QuireTokens.accentInkLight : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999), side: BorderSide(color: ruleColor)),
               ),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999), side: BorderSide(color: ruleColor)),
-            ),
-          ],
+              const SizedBox(width: 8),
+              ChoiceChip(
+                avatar: Icon(_filterIndex == 2 ? Icons.people : Icons.people_outline, size: 14),
+                label: const Text('Vòng bạn bè'),
+                selected: _filterIndex == 2,
+                onSelected: (_) => setState(() => _filterIndex = 2),
+                selectedColor: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
+                labelStyle: TextStyle(
+                  fontFamily: QuireTokens.fontMono,
+                  fontSize: 11,
+                  fontWeight: _filterIndex == 2 ? FontWeight.bold : FontWeight.normal,
+                  color: _filterIndex == 2 ? QuireTokens.accentInkLight : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999), side: BorderSide(color: ruleColor)),
+              ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: Text('Đã lưu (${_articles.where((a) => a.isBookmarked).length})'),
+                selected: _filterIndex == 3,
+                onSelected: (_) => setState(() => _filterIndex = 3),
+                selectedColor: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
+                labelStyle: TextStyle(
+                  fontFamily: QuireTokens.fontMono,
+                  fontSize: 11,
+                  fontWeight: _filterIndex == 3 ? FontWeight.bold : FontWeight.normal,
+                  color: _filterIndex == 3 ? QuireTokens.accentInkLight : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999), side: BorderSide(color: ruleColor)),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
 
         // Articles Feed
-        ...(_showOnlyBookmarked ? _articles.where((a) => a.isBookmarked).toList() : _articles).map((article) {
+        ..._articles.where((a) {
+          if (_filterIndex == 1) return a.isPublic;
+          if (_filterIndex == 2) return !a.isPublic;
+          if (_filterIndex == 3) return a.isBookmarked;
+          return true;
+        }).map((article) {
           return Container(
             margin: const EdgeInsets.only(bottom: 20.0),
             decoration: BoxDecoration(

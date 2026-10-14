@@ -34,9 +34,10 @@ class QuireHomeScreen extends StatefulWidget {
 }
 
 class _QuireHomeScreenState extends State<QuireHomeScreen> {
-  int _currentTabIndex = 1; // Default to Moments tab
+  int _currentTabIndex = 0; // Default to Reading tab so users see the article compose banner immediately
 
   String _userName = 'Bạn';
+  String _username = '@ban.quire';
   String _userBio = 'Thành viên từ tháng 3 · Lisbon';
   Uint8List? _userAvatarBytes;
   late List<FriendChip> _friends;
@@ -59,9 +60,10 @@ class _QuireHomeScreenState extends State<QuireHomeScreen> {
     ];
   }
 
-  void _onProfileUpdated(String name, String bio, Uint8List? avatarBytes) {
+  void _onProfileUpdated(String name, String username, String bio, Uint8List? avatarBytes) {
     setState(() {
       if (name.isNotEmpty) _userName = name;
+      if (username.isNotEmpty) _username = username;
       if (bio.isNotEmpty) _userBio = bio;
       _userAvatarBytes = avatarBytes;
     });
@@ -106,6 +108,7 @@ class _QuireHomeScreenState extends State<QuireHomeScreen> {
                 friends: _friends,
                 currentUserEmail: widget.currentUserEmail,
                 currentUserName: _userName,
+                currentUsername: _username,
                 currentUserBio: _userBio,
                 currentUserAvatarBytes: _userAvatarBytes,
                 onProfileUpdated: _onProfileUpdated,

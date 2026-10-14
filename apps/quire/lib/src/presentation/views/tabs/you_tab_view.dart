@@ -1,7 +1,9 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../theme/quire_tokens.dart';
 import '../../theme/quire_theme.dart';
+import '../profile/friend_profile_sheet.dart';
+import '../chat/circle_chat_sheet.dart';
 import '../../../features/photo_upload/models/friend_chip.dart';
 import '../../../features/photo_upload/services/native_camera_gallery_service.dart';
 
@@ -10,9 +12,10 @@ class YouTabView extends StatefulWidget {
   final List<FriendChip> friends;
   final String currentUserEmail;
   final String currentUserName;
+  final String currentUsername;
   final String currentUserBio;
   final Uint8List? currentUserAvatarBytes;
-  final void Function(String name, String bio, Uint8List? avatarBytes)? onProfileUpdated;
+  final void Function(String name, String username, String bio, Uint8List? avatarBytes)? onProfileUpdated;
   final void Function(FriendChip newFriend)? onAddFriend;
   final void Function(String friendId)? onRemoveFriend;
   final VoidCallback? onSignOut;
@@ -23,6 +26,7 @@ class YouTabView extends StatefulWidget {
     required this.friends,
     this.currentUserEmail = 'Khách trải nghiệm',
     this.currentUserName = 'Bạn',
+    this.currentUsername = '@ban.quire',
     this.currentUserBio = 'Thành viên từ tháng 3 · Lisbon',
     this.currentUserAvatarBytes,
     this.onProfileUpdated,
@@ -30,6 +34,7 @@ class YouTabView extends StatefulWidget {
     this.onRemoveFriend,
     this.onSignOut,
   }) : super(key: key);
+
 
   @override
   State<YouTabView> createState() => _YouTabViewState();
@@ -47,8 +52,34 @@ class _YouTabViewState extends State<YouTabView> {
     super.dispose();
   }
 
+  void _openFriendProfile(FriendChip friend) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => FriendProfileSheet(
+        friend: friend,
+        hasUnreadStory: friend.name == 'Mai',
+        onOpenChat: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => CircleChatSheet(friend: friend),
+          );
+        },
+        onRemoveFriend: () {
+          widget.onRemoveFriend?.call(friend.id);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Đã gỡ ${friend.name} khỏi vòng bạn bè.')),
+          );
+        },
+      ),
+    );
+  }
   void _openEditProfileSheet() {
     final nameController = TextEditingController(text: widget.currentUserName);
+    final usernameController = TextEditingController(text: widget.currentUsername);
     final bioController = TextEditingController(text: widget.currentUserBio);
     Uint8List? selectedAvatar = widget.currentUserAvatarBytes;
 
@@ -157,6 +188,24 @@ class _YouTabViewState extends State<YouTabView> {
                     ),
                     const SizedBox(height: 16),
 
+                    // Username Input
+                    Text('TÊN ĐỊNH DANH (@USERNAME)', style: QuireTokens.eyebrow(isDark: isDark)),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                      decoration: BoxDecoration(
+                        color: surfaceColor,
+                        borderRadius: BorderRadius.circular(QuireTokens.rField),
+                        border: Border.all(color: ruleColor),
+                      ),
+                      child: TextField(
+                        controller: usernameController,
+                        style: TextStyle(fontFamily: QuireTokens.fontMono, fontWeight: FontWeight.bold, color: QuireTokens.accentLight),
+                        decoration: const InputDecoration(border: InputBorder.none),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
                     // Bio Input
                     Text('TIỂU SỬ & NƠI CHỐN', style: QuireTokens.eyebrow(isDark: isDark)),
                     const SizedBox(height: 6),
@@ -187,8 +236,11 @@ class _YouTabViewState extends State<YouTabView> {
                           elevation: 0,
                         ),
                         onPressed: () {
+                          var uname = usernameController.text.trim();
+                          if (!uname.startsWith('@')) uname = '@$uname';
                           widget.onProfileUpdated?.call(
                             nameController.text.trim(),
+                            uname,
                             bioController.text.trim(),
                             selectedAvatar,
                           );
@@ -333,11 +385,14 @@ class _YouTabViewState extends State<YouTabView> {
                                   ),
                                 ),
                               ),
-                              label: Text(
-                                f.name,
-                                style: TextStyle(
-                                  fontFamily: QuireTokens.fontSerif,
-                                  color: isDark ? QuireTokens.inkDark : QuireTokens.inkLight,
+                              label: InkWell(
+                                onTap: () => _openFriendProfile(f),
+                                child: Text(
+                                  f.name,
+                                  style: TextStyle(
+                                    fontFamily: QuireTokens.fontSerif,
+                                    color: isDark ? QuireTokens.inkDark : QuireTokens.inkLight,
+                                  ),
                                 ),
                               ),
                               deleteIcon: const Icon(Icons.close, size: 14),
@@ -405,6 +460,7 @@ class _YouTabViewState extends State<YouTabView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(widget.currentUserName, style: QuireTokens.h3(isDark: isDark)),
+                    Text(widget.currentUsername, style: TextStyle(fontFamily: QuireTokens.fontMono, fontSize: 11, fontWeight: FontWeight.bold, color: isDark ? QuireTokens.accentDark : QuireTokens.accentLight)),
                     const SizedBox(height: 2),
                     Text(widget.currentUserBio, style: QuireTokens.meta(isDark: isDark)),
                     const SizedBox(height: 4),
@@ -738,6 +794,16 @@ class _YouTabViewState extends State<YouTabView> {
                 leading: const Icon(Icons.bookmark, color: QuireTokens.accentLight),
                 title: Text('Nghệ thuật của gạch men azulejo ở Lisbon', style: QuireTokens.h3(isDark: isDark).copyWith(fontSize: 15)),
                 subtitle: Text('Inês Castro · Đã lưu hôm qua', style: QuireTokens.meta(isDark: isDark)),
+                trailing: IconButton(
+                  icon: const Icon(Icons.bookmark_remove_outlined, color: Color(0xFFC13832), size: 20),
+                  tooltip: 'Bỏ lưu',
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Đã bỏ lưu bài viết khỏi Thư viện!')),
+                    );
+                  },
+                ),
               ),
               const Divider(),
               ListTile(
@@ -745,8 +811,17 @@ class _YouTabViewState extends State<YouTabView> {
                 leading: const Icon(Icons.bookmark, color: QuireTokens.accentLight),
                 title: Text('Những thư viện im lặng ở cố đô Kyoto', style: QuireTokens.h3(isDark: isDark).copyWith(fontSize: 15)),
                 subtitle: Text('Kenji Sato · Đã lưu tuần trước', style: QuireTokens.meta(isDark: isDark)),
+                trailing: IconButton(
+                  icon: const Icon(Icons.bookmark_remove_outlined, color: Color(0xFFC13832), size: 20),
+                  tooltip: 'Bỏ lưu',
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Đã bỏ lưu bài viết khỏi Thư viện!')),
+                    );
+                  },
+                ),
               ),
-              const SizedBox(height: 16),
             ],
           ),
         );
@@ -813,14 +888,29 @@ class _YouTabViewState extends State<YouTabView> {
                         ],
                       ),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Đã khôi phục khoảnh khắc lên bảng tin thành công!')),
-                        );
-                      },
-                      child: const Text('Khôi phục'),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Đã khôi phục khoảnh khắc lên bảng tin thành công!')),
+                            );
+                          },
+                          child: const Text('Khôi phục'),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFC13832)),
+                          tooltip: 'Xóa vĩnh viễn',
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Đã xóa vĩnh viễn khoảnh khắc khỏi kho lưu trữ.')),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -962,9 +1052,10 @@ class _YouTabViewState extends State<YouTabView> {
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(QuireTokens.rBtn)),
                                   elevation: 0,
                                 ),
-                                onPressed: () {
+                                onPressed: () async {
+                                  await Clipboard.setData(ClipboardData(text: inviteUrl));
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Đã sao chép liên kết mời: $inviteUrl')),
+                                    SnackBar(content: Text('Đã sao chép liên kết mời vào bộ nhớ tạm: $inviteUrl')),
                                   );
                                 },
                                 icon: const Icon(Icons.copy_rounded, size: 16),
