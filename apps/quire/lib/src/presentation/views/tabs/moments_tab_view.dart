@@ -452,15 +452,23 @@ class _MomentsTabViewState extends State<MomentsTabView> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('QUIRE · KHOẢNH KHẮC', style: QuireTokens.eyebrow(isDark: isDark)),
-                const SizedBox(height: 4),
-                Text('Từ những người bạn quen', style: QuireTokens.title(isDark: isDark)),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('QUIRE · KHOẢNH KHẮC', style: QuireTokens.eyebrow(isDark: isDark)),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Từ những người bạn quen',
+                    style: QuireTokens.title(isDark: isDark),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
                   icon: const Icon(Icons.chat_bubble_outline, size: 22),

@@ -465,13 +465,13 @@ class _YouTabViewState extends State<YouTabView> {
           ),
           child: Column(
             children: [
-              _buildQuickRow('Đã lưu (Saved)', '9 bài viết & bộ sưu tập', 'https://picsum.photos/seed/saved_thumb/120/120', ruleColor, isDark),
+              _buildQuickRow('Đã lưu (Saved)', '9 bài viết & bộ sưu tập', 'https://picsum.photos/seed/saved_thumb/120/120', ruleColor, isDark, onTap: _openSavedSheet),
               Divider(height: 1, indent: 68, color: ruleColor),
-              _buildQuickRow('Khoảnh khắc của bạn', '12 đã chia sẻ · 4 tuần này', 'https://picsum.photos/seed/shared_thumb/120/120', ruleColor, isDark),
+              _buildQuickRow('Khoảnh khắc của bạn', '12 đã chia sẻ · 4 tuần này', 'https://picsum.photos/seed/shared_thumb/120/120', ruleColor, isDark, onTap: _openMyArchiveSheet),
               Divider(height: 1, indent: 68, color: ruleColor),
-              _buildQuickRow('Lịch sử đọc', 'Bốn bài tháng này', 'https://picsum.photos/seed/history_thumb/120/120', ruleColor, isDark),
+              _buildQuickRow('Lịch sử đọc', 'Bốn bài tháng này', 'https://picsum.photos/seed/history_thumb/120/120', ruleColor, isDark, onTap: _openHistorySheet),
               Divider(height: 1, indent: 68, color: ruleColor),
-              _buildQuickRow('Mời bạn thân', 'Còn ba lời mời kết nối', 'https://picsum.photos/seed/invite_thumb/120/120', ruleColor, isDark),
+              _buildQuickRow('Mời bạn thân', 'Còn ba lời mời kết nối', 'https://picsum.photos/seed/invite_thumb/120/120', ruleColor, isDark, onTap: _openInviteSheet),
             ],
           ),
         ),
@@ -703,7 +703,237 @@ class _YouTabViewState extends State<YouTabView> {
     );
   }
 
-  Widget _buildQuickRow(String title, String subtitle, String imageUrl, Color ruleColor, bool isDark) {
+  void _openSavedSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final bgColor = isDark ? QuireTokens.paperDark : QuireTokens.paperLight;
+        final ruleColor = isDark ? QuireTokens.ruleDark : QuireTokens.ruleLight;
+
+        return Container(
+          padding: const EdgeInsets.all(24.0),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(QuireTokens.rSheet)),
+            border: Border.all(color: ruleColor),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('THƯ VIỆN LƯU TRỮ', style: QuireTokens.eyebrow(isDark: isDark)),
+                  IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(ctx)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text('Bài viết & Khoảnh khắc đã lưu', style: QuireTokens.title(isDark: isDark)),
+              const SizedBox(height: 16),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.bookmark, color: QuireTokens.accentLight),
+                title: Text('Nghệ thuật của gạch men azulejo ở Lisbon', style: QuireTokens.h3(isDark: isDark).copyWith(fontSize: 15)),
+                subtitle: Text('Inês Castro · Đã lưu hôm qua', style: QuireTokens.meta(isDark: isDark)),
+              ),
+              const Divider(),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.bookmark, color: QuireTokens.accentLight),
+                title: Text('Những thư viện im lặng ở cố đô Kyoto', style: QuireTokens.h3(isDark: isDark).copyWith(fontSize: 15)),
+                subtitle: Text('Kenji Sato · Đã lưu tuần trước', style: QuireTokens.meta(isDark: isDark)),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _openMyArchiveSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final bgColor = isDark ? QuireTokens.paperDark : QuireTokens.paperLight;
+        final ruleColor = isDark ? QuireTokens.ruleDark : QuireTokens.ruleLight;
+
+        return Container(
+          padding: const EdgeInsets.all(24.0),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(QuireTokens.rSheet)),
+            border: Border.all(color: ruleColor),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('KỶ NIỆM RIÊNG CỦA BẠN', style: QuireTokens.eyebrow(isDark: isDark)),
+                  IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(ctx)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text('Khoảnh khắc lưu trữ', style: QuireTokens.title(isDark: isDark)),
+              const SizedBox(height: 8),
+              Text(
+                'Những khoảnh khắc đã tự động ẩn khỏi bảng tin của bạn bè sau thời hạn tự huỷ. Dữ liệu kỷ niệm của bạn luôn được bảo toàn nguyên vẹn.',
+                style: QuireTokens.body(isDark: isDark),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark ? QuireTokens.surfaceDark : QuireTokens.surfaceLight,
+                  borderRadius: BorderRadius.circular(QuireTokens.rCard),
+                  border: Border.all(color: ruleColor),
+                ),
+                child: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(QuireTokens.rPhoto),
+                      child: Image.network('https://picsum.photos/seed/archived_1/120/120', width: 56, height: 56, fit: BoxFit.cover),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Hoàng hôn bên bờ hồ', style: QuireTokens.h3(isDark: isDark).copyWith(fontSize: 14)),
+                          const SizedBox(height: 2),
+                          Text('Đã ẩn sau 30 ngày · Vẫn lưu an toàn', style: QuireTokens.meta(isDark: isDark)),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Đã khôi phục khoảnh khắc lên bảng tin thành công!')),
+                        );
+                      },
+                      child: const Text('Khôi phục'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _openHistorySheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final bgColor = isDark ? QuireTokens.paperDark : QuireTokens.paperLight;
+        final ruleColor = isDark ? QuireTokens.ruleDark : QuireTokens.ruleLight;
+
+        return Container(
+          padding: const EdgeInsets.all(24.0),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(QuireTokens.rSheet)),
+            border: Border.all(color: ruleColor),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('LỊCH SỬ ĐỌC BÀI', style: QuireTokens.eyebrow(isDark: isDark)),
+                  IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(ctx)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text('Bốn bài đã đọc xong', style: QuireTokens.title(isDark: isDark)),
+              const SizedBox(height: 8),
+              Text('Không còn bài nào chờ. Bạn đã đọc trọn vẹn và tĩnh lặng trong tháng này.', style: QuireTokens.body(isDark: isDark)),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _openInviteSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final bgColor = isDark ? QuireTokens.paperDark : QuireTokens.paperLight;
+        final ruleColor = isDark ? QuireTokens.ruleDark : QuireTokens.ruleLight;
+
+        return Container(
+          padding: const EdgeInsets.all(24.0),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(QuireTokens.rSheet)),
+            border: Border.all(color: ruleColor),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('KẾT NỐI VÒNG BẠN BÈ', style: QuireTokens.eyebrow(isDark: isDark)),
+                  IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(ctx)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text('Mời bạn thân gia nhập', style: QuireTokens.title(isDark: isDark)),
+              const SizedBox(height: 8),
+              Text('Vòng tròn thân mật giới hạn từ 4 đến 11 người. Bạn còn 3 lời mời kết nối.', style: QuireTokens.body(isDark: isDark)),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: isDark ? QuireTokens.surfaceDark : QuireTokens.surfaceLight,
+                  borderRadius: BorderRadius.circular(QuireTokens.rField),
+                  border: Border.all(color: ruleColor),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('QUIRE-LISBON-2026', style: TextStyle(fontFamily: QuireTokens.fontMono, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã sao chép mã mời vào bộ nhớ tạm!')));
+                      },
+                      child: const Text('Sao chép'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildQuickRow(String title, String subtitle, String imageUrl, Color ruleColor, bool isDark, {VoidCallback? onTap}) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       leading: ClipRRect(
@@ -724,7 +954,7 @@ class _YouTabViewState extends State<YouTabView> {
       title: Text(title, style: QuireTokens.h3(isDark: isDark).copyWith(fontSize: 15)),
       subtitle: Text(subtitle, style: QuireTokens.meta(isDark: isDark)),
       trailing: const Icon(Icons.chevron_right, size: 18),
-      onTap: () {},
+      onTap: onTap,
     );
   }
 }

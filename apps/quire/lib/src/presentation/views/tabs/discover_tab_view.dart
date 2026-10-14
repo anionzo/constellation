@@ -169,14 +169,18 @@ class _DiscoverTabViewState extends State<DiscoverTabView> {
     return filtered.map((item) {
       return Container(
         margin: const EdgeInsets.only(bottom: 14.0),
-        padding: const EdgeInsets.all(12.0),
         decoration: BoxDecoration(
           color: surfaceColor,
           borderRadius: BorderRadius.circular(QuireTokens.rCard),
           border: Border.all(color: ruleColor),
         ),
-        child: Row(
-          children: [
+        child: InkWell(
+          borderRadius: BorderRadius.circular(QuireTokens.rCard),
+          onTap: () => _openArticleDetail(context, item),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(QuireTokens.rPhoto),
               child: Image.network(
@@ -217,8 +221,84 @@ class _DiscoverTabViewState extends State<DiscoverTabView> {
               ),
             ),
           ],
+            ),
+          ),
         ),
       );
     }).toList();
+  }
+
+  void _openArticleDetail(BuildContext context, Map<String, String> item) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final bgColor = isDark ? QuireTokens.paperDark : QuireTokens.paperLight;
+        final ruleColor = isDark ? QuireTokens.ruleDark : QuireTokens.ruleLight;
+
+        return DraggableScrollableSheet(
+          initialChildSize: 0.94,
+          minChildSize: 0.5,
+          maxChildSize: 0.98,
+          builder: (_, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(QuireTokens.rSheet)),
+                border: Border.all(color: ruleColor),
+              ),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(icon: const Icon(Icons.arrow_back, size: 20), onPressed: () => Navigator.pop(ctx)),
+                        Text(item['readTime']!.toUpperCase(), style: QuireTokens.meta(isDark: isDark)),
+                        IconButton(icon: const Icon(Icons.bookmark_border), onPressed: () {}),
+                      ],
+                    ),
+                  ),
+                  Divider(height: 1, color: ruleColor),
+                  Expanded(
+                    child: ListView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+                      children: [
+                        Text(item['title']!, style: QuireTokens.title(isDark: isDark).copyWith(fontSize: 26, height: 1.25)),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Text(item['author']!, style: QuireTokens.meta(isDark: isDark)),
+                            Text(' · ', style: TextStyle(color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light)),
+                            Text(item['category']!, style: QuireTokens.meta(isDark: isDark)),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(QuireTokens.rPhoto),
+                          child: Image.network(item['imageUrl']!, height: 220, fit: BoxFit.cover),
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          '''Không gian yên tĩnh mở ra giữa những thanh âm của ngày mới. Từng chi tiết trong bài viết này được chọn lọc để bạn thưởng thức với tốc độ của riêng mình, không bị giục giã hay phân tâm.
+
+Khi đọc chậm lại, ta nhận ra rằng những điều giá trị nhất thường ẩn mình trong những góc khuất giản dị nhất của cuộc sống.''',
+                          style: QuireTokens.body(isDark: isDark).copyWith(fontSize: 16, height: 1.7),
+                        ),
+                        const SizedBox(height: 48),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 }

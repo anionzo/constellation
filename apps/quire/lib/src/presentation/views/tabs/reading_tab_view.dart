@@ -322,7 +322,47 @@ Vilhelm Hammershøi vẽ những căn phòng vắng ở Copenhagen với gam mà
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
+
+        // Prominent Article Creation Banner
+        InkWell(
+          onTap: _openPublishSheet,
+          borderRadius: BorderRadius.circular(QuireTokens.rCard),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            decoration: BoxDecoration(
+              color: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
+              borderRadius: BorderRadius.circular(QuireTokens.rCard),
+              border: Border.all(color: isDark ? QuireTokens.accentDark : QuireTokens.accentLight, width: 1.2),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                    color: QuireTokens.accentLight,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.edit_note_rounded, size: 20, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('SOẠN BÀI VIẾT MỚI', style: TextStyle(fontFamily: QuireTokens.fontMono, fontSize: 10, fontWeight: FontWeight.bold, color: isDark ? QuireTokens.accentDark : QuireTokens.accentInkLight)),
+                      const SizedBox(height: 2),
+                      Text('Chia sẻ câu chuyện & góc nhìn của bạn', style: QuireTokens.h3(isDark: isDark).copyWith(fontSize: 14.5)),
+                    ],
+                  ),
+                ),
+                Icon(Icons.arrow_forward_ios, size: 14, color: isDark ? QuireTokens.accentDark : QuireTokens.accentInkLight),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
 
         // Filter Chips
         Row(
