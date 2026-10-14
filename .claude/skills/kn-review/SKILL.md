@@ -15,7 +15,10 @@ Post-implementation quality review. Run after `kn-implement`, before `kn-commit`
 
 - After implementing a task, before committing
 - When user says "review my code", "check this", "review before commit"
+- As the review step inside `/kn-flow` after each task or integrated wave
 - As part of `/kn-go` pipeline (optional — can be enabled)
+
+If the user asks to review and finish a whole approved spec or task wave, route to `/kn-flow @doc/<spec-path>` so review is paired with implementation and combined verification.
 
 ## Inputs
 
@@ -31,17 +34,23 @@ git diff
 
 If task ID provided:
 ```json
-mcp__knowns__get_task({ "taskId": "$ARGUMENTS" })
+mcp_knowns_tasks({ "action": "get", "taskId": "$ARGUMENTS" })
 ```
 
 If task has spec:
 ```json
-mcp__knowns__get_doc({ "path": "<spec-path>", "smart": true })
+mcp_knowns_docs({ "action": "get", "path": "<spec-path>", "smart": true })
+```
+
+Read the linked spec's full `Locked Decisions` section, then retrieve only relevant current System Decisions:
+```json
+mcp_knowns_search({ "action": "retrieve", "query": "<task + feature area>",
+  "sourceTypes": ["decision"], "status": "accepted", "includeHistorical": false, "limit": 8 })
 ```
 
 Search for relevant conventions and past review patterns:
 ```json
-mcp__knowns__search({ "query": "<feature area>", "type": "memory" })
+mcp_knowns_search({ "action": "search", "query": "<feature area>", "type": "memory" })
 ```
 
 ---
@@ -79,6 +88,10 @@ Review the diff from 4 perspectives. For each, produce findings with severity.
 - Integration gaps — new code not wired into existing flows
 - Stubs or TODOs left in code
 - ACs from task not fully met (if task provided)
+- Missing, incomplete, or contradicted `Spec Decision Compliance` markers for the linked spec (P1 when the task would otherwise be approved)
+- Missing `System Decision Impact: none — <reason>` or `System Decision Impact: candidate @decision/<id> (added|changed|removed) — <summary>` on an in-review/done task (P1 when the task would otherwise be approved)
+- A positive System Decision impact has no persisted candidate, lacks task/spec/source provenance, or treats a draft/replacement as current before explicit verified human resolution
+- A workflow created Memory category `decision`, or copied Spec Locked Decisions into the System Decision ledger
 
 ---
 
@@ -137,6 +150,7 @@ Do NOT proceed to commit. Do NOT offer to skip P1.
 >
 > Options:
 > - Fix P2s now, then `/kn-commit`
+> - If running inside `/kn-flow`, return to the flow after fixing or explicitly deferring P2s
 > - Commit as-is: `/kn-commit`
 > - Create follow-up task for P2s
 
@@ -153,8 +167,7 @@ Do NOT proceed to commit. Do NOT offer to skip P1.
 If P2 findings are deferred, create a follow-up task:
 
 ```json
-mcp__knowns__create_task({
-  "title": "Review follow-up: <summary>",
+mcp_knowns_tasks({ "action": "create", "title": "Review follow-up: <summary>",
   "description": "P2 findings from review of task-<id>:\n- Finding 1\n- Finding 2",
   "priority": "low",
   "labels": ["review-followup"]
@@ -198,6 +211,7 @@ For `kn-review`, the key details should cover:
 
 ## Related Skills
 
+- `/kn-flow @doc/<spec-path>` — orchestrate review as part of full spec/task-wave execution
 - `/kn-implement <id>` — implement before review
 - `/kn-commit` — commit after review passes
 - `/kn-verify` — SDD-level verification (broader than code review)
@@ -208,6 +222,10 @@ For `kn-review`, the key details should cover:
 - [ ] Findings triaged by severity
 - [ ] P1 findings block commit
 - [ ] Artifact verification done (if spec linked)
+- [ ] Every linked Spec Decision was assessed and no conflict was hidden
+- [ ] System Decision Impact marker is explicit and any candidate ref resolves with required provenance
+- [ ] No new legacy Decision Memory or duplicated Spec Decision row was introduced
+- [ ] Returned control to `/kn-flow` when reviewing inside an active flow
 - [ ] Next step suggested
 
 ## Red Flags
@@ -217,3 +235,6 @@ For `kn-review`, the key details should cover:
 - Not checking the actual diff (reviewing from memory)
 - Severity inflation — calling everything P1
 - Skipping security perspective
+- Reviewing one task as if the whole spec is complete when `/kn-flow` is needed
+- Approving a task without an explicit System Decision Impact marker
+- Accepting a Decision candidate automatically as part of implementation

@@ -1,11 +1,15 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:local_sync/local_sync.dart';
 import 'package:media_storage/media_storage.dart';
+import 'package:version_gate/version_gate.dart';
 import 'src/presentation/theme/quire_tokens.dart';
+import 'src/presentation/theme/quire_theme.dart';
+import 'src/presentation/views/force_update_view.dart';
+import 'src/presentation/views/calm_auth_view.dart';
 import 'src/presentation/views/quire_home_screen.dart';
 import 'src/features/photo_upload/services/quire_moment_uploader.dart';
+import 'src/features/version_gate/dispatcher_sync_lock_bridge.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,30 +29,186 @@ void main() {
   runApp(const QuireApp());
 }
 
-class QuireApp extends StatelessWidget {
-  const QuireApp({Key? key}) : super(key: key);
+class QuireApp extends StatefulWidget {
+  final VersionGateManager? versionGateManager;
+  final QuireMomentUploader? momentUploader;
+  final SyncDispatcher? syncDispatcher;
+  final ThemeController? themeController;
+
+  const QuireApp({
+    Key? key,
+    this.versionGateManager,
+    this.momentUploader,
+    this.syncDispatcher,
+    this.themeController,
+  }) : super(key: key);
+
+  @override
+  State<QuireApp> createState() => _QuireAppState();
+}
+
+class _QuireAppState extends State<QuireApp> with WidgetsBindingObserver {
+  late final VersionGateManager _versionGateManager;
+  late final QuireMomentUploader _momentUploader;
+  late final SyncDispatcher _syncDispatcher;
+  late final ThemeController _themeController;
+  VersionGateStatus? _currentGateStatus;
+  bool _isAuthenticated = false;
+  String _currentUserEmail = 'Khách trải nghiệm';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    _momentUploader = widget.momentUploader ?? MockQuireMomentUploader();
+    _themeController = widget.themeController ?? ThemeController();
+    _themeController.addListener(_onThemeChanged);
+    _syncDispatcher = widget.syncDispatcher ??
+        SyncDispatcher(
+          store: _momentUploader.localStore,
+          isOnline: _momentUploader.isOnline,
+        );
+
+    // Register offline replay handler for Quire moments
+    _syncDispatcher.registerHandler(
+      'upload_quire_moment',
+      _momentUploader.handleReplaySync,
+    );
+
+    _versionGateManager = widget.versionGateManager ??
+        VersionGateManager(
+          currentAppVersion: SemVer.parse('1.0.0'),
+          platform: 'ios',
+          syncLockListener: DispatcherSyncLockBridge(_syncDispatcher),
+          repository: StaticSystemConfigRepository(
+            AppSystemConfig(
+              platform: 'ios',
+              minSupportedVersion: SemVer.parse('1.0.0'),
+              latestVersion: SemVer.parse('1.0.0'),
+              forceUpdateTitle: 'Cập nhật ứng dụng',
+              forceUpdateMessage: 'Phiên bản mới của Constellation đã sẵn sàng.',
+              updateUrl: 'https://apps.apple.com/app/constellation',
+              maintenanceMode: false,
+            ),
+          ),
+        );
+
+    _versionGateManager.statusStream.listen((status) {
+      if (mounted) {
+        setState(() {
+          _currentGateStatus = status;
+        });
+      }
+    });
+
+    // Hook 1: Cold Boot evaluation & background sync replay
+    _versionGateManager.onAppBoot().then((_) {
+      _syncDispatcher.dispatchPendingBatch();
+    });
+  }
+
+  @override
+  void dispose() {
+    _themeController.removeListener(_onThemeChanged);
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  void _onThemeChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Hook 2: Resumed from background & background sync replay
+    if (state == AppLifecycleState.resumed) {
+      _versionGateManager.onAppResume().then((_) {
+        _syncDispatcher.dispatchPendingBatch();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isBlocked = _currentGateStatus?.shouldBlockUI ?? false;
+
     return MaterialApp(
       title: 'Quire',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        scaffoldBackgroundColor: QuireTokens.paperLight,
-        fontFamily: QuireTokens.fontSerif,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: QuireTokens.accentLight,
-          surface: QuireTokens.surfaceLight,
-          background: QuireTokens.paperLight,
-        ),
-        useMaterial3: true,
-      ),
-      home: QuireHomeScreen(
-        momentUploader: MockQuireMomentUploader(),
-      ),
+      theme: QuireTheme.light(),
+      darkTheme: QuireTheme.dark(),
+      themeMode: _themeController.value,
+      home: isBlocked
+          ? _buildBlockedView()
+          : (!_isAuthenticated
+              ? CalmAuthView(
+                  onEnterAsGuest: () {
+                    setState(() {
+                      _isAuthenticated = true;
+                      _currentUserEmail = 'Khách trải nghiệm';
+                    });
+                  },
+                  onAuthenticated: (email) {
+                    setState(() {
+                      _isAuthenticated = true;
+                      _currentUserEmail = email;
+                    });
+                  },
+                )
+              : QuireHomeScreen(
+                  momentUploader: _momentUploader,
+                  themeController: _themeController,
+                  currentUserEmail: _currentUserEmail,
+                  onSignOut: () {
+                    setState(() {
+                      _isAuthenticated = false;
+                    });
+                  },
+                )),
     );
   }
+
+  Widget _buildBlockedView() {
+    final status = _currentGateStatus;
+    if (status is ForceUpdateStatus) {
+      return ForceUpdateView(
+        title: status.config.forceUpdateTitle,
+        message: status.config.forceUpdateMessage,
+        updateUrl: status.config.updateUrl,
+        isMaintenance: false,
+        onRetry: () => _versionGateManager.onAppBoot(),
+      );
+    } else if (status is MaintenanceStatus) {
+      return ForceUpdateView(
+        title: status.config.forceUpdateTitle,
+        message: status.config.maintenanceNotice ?? status.config.forceUpdateMessage,
+        updateUrl: status.config.updateUrl,
+        isMaintenance: true,
+        onRetry: () => _versionGateManager.onAppBoot(),
+      );
+    }
+    return const SizedBox.shrink();
+  }
 }
+
+/// Static / In-memory SystemConfigRepository for standalone execution and testing.
+class StaticSystemConfigRepository implements SystemConfigRepository {
+  final AppSystemConfig config;
+  const StaticSystemConfigRepository(this.config);
+
+  @override
+  AppSystemConfig? get cachedConfig => config;
+
+  @override
+  Future<AppSystemConfig> fetchConfig({required String platform}) async => config;
+
+  @override
+  Future<void> cacheConfig(AppSystemConfig config) async {}
+}
+
 
 /// Mock uploader for standalone execution and demonstration.
 class MockQuireMomentUploader extends QuireMomentUploader {

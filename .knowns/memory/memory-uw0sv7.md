@@ -3,6 +3,13 @@ id: uw0sv7
 title: 'Quyết định Backend & Storage: Supabase Self-Hosted (Docker), Chuẩn Upload Avatar & Cơ chế Version Gating'
 layer: project
 category: decision
+status: archived
+confidence: high
+lastVerified: '2026-09-29T10:47:09.043Z'
+ttlDays: 365
+sources:
+  - backend/supabase/migrations/01-init-schema.sql
+  - packages/version_gate/lib
 tags:
   - architecture
   - backend
@@ -13,7 +20,7 @@ tags:
   - version-gating
   - decision
 createdAt: '2026-09-24T16:22:04.752Z'
-updatedAt: '2026-09-24T16:22:04.752Z'
+updatedAt: '2026-09-29T10:47:09.043Z'
 ---
 
 Quyết định kiến trúc chính thức ngày 2026-09-24:

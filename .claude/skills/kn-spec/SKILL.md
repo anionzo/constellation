@@ -9,7 +9,7 @@ Create a specification document for a feature using SDD (Spec-Driven Development
 
 **Announce:** "Using kn-spec to create spec for [name]."
 
-**Core principle:** EXPLORE DECISIONS → SPEC → REVIEW → APPROVE → THEN PLAN TASKS.
+**Core principle:** EXPLORE DECISIONS -> SPEC -> REVIEW -> APPROVE -> THEN KN-FLOW OR TASK PLANNING.
 
 ## Inputs
 
@@ -18,6 +18,14 @@ Create a specification document for a feature using SDD (Spec-Driven Development
 - Related docs/tasks, if any
 - Optional: `--skip-explore` to jump straight to spec writing (for trivial features)
 
+## Spec Storage Convention
+
+- Create new specs under `specs/<yyyy-mm-dd>/<slug>` using today's date and a stable slug.
+- Keep the date in the folder, not the title: `specs/2026-06-17/lsp-runtime-wrapper`.
+- Use the exact spec path in all follow-up commands and task links.
+- Do not split a normal spec into `requirements.md`, `design.md`, and `tasks.md`. Keep one spec doc with sections; detailed execution belongs in Knowns Tasks.
+- If a spec already exists at `specs/<slug>`, keep using its existing path instead of moving it during normal spec work.
+
 ## Spec Quality Rules
 
 - Requirements must be testable
@@ -25,6 +33,21 @@ Create a specification document for a feature using SDD (Spec-Driven Development
 - Scenarios should cover happy path plus at least important edge cases
 - Open questions should stay explicit instead of being buried in prose
 - If background knowledge is too broad for the spec body, move it into a supporting doc and reference it
+- Keep task lists out of the spec body except for a short `Task Links` section after tasks are created
+
+## Spec Bypass Rule
+
+Do not create a spec just because the user invoked `kn-spec`.
+
+If the request is tiny, low ambiguity, and low risk, rule out a spec and recommend direct task creation:
+
+```text
+/kn-plan --new "<short work summary>"
+```
+
+Use this bypass for narrow copy/docs/config tweaks, small bug fixes, and low-risk maintenance that does not change product contracts, architecture, data, auth, external integrations, or cross-module behavior.
+
+If the tiny work reveals reusable knowledge, create or update a supporting doc/memory first, then recommend `/kn-plan --new ...`. If the user explicitly insists on a spec after the bypass recommendation, create a compact spec.
 
 ---
 
@@ -36,7 +59,8 @@ Extract decisions from the user BEFORE writing the spec. This prevents the agent
 
 Assess from the request + a quick project scan:
 
-- **Quick** — bounded, low ambiguity (rename a flag, tweak a label). Skip to Step 1 (or use `--skip-explore`).
+- **Tiny** — bounded, low ambiguity, low risk. Do not create a spec by default; recommend `/kn-plan --new "<summary>"`.
+- **Quick** — bounded but still worth a small spec due to user request, traceability, or mild ambiguity. Skip to Step 1 (or use `--skip-explore`).
 - **Standard** — normal feature with decisions to extract. Run full Phase 0.
 - **Deep** — cross-cutting, strategic, or highly ambiguous. Run Phase 0 with extra depth.
 
@@ -61,19 +85,29 @@ Generate 2–4 gray areas for this feature. A gray area is a decision that:
 - Was not stated in the request
 - Would force the planner to make an assumption without it
 
-**Quick codebase scout** (grep only — no deep analysis):
+**Quick project scout** (use available project search/code intelligence; no deep analysis):
 - Check what already exists that's related
 - Search for past decisions and patterns on this topic
 - Annotate options with what the codebase already has
 
 ```json
-mcp__knowns__search({ "query": "<feature keywords>", "type": "memory" })
+mcp_knowns_search({ "action": "search", "query": "<feature keywords>", "type": "memory" })
 ```
 
+Retrieve only relevant current System Decisions as a separate, trusted source:
+```json
+mcp_knowns_search({ "action": "retrieve", "query": "<feature keywords and proposed system change>",
+  "sourceTypes": ["decision"], "status": "accepted", "includeHistorical": false, "limit": 8 })
+```
+
+Spec Decisions are scoped execution rules kept canonically in this spec's `Locked Decisions` section. System Decisions are first-class durable project records. Memory entries whose category is `decision` are legacy and must not be created by this workflow.
+
 **Filter OUT:**
-- Technical implementation details (architecture, library choices) — that's planning's job
-- Performance concerns
+- Low-level implementation mechanics that do not change user-visible behavior or durable constraints
+- Premature optimization without an explicit requirement or measured risk
 - Scope expansion (new capabilities not requested)
+
+Keep architecture, dependency, security, migration, and performance decisions when they affect product behavior, public contracts, feasibility, cost, or acceptance criteria.
 
 ### 0.4 Socratic Exploration
 
@@ -137,11 +171,15 @@ If requirements depend on large domain or architecture context:
 
 ## Step 3: Create Spec Document
 
+Derive:
+- `<slug>` from the feature name, using lowercase kebab-case
+- `<spec-path>` as `specs/<yyyy-mm-dd>/<slug>`
+- `<spec-folder>` as `specs/<yyyy-mm-dd>`
+
 ```json
-mcp__knowns__create_doc({
-  "title": "<Feature Name>",
+mcp_knowns_docs({ "action": "create", "title": "<Feature Name>",
   "description": "Specification for <feature>",
-  "folder": "specs",
+  "folder": "specs/<yyyy-mm-dd>",
   "tags": ["spec", "draft"],
   "content": "<spec content>"
 })
@@ -159,6 +197,12 @@ Brief description of the feature and its purpose.
 Decisions extracted during exploring phase:
 - D1: [Decision summary]
 - D2: [Decision summary]
+
+## System Decision Impact
+
+- Impact: [none | existing | draft new | replacement]
+- Decision: [@decision/<id> when impact is not none]
+- Acceptance gate: [verification required before the linked draft becomes accepted]
 
 ## Requirements
 
@@ -191,6 +235,11 @@ Decisions extracted during exploring phase:
 
 Optional implementation hints or constraints.
 
+## Task Links
+
+Generated tasks will be linked here after `/kn-plan --from @doc/<spec-path>` runs.
+Keep this section short: task ID, prefixed title, and status only.
+
 ## Open Questions
 
 - [ ] Question 1?
@@ -202,7 +251,7 @@ Optional implementation hints or constraints.
 **CRITICAL:** After creating spec, validate to catch issues:
 
 ```json
-mcp__knowns__validate({ "entity": "specs/<name>" })
+mcp_knowns_validate({ "entity": "<spec-path>" })
 ```
 
 ## Step 4: Ask for Review
@@ -217,11 +266,15 @@ Present the spec and ask:
 
 **If approved:**
 ```json
-mcp__knowns__update_doc({
-  "path": "specs/<name>",
+mcp_knowns_docs({ "action": "update", "path": "<spec-path>",
   "tags": ["spec", "approved"]
 })
 ```
+
+After approval:
+- If the user wants the approved spec executed end to end, hand off to `/kn-flow @doc/<spec-path>`.
+- If the user only wants task generation or a manual task-by-task path, use `/kn-plan --from @doc/<spec-path>`.
+- Use `/kn-go <spec-path>` only when the user explicitly wants the older no-review-gates pipeline.
 
 **If edit requested:**
 Update the spec based on feedback and return to Step 4.
@@ -231,7 +284,7 @@ Gather additional requirements and update spec.
 
 ## Final Response Contract
 
-All built-in skills in scope must end with the same user-facing information order: `kn-init`, `kn-spec`, `kn-plan`, `kn-research`, `kn-implement`, `kn-verify`, `kn-doc`, `kn-template`, `kn-extract`, and `kn-commit`.
+All built-in skills in scope must end with the same user-facing information order: `kn-init`, `kn-spec`, `kn-flow`, `kn-plan`, `kn-research`, `kn-implement`, `kn-verify`, `kn-doc`, `kn-template`, `kn-extract`, and `kn-commit`.
 
 Required order for the final user-facing response:
 
@@ -241,11 +294,12 @@ Required order for the final user-facing response:
 
 Keep this concise for CLI use. Skill-specific content may extend the key-details section, but must not replace or reorder the shared structure.
 
-Out of scope: explaining, syncing, or generating `.claude/skills/*`. Runtime auto-sync already handles platform copies, so this skill source only defines the built-in output contract.
+Do not manage platform-synced skill copies; this source defines the built-in workflow contract.
 
 For `kn-spec`, the key details should cover:
 
 - the concrete spec draft or revision
+- whether a spec was ruled out as unnecessary for tiny work
 - clear open questions, if any
 - approval status
 - any validation result or unresolved gaps
@@ -267,22 +321,28 @@ If the spec uncovers cross-cutting or general knowledge work:
 After spec is approved:
 
 ```
-✓ Spec approved: @doc/specs/<name>
+✓ Spec approved: @doc/<spec-path>
 
 Next step — choose one:
 
-1. Task by task (review each step):
-   /kn-plan --from @doc/specs/<name>
+1. Recommended full flow (plan -> implement -> review -> verify):
+   /kn-flow @doc/<spec-path>
 
-2. Run all at once (auto pipeline, no review gates):
-   /kn-go specs/<name>
+2. Generate tasks only / manual task-by-task path:
+   /kn-plan --from @doc/<spec-path>
+
+3. Legacy auto pipeline, no review gates:
+   /kn-go <spec-path>
 ```
 
-**Option 1 (`kn-plan --from`):**
+**Option 1 (`kn-flow`):**
+- Discovers linked tasks, gates parallel work, runs plan -> implement -> review, then verifies the spec.
+
+**Option 2 (`kn-plan --from`):**
 - Parse requirements → preview tasks → user approve → create tasks
 - Then `/kn-plan <id>` + `/kn-implement <id>` for each task
 
-**Option 2 (`kn-go`):**
+**Option 3 (`kn-go`):**
 - Generate tasks → plan → implement all → verify → commit
 - Only stops once at the end for commit confirmation
 - Auto-skips done tasks on re-run
@@ -291,32 +351,38 @@ Next step — choose one:
 
 ## Related Skills
 
-- `/kn-plan --from @doc/specs/<name>` - Generate tasks from this spec (manual flow)
-- `/kn-go specs/<name>` - Execute entire spec in one run (auto pipeline)
+- `/kn-flow @doc/<spec-path>` - Orchestrate an approved spec through plan, implement, review, and verify
+- `/kn-plan --from @doc/<spec-path>` - Generate tasks from this spec (manual flow)
+- `/kn-go <spec-path>` - Legacy no-review-gates auto pipeline
 - `/kn-plan <id>` - Plan individual task
 - `/kn-verify` - Verify implementation against spec
 
 ## Checklist
 
-- [ ] Scope assessed (quick/standard/deep)
+- [ ] Scope assessed (tiny/quick/standard/deep)
+- [ ] Tiny work bypassed to `/kn-plan --new` when a spec would be overhead
 - [ ] Gray areas identified and explored (Phase 0)
 - [ ] Decisions locked with stable IDs (D1, D2...)
 - [ ] Feature name determined
 - [ ] Requirements gathered
-- [ ] Spec created in specs/ folder
-- [ ] Includes: Overview, Locked Decisions, Requirements, ACs, Scenarios
+- [ ] Spec created at `specs/<yyyy-mm-dd>/<slug>`
+- [ ] Includes: Overview, Locked Decisions, Requirements, ACs, Scenarios, Task Links
+- [ ] Declares System Decision Impact (none, existing, draft new, or replacement)
+- [ ] Relevant accepted/current System Decisions were retrieved with bounded filters
 - [ ] User reviewed
 - [ ] Status updated (draft → approved)
-- [ ] **Next step suggested** (/kn-plan --from or /kn-go)
+- [ ] **Next step suggested** (/kn-flow, /kn-plan --from, or /kn-go)
 
 ## Red Flags
 
 - Creating spec without user input
+- Creating a spec for tiny work when a direct task would be clearer
 - Skipping Phase 0 for standard/deep scope features
 - Batching multiple questions in one message (HARD GATE violation)
 - Answering your own questions during exploring
 - Skipping review step
 - Approving without explicit user confirmation
-- **Not suggesting task creation after approval**
+- Editing an approved spec's Locked Decisions without returning it to `draft` + `review-required` and obtaining renewed approval
+- **Not suggesting `/kn-flow` or task creation after approval**
 - Writing implementation notes instead of requirements
 - Leaving ambiguous AC text that cannot be verified later

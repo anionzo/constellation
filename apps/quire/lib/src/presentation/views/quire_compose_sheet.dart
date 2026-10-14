@@ -4,7 +4,6 @@ import '../../features/photo_upload/models/friend_chip.dart';
 import '../../features/photo_upload/models/photo_upload_input.dart';
 import '../../features/photo_upload/machine/photo_upload_state_machine.dart';
 import '../../features/photo_upload/state/photo_upload_state.dart';
-import '../../features/photo_upload/state/photo_upload_event.dart';
 import '../theme/quire_tokens.dart';
 
 /// Quire Compose Sheet Widget.
@@ -15,6 +14,7 @@ class QuireComposeSheet extends StatefulWidget {
   final PhotoUploadStateMachine stateMachine;
   final VoidCallback onClose;
   final void Function(String message) onShowToast;
+  final void Function(String caption)? onMomentDispatched;
 
   const QuireComposeSheet({
     Key? key,
@@ -23,6 +23,7 @@ class QuireComposeSheet extends StatefulWidget {
     required this.stateMachine,
     required this.onClose,
     required this.onShowToast,
+    this.onMomentDispatched,
   }) : super(key: key);
 
   @override
@@ -31,7 +32,15 @@ class QuireComposeSheet extends StatefulWidget {
 
 class _QuireComposeSheetState extends State<QuireComposeSheet> {
   final TextEditingController _noteController = TextEditingController();
-  final Set<String> _selectedFriends = {};
+  bool _hasAutoSelected = false;
+
+  Set<String> get _selectedFriends {
+    final state = _currentState;
+    if (state is PhotoUploadComposeState) {
+      return state.selectedFriendIds;
+    }
+    return const {};
+  }
   late StreamSubscription<PhotoUploadState> _subscription;
   PhotoUploadState _currentState = const PhotoUploadIdleState();
   Timer? _undoTimer;
@@ -46,12 +55,16 @@ class _QuireComposeSheetState extends State<QuireComposeSheet> {
           _currentState = state;
         });
 
-        if (state is PhotoUploadUndoGraceState) {
+        if (state is PhotoUploadComposeState && !_hasAutoSelected) {
+          _hasAutoSelected = true;
+          widget.stateMachine.selectAllFriends();
+        } else if (state is PhotoUploadUndoGraceState) {
           _startUndoAnimation();
         } else if (state is PhotoUploadAbortedState) {
           widget.onShowToast('Đã huỷ gửi. Không có gì rời khỏi ứng dụng.');
           widget.onClose();
         } else if (state is PhotoUploadDispatchedState) {
+          widget.onMomentDispatched?.call(_noteController.text);
           widget.onClose();
         }
       }
@@ -90,13 +103,6 @@ class _QuireComposeSheetState extends State<QuireComposeSheet> {
   }
 
   void _toggleFriend(String id) {
-    setState(() {
-      if (_selectedFriends.contains(id)) {
-        _selectedFriends.remove(id);
-      } else {
-        _selectedFriends.add(id);
-      }
-    });
     widget.stateMachine.toggleFriend(id);
   }
 
@@ -120,7 +126,7 @@ class _QuireComposeSheetState extends State<QuireComposeSheet> {
 
   Widget _buildComposeContent() {
     final isSending = _currentState is PhotoUploadSendingState;
-    final canSend = _selectedFriends.isNotEmpty && !isSending;
+    final canSend = !isSending;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -183,6 +189,8 @@ class _QuireComposeSheetState extends State<QuireComposeSheet> {
               label: Text(friend.name),
               selected: isSelected,
               onSelected: isSending ? null : (_) => _toggleFriend(friend.id),
+              materialTapTargetSize: MaterialTapTargetSize.padded,
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
               backgroundColor: QuireTokens.paperLight,
               selectedColor: QuireTokens.accentSoftLight,
               checkmarkColor: QuireTokens.accentInkLight,
@@ -221,14 +229,16 @@ class _QuireComposeSheetState extends State<QuireComposeSheet> {
           child: Text(
             isSending
                 ? 'Đang gửi…'
-                : _selectedFriends.isEmpty
-                    ? 'Chọn ít nhất một người'
-                    : 'Gửi cho ${_selectedFriends.length} người',
+                : _selectedFriends.length == widget.availableFriends.length
+                    ? 'Gửi cho cả vòng (${widget.availableFriends.length} người)'
+                    : _selectedFriends.isEmpty
+                        ? 'Chọn ít nhất một người'
+                        : 'Gửi cho ${_selectedFriends.length} người',
             style: TextStyle(
               fontFamily: QuireTokens.fontSerif,
               fontSize: 15.0,
               fontWeight: FontWeight.w500,
-              color: canSend ? Colors.white : QuireTokens.ink3Light,
+              color: canSend ? QuireTokens.onAccentLight : QuireTokens.ink3Light,
             ),
           ),
         ),
@@ -237,11 +247,16 @@ class _QuireComposeSheetState extends State<QuireComposeSheet> {
   }
 
   Widget _buildDoneContent() {
+    final state = _currentState;
+    final int count = (state is PhotoUploadUndoGraceState && state.selectedCount > 0)
+        ? state.selectedCount
+        : widget.availableFriends.length;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         const SizedBox(height: 8),
-        Text('Đã gửi cho ${_selectedFriends.length} người', style: QuireTokens.title()),
+        Text('Đã gửi cho $count người trong vòng', style: QuireTokens.title()),
         const SizedBox(height: 8),
         Text(
           'Họ có thể thả tim, đáp lại bằng ảnh, hoặc giữ riêng.',

@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "migrationId": "decision-memory-uw0sv7",
+  "memoryId": "uw0sv7",
+  "selection": {
+    "memoryId": "uw0sv7",
+    "resolution": "create_decision"
+  },
+  "originalMemory": {
+    "id": "uw0sv7",
+    "title": "Quyết định Backend \u0026 Storage: Supabase Self-Hosted (Docker), Chuẩn Upload Avatar \u0026 Cơ chế Version Gating",
+    "layer": "project",
+    "category": "decision",
+    "content": "Quyết định kiến trúc chính thức ngày 2026-09-24:\r\n1. Backend \u0026 Sync Platform: Chọn Supabase Self-Hosted triển khai qua Docker trên VPS cá nhân (kết hợp Caddy/Nginx và Cloudflare CDN).\r\n2. Chuẩn lưu trữ Avatar (Supabase Storage):\r\n   - Bucket: `avatars` (public read).\r\n   - Cấu trúc đường dẫn bắt buộc: `avatars/{user_id}/avatar_{timestamp}.webp` để chống kẹt cache CDN và browser.\r\n   - Tiền xử lý tại client Flutter: crop vuông 1:1, resize tối đa 400x400px, nén WebP chất lượng 80-85% (dung lượng \u003c100KB) trước khi gửi.\r\n   - Bảo mật RLS: Storage Objects chỉ cho phép chính chủ `auth.uid()` ghi/xóa trong folder `{user_id}`.\r\n3. Cơ chế Ép Cập Nhật Phiên Bản (Version Gating \u0026 Anti-Stale Cache):\r\n   - Bảng `app_system_configs` trên Supabase lưu `min_supported_version` (SemVer).\r\n   - Client Flutter kiểm tra lúc khởi động và khi resume từ background; nếu nhỏ hơn `min_supported_version`, app hiển thị màn hình khóa cứng (Force Update Screen) ngắt sync để tránh lệch schema.\r\n   - Web/PWA: cấu hình Cache-Control `no-cache, no-store, must-revalidate` cho `index.html` và lắng nghe ServiceWorker `controllerchange` để tự động nhắc reload.",
+    "status": "active",
+    "lastVerified": "0001-01-01T00:00:00Z",
+    "tags": [
+      "architecture",
+      "backend",
+      "supabase",
+      "docker",
+      "storage",
+      "avatar",
+      "version-gating",
+      "decision"
+    ],
+    "createdAt": "2026-09-24T16:22:04.752Z",
+    "updatedAt": "2026-09-24T16:22:04.752Z",
+    "lifecycleMetadataMissing": [
+      "status",
+      "confidence",
+      "lastVerified",
+      "ttlDays",
+      "sources"
+    ]
+  },
+  "decisionId": "20260924-1622-quy-t-nh-backend-storage-supabase-self-hosted-docker-chu-n-upload-avatar-c-ch-version-gating",
+  "decisionCreated": true,
+  "addedSources": [
+    "@memory/uw0sv7"
+  ],
+  "state": "applied",
+  "legacyExcluded": false,
+  "createdAt": "2026-09-29T10:45:55.0093916Z",
+  "updatedAt": "2026-09-29T10:45:55.035205Z"
+}

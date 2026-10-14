@@ -166,4 +166,53 @@ class QuireMomentUploader {
       message: 'Đã lưu ngoại tuyến. Khoảnh khắc sẽ được gửi đi khi có mạng trở lại.',
     );
   }
+
+  /// Handler invoked by [SyncDispatcher] to replay queued offline moments.
+  Future<bool> handleReplaySync(SyncQueueItem item) async {
+    final payload = item.payload;
+
+    try {
+      final momentId = payload['moment_id'] as String;
+      final circleId = payload['circle_id'] as String;
+      final senderId = payload['sender_id'] as String;
+      final storagePath = payload['storage_path'] as String;
+      final recipientIds = (payload['recipient_ids'] as List?)?.cast<String>() ?? [];
+      final caption = payload['caption'] as String?;
+      final articleId = payload['article_id'] as String?;
+      final replyToMomentId = payload['reply_to_moment_id'] as String?;
+
+      final now = DateTime.now();
+      final expiresAt = now.add(const Duration(days: 30));
+
+      final momentRow = {
+        'id': momentId,
+        'circle_id': circleId,
+        'sender_id': senderId,
+        'image_path': storagePath,
+        'caption': caption,
+        'article_id': articleId,
+        'reply_to_moment_id': replyToMomentId,
+        'created_at': now.toIso8601String(),
+        'expires_at': expiresAt.toIso8601String(),
+      };
+
+      final recipientRows = recipientIds.map((recipientId) {
+        return {
+          'moment_id': momentId,
+          'recipient_id': recipientId,
+          'read_at': null,
+          'liked': false,
+        };
+      }).toList();
+
+      await dbInserter(
+        momentRow: momentRow,
+        recipientRows: recipientRows,
+      );
+
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 }

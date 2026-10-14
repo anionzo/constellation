@@ -25,39 +25,35 @@ description: Use when working with Knowns documentation - viewing, searching, cr
 
 ```json
 // List docs
-mcp__knowns__list_docs({})
+mcp_knowns_docs({ "action": "list" })
 
 // View doc (smart mode)
-mcp__knowns__get_doc({ "path": "<path>", "smart": true })
+mcp_knowns_docs({ "action": "get", "path": "<path>", "smart": true })
 
 // Search docs
-mcp__knowns__search({ "query": "<query>", "type": "doc" })
+mcp_knowns_search({ "action": "search", "query": "<query>", "type": "doc" })
 
 // Create doc (MUST include description)
-mcp__knowns__create_doc({
-  "title": "<title>",
+mcp_knowns_docs({ "action": "create", "title": "<title>",
   "description": "<brief description of what this doc covers>",
   "tags": ["tag1", "tag2"],
   "folder": "folder"
 })
 
 // Update content
-mcp__knowns__update_doc({
-  "path": "<path>",
+mcp_knowns_docs({ "action": "update", "path": "<path>",
   "content": "content"
 })
 
 // Update metadata (title, description, tags)
-mcp__knowns__update_doc({
-  "path": "<path>",
+mcp_knowns_docs({ "action": "update", "path": "<path>",
   "title": "New Title",
   "description": "Updated description",
   "tags": ["new", "tags"]
 })
 
 // Update section only
-mcp__knowns__update_doc({
-  "path": "<path>",
+mcp_knowns_docs({ "action": "update", "path": "<path>",
   "section": "2",
   "content": "## 2. New Content\n\n..."
 })
@@ -85,8 +81,7 @@ mcp__knowns__update_doc({
 
 **Section edit is most efficient:**
 ```json
-mcp__knowns__update_doc({
-  "path": "<path>",
+mcp_knowns_docs({ "action": "update", "path": "<path>",
   "section": "3",
   "content": "## 3. New Content\n\n..."
 })
@@ -98,17 +93,17 @@ mcp__knowns__update_doc({
 
 ```json
 // Validate specific doc (saves tokens)
-mcp__knowns__validate({ "entity": "<doc-path>" })
+mcp_knowns_validate({ "entity": "<doc-path>" })
 
 // Or validate all docs
-mcp__knowns__validate({ "scope": "docs" })
+mcp_knowns_validate({ "scope": "docs" })
 ```
 
 If errors found, fix before continuing.
 
 ## Shared Output Contract
 
-All built-in skills in scope must end with the same user-facing information order: `kn-init`, `kn-spec`, `kn-plan`, `kn-research`, `kn-implement`, `kn-verify`, `kn-doc`, `kn-template`, `kn-extract`, and `kn-commit`.
+All built-in skills in scope must end with the same user-facing information order: `kn-init`, `kn-spec`, `kn-flow`, `kn-plan`, `kn-research`, `kn-implement`, `kn-verify`, `kn-doc`, `kn-template`, `kn-extract`, and `kn-commit`.
 
 Required order for the final user-facing response:
 
@@ -118,7 +113,7 @@ Required order for the final user-facing response:
 
 Keep this concise for CLI use. Documentation-specific content may extend the key-details section, but must not replace or reorder the shared structure.
 
-Out of scope: explaining, syncing, or generating `.claude/skills/*`. Runtime auto-sync already handles platform copies, so this skill source only defines the built-in output contract.
+Do not manage platform-synced skill copies; this source defines the built-in workflow contract.
 
 For `kn-doc`, the key details should cover:
 

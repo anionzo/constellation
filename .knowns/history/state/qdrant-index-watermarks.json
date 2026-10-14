@@ -1,0 +1,173 @@
+{
+  "doc:doc-09d023ff349bd59e15ccd5fe31308934": {
+    "entityType": "doc",
+    "entityId": "doc-09d023ff349bd59e15ccd5fe31308934",
+    "canonicalHash": "e75b999a39ba390766dc668fa69c2a2826fac232742fa70e43d134ac4a307ada",
+    "revision": 5,
+    "path": "docs/specs/2026-10-14/quire-real-photo-acquisition-calm-authentication.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "doc:doc-53b28b31052bcd127e0fb46a50005c13": {
+    "entityType": "doc",
+    "entityId": "doc-53b28b31052bcd127e0fb46a50005c13",
+    "canonicalHash": "5308a0788e33474368869a5bebfee848e1109b68e113b10099ef2a655feb7fd4",
+    "revision": 3,
+    "path": "docs/guides/testing-verification-strategy.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "doc:doc-54be6b764f1e379d9b0433410952a537": {
+    "entityType": "doc",
+    "entityId": "doc-54be6b764f1e379d9b0433410952a537",
+    "canonicalHash": "464034c9292f4f309f670af450adabd5c933b2e9179897b311c0cfeebf384195",
+    "revision": 4,
+    "path": "docs/architecture/quire-design-implementation.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "doc:doc-5ab60a2f4edaf645f62e97b23ac5fcbe": {
+    "entityType": "doc",
+    "entityId": "doc-5ab60a2f4edaf645f62e97b23ac5fcbe",
+    "canonicalHash": "d68ef308e29f2f3ac86adf51a97c871d3034a2e17d2e017b6291577dda827b96",
+    "revision": 5,
+    "path": "docs/guides/tmp-hash-probe-2.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "doc:doc-79f050e92aaee5305383558ed0ca66d4": {
+    "entityType": "doc",
+    "entityId": "doc-79f050e92aaee5305383558ed0ca66d4",
+    "canonicalHash": "ae45814685998cebb1751020652a7d24dedab181062666b474d1791027bf6368",
+    "revision": 6,
+    "path": "docs/specs/2026-10-13/quire-client-hardening-invariants.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "doc:doc-7d776020dbcfad91fe33c34c6e575ff9": {
+    "entityType": "doc",
+    "entityId": "doc-7d776020dbcfad91fe33c34c6e575ff9",
+    "canonicalHash": "2ffa9cf813f17a8421d9fd812dd484d94c0fb4ab7aa38cc01911f4b081210458",
+    "revision": 7,
+    "path": "docs/constellation/business-use-cases-and-processing-flows.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "doc:doc-9d44dbfe04863402ffc5cf56c024fa74": {
+    "entityType": "doc",
+    "entityId": "doc-9d44dbfe04863402ffc5cf56c024fa74",
+    "canonicalHash": "209970176c63821e0e45683845ee7aa03a15e5275a1589d7111a38b3c307ab2a",
+    "revision": 3,
+    "path": "docs/architecture/client-core-packages-contract.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "doc:doc-bfa6466f9e4ef355c21886028d5d13d6": {
+    "entityType": "doc",
+    "entityId": "doc-bfa6466f9e4ef355c21886028d5d13d6",
+    "canonicalHash": "b580776bd064a6824729bb19ba4a2bb802cead01cbe44c0df98232b6a5ed1597",
+    "revision": 4,
+    "path": "docs/architecture/quire-app-implementation.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "doc:doc-d01c2d8cf93b6e1eaabf3c7471bac766": {
+    "entityType": "doc",
+    "entityId": "doc-d01c2d8cf93b6e1eaabf3c7471bac766",
+    "canonicalHash": "17946850462d6e8ff0ed4598b041a4f51b785819f19e092586113068b1fd1724",
+    "revision": 4,
+    "path": "docs/architecture/supabase-data-model.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "doc:legacy-887f5887d303a51f": {
+    "entityType": "doc",
+    "entityId": "legacy-887f5887d303a51f",
+    "canonicalHash": "93af746e248fadcd05c880b72df685d6aabd0ceb13a84c64859e2eb7bdef35c7",
+    "revision": 9,
+    "path": "docs/README.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:DFA-25QN1F": {
+    "entityType": "task",
+    "entityId": "DFA-25QN1F",
+    "canonicalHash": "2257159141af989abf4c5daf0a4ac36893f965f1f6f293ba8d8f6175031ea6f3",
+    "revision": 4,
+    "path": "tasks/DFA-25QN1F.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:DFA-2T6SJK": {
+    "entityType": "task",
+    "entityId": "DFA-2T6SJK",
+    "canonicalHash": "2d81b176f39cb3caf0fef1544af6ac3c64b53a3d6b0fbfea8e696fcab3dc246a",
+    "revision": 4,
+    "path": "tasks/DFA-2T6SJK.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:DFA-9JFBXT": {
+    "entityType": "task",
+    "entityId": "DFA-9JFBXT",
+    "canonicalHash": "6a334a1fc32761cc85d44b883f35be9c5c3434ad942f6082b2edcfab358b05a4",
+    "revision": 4,
+    "path": "tasks/DFA-9JFBXT.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:DFA-C7N9HD": {
+    "entityType": "task",
+    "entityId": "DFA-C7N9HD",
+    "canonicalHash": "daecd0e3ae40c63821211a6b5da9477a5dad87b5669f13835372a97f99dfbed7",
+    "revision": 4,
+    "path": "tasks/DFA-C7N9HD.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:DFA-GG2JT0": {
+    "entityType": "task",
+    "entityId": "DFA-GG2JT0",
+    "canonicalHash": "2e827bf69c745e2ea08a4d1a191272dabd43b58590d6671a63e6297ad435ba75",
+    "revision": 4,
+    "path": "tasks/DFA-GG2JT0.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:DFA-GYPHZQ": {
+    "entityType": "task",
+    "entityId": "DFA-GYPHZQ",
+    "canonicalHash": "b4d519cfc2a01771353c1b243c249b8d1813b46a9d55c9457a7a9e545265695c",
+    "revision": 4,
+    "path": "tasks/DFA-GYPHZQ.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:DFA-Q5SAT4": {
+    "entityType": "task",
+    "entityId": "DFA-Q5SAT4",
+    "canonicalHash": "8554024b80172dc7252185720d1db99b5926b6a92730365108bc3fbd1db728c2",
+    "revision": 4,
+    "path": "tasks/DFA-Q5SAT4.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:DFA-REHBNJ": {
+    "entityType": "task",
+    "entityId": "DFA-REHBNJ",
+    "canonicalHash": "5efb23b0f47479326bccaa92f252dade15cbd55dcfd6928b4df821a838eae396",
+    "revision": 4,
+    "path": "tasks/DFA-REHBNJ.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
+  "task:DFA-W1ZH6M": {
+    "entityType": "task",
+    "entityId": "DFA-W1ZH6M",
+    "canonicalHash": "1e55519b2f2b9d663c02cd508ad561d1e96868f6a601bf1191d6585f19bcddcb",
+    "revision": 4,
+    "path": "tasks/DFA-W1ZH6M.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  }
+}

@@ -1,8 +1,9 @@
 ---
+id: legacy-887f5887d303a51f
 title: 'Constellation Portfolio Overview & Documentation Index'
 description: 'Tổng quan Constellation: 4 prototype browser mobile-first độc lập, hướng Flutter/Dart production, taxonomy Knowns, canonical source chain và ranh giới anti-merge.'
 createdAt: '2026-09-24T00:00:00.000Z'
-updatedAt: '2026-09-26T05:03:40.916Z'
+updatedAt: '2026-09-29T11:16:24.028Z'
 tags:
   - constellation
   - overview
@@ -99,3 +100,15 @@ Mọi đóng góp vào tài liệu phải ghi rõ ranh giới và trạng thái:
 2. **Anti-Merge (C-90)**: bốn app giữ bốn thế giới thị giác, domain, state và data identity độc lập; abstraction chung chỉ được phép ở tầng trung lập, không mang visual/domain identity.
 3. **Intentional Deferrals (C-91)**: backend, auth, sync contract, AI service, motion chi tiết, accessibility audit, analytics và deploy là `DEFERRED` cho đến khi có quyết định/ADR.
 4. **Phase Boundary**: prototype browser không phải production architecture. Hướng production Flutter/Dart + local-first đã được chọn, nhưng storage engine, sync, security và deletion propagation vẫn là `PROPOSED/DEFERRED`.
+
+
+## Tài liệu bổ sung wave 2026-09-29
+
+| Doc | Nội dung |
+|---|---|
+| `architecture/client-core-packages-contract` | Contract API 3 package lõi (local_sync, media_storage, version_gate): ports, presets, trạng thái, guard, wiring recipe |
+| `architecture/quire-app-implementation` | Triển khai Quire: cấu trúc module, state machine 8 trạng thái, uploader online/offline, 10 gap DEFERRED |
+| `architecture/supabase-data-model` | Data model: 8 bảng + RLS đầy đủ, 3 bucket, purge 30 ngày, invariant The Void non-persistence |
+| `architecture/quire-design-implementation` | Ánh xạ design-notes/prototype → QuireTokens, WCAG đã kiểm, 7 khoảng cách (contrast AA, dark theme chưa wiring) |
+| `guides/testing-verification-strategy` | Hiện trạng 5 file/22 test, invariant được bảo vệ, kế hoạch bổ sung PROPOSED (RLS, purge, CI) |
+| `constellation/business-use-cases-and-processing-flows` | 12 usecase nghiệp vụ kèm luồng xử lý từng bước + ma trận triển khai client/backend/test |

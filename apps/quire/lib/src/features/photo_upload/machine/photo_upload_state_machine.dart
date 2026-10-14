@@ -149,6 +149,21 @@ class PhotoUploadStateMachine {
     _transition(composeState.copyWith(selectedFriendIds: updated));
   }
 
+  /// Select all available circle friends.
+  void selectAllFriends() {
+    if (_state is! PhotoUploadComposeState) return;
+    final composeState = _state as PhotoUploadComposeState;
+    final allIds = composeState.availableFriends.map((f) => f.id).toSet();
+    _transition(composeState.copyWith(selectedFriendIds: allIds));
+  }
+
+  /// Deselect all friends.
+  void clearAllFriends() {
+    if (_state is! PhotoUploadComposeState) return;
+    final composeState = _state as PhotoUploadComposeState;
+    _transition(composeState.copyWith(selectedFriendIds: const {}));
+  }
+
   /// Update optional caption/note.
   void updateCaption(String caption) {
     if (_state is! PhotoUploadComposeState) return;
@@ -161,15 +176,24 @@ class PhotoUploadStateMachine {
   /// 2. Opens 900ms Undo Grace Window.
   Future<void> submitSend() async {
     if (_state is! PhotoUploadComposeState) return;
-    final composeState = _state as PhotoUploadComposeState;
+    var composeState = _state as PhotoUploadComposeState;
 
-    // Enforce Invariant: At least 1 friend must be selected
+    // Safety fallback: if user taps send and no friends were explicitly selected,
+    // default to all friends in the circle so sending never fails unexpectedly
+    if (!composeState.canSend && composeState.availableFriends.isNotEmpty) {
+      final allIds = composeState.availableFriends.map((f) => f.id).toSet();
+      composeState = composeState.copyWith(selectedFriendIds: allIds);
+      _transition(composeState);
+    }
+
     if (!composeState.canSend) {
       return;
     }
 
     final momentId = DateTime.now().millisecondsSinceEpoch.toString();
-    final selectedCount = composeState.selectedCount;
+    final selectedCount = composeState.selectedCount > 0
+        ? composeState.selectedCount
+        : (composeState.availableFriends.isNotEmpty ? composeState.availableFriends.length : 1);
 
     // Step 4: Immediately lock button in SendingState
     _transition(PhotoUploadSendingState(

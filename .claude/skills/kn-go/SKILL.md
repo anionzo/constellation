@@ -1,294 +1,112 @@
 ---
 name: kn-go
-description: Use when implementing all tasks from an approved spec in one continuous run without manual review gates
+description: Use only when the user explicitly wants the legacy no-review-gates pipeline for an approved spec; prefer kn-flow for normal spec orchestration
 ---
 
-# Go Mode — Full Pipeline Execution
-
-Run the entire SDD pipeline from an approved spec: generate tasks → plan each → implement each → verify → commit. No manual review gates between steps.
+# Go Mode — Legacy Full Pipeline
 
 **Announce:** "Using kn-go for spec [name]."
 
-**Core principle:** SPEC APPROVED → GENERATE TASKS → PLAN → IMPLEMENT ALL → VERIFY → COMMIT.
+**Core principle:** APPROVED SPEC → TASKS → PLAN → IMPLEMENT → VERIFY → COMMIT GATE.
 
-## When to Use
-
-- User has an approved spec and wants to execute everything in one shot
-- User says "run all", "go mode", "execute everything", or similar
-- The spec is already approved (tag: `spec`, `approved`)
-
-## When NOT to Use
-
-- Spec is still draft — redirect to `/kn-spec` first
-- User wants to review each task individually — use `/kn-plan <id>` + `/kn-implement <id>`
-- Spec has unresolved open questions — resolve them first
+`kn-go` is a compatibility workflow. Use it only when the user explicitly requests the legacy no-review-gates pipeline. For normal approved-spec execution, delegation, parallel safety checks, or integrated review, use `/kn-flow @doc/<spec-path>`.
 
 ## Inputs
 
-- Spec path: `specs/<name>` (from `$ARGUMENTS` or ask user)
-- Optional: `--dry-run` to preview tasks without executing
+- Approved spec ref
+- Optional `--dry-run` to validate and preview tasks without mutating project state
 
-## Process
+Stop if the spec is draft, has no ACs, has blocking open questions, or the requested ref cannot be resolved.
 
-Complete these phases in order. Do not skip phases.
+## Phase 1: Validate and Discover
 
----
-
-### Phase 1: Validate Spec
-
-```json
-mcp__knowns__get_doc({ "path": "specs/<name>", "smart": true })
-```
-
-**Check:**
-- Tags include `approved` — if not, STOP: "Spec not approved. Run `/kn-spec <name>` first."
-- Has Acceptance Criteria — if empty, STOP: "Spec has no ACs."
-- No unresolved open questions marked as blocking
+1. Read the spec and its complete `Locked Decisions` section.
+2. Validate the spec.
+3. Resolve existing linked tasks before generating anything.
+4. Reuse existing tasks; skip done tasks and continue todo/in-progress work in dependency order.
+5. Retrieve only relevant accepted/current System Decisions with bounded filters.
 
 ```json
-mcp__knowns__validate({ "entity": "specs/<name>" })
+mcp_knowns_docs({ "action": "get", "path": "<spec-path>", "smart": true })
+mcp_knowns_validate({ "entity": "<spec-path>" })
+mcp_knowns_search({ "action": "resolve", "ref": "@doc/<spec-path>{implements}",
+  "direction": "inbound", "entityTypes": "task" })
 ```
 
-If validation errors → fix or report before continuing.
+With `--dry-run`, stop after presenting validation plus the task create/reuse preview.
 
----
+## Phase 2: Create Missing Tasks
 
-### Phase 2: Generate Tasks
+Use the same task-shaping rules as `/kn-plan --from @doc/<spec-path>`, but skip its approval gate because the user explicitly selected go mode:
 
-Parse spec for requirements and generate tasks. Same logic as `kn-plan --from @doc/specs/<name>` but **skip the approval gate**.
+- stable `[<slug>-NN]` titles and order
+- `spec` link and `fulfills` mapping
+- outcome-oriented task ACs
+- concise descriptions; implementation detail belongs in task plans
+- no duplicate task scope
 
-```json
-mcp__knowns__create_task({
-  "title": "<requirement title>",
-  "description": "<from spec>",
-  "spec": "specs/<name>",
-  "fulfills": ["AC-1", "AC-2"],
-  "priority": "medium",
-  "labels": ["from-spec", "go-mode"]
-})
-```
+Report the number of reused and created tasks before implementation begins.
 
-Add implementation ACs per task:
-```json
-mcp__knowns__update_task({
-  "taskId": "<id>",
-  "addAc": ["Step 1", "Step 2", "Tests"]
-})
-```
+## Phase 3: Execute Sequentially
 
-**Report:** "Created X tasks from spec. Starting implementation..."
+For each pending task:
 
----
+1. Take ownership and start its timer.
+2. Follow refs and gather bounded project context.
+3. Read every applicable Spec Decision and retrieve relevant current System Decisions.
+4. Draft and save an executable plan without a per-task approval gate.
+5. Implement the plan; check ACs only after outcomes are complete.
+6. Run targeted tests, lint/build checks, and task validation.
+7. Record `Spec Decision Compliance` for every D-ID.
+8. Record exactly one `System Decision Impact` branch:
+   - `none — <reason>`, or
+   - persisted draft `candidate @decision/<id> (added|changed|removed) — <summary>`
+9. Append concise notes, stop the timer, and mark the task done.
 
-### Phase 3: Plan + Implement Each Task
+Never create Memory category `decision`, duplicate Spec Decisions into the System Decision ledger, or auto-accept a Decision candidate.
 
-Loop through all generated tasks in dependency order (foundational first, dependent last).
+If a task fails verification, keep it in-progress or blocked with the exact reason. Do not check incomplete ACs. Skip dependents whose prerequisites are blocked.
 
-For each task:
+## Phase 4: Integrated Verification
 
-#### 3a. Take ownership + plan
+After runnable tasks finish:
 
-```json
-mcp__knowns__update_task({
-  "taskId": "<id>",
-  "status": "in-progress"
-})
-mcp__knowns__start_time({ "taskId": "<id>" })
-```
+- run SDD validation
+- confirm all linked tasks are done or explicitly blocked
+- confirm all Spec Decision compliance and System Decision impact markers
+- run project-level test/build/lint commands appropriate to the repository
+- report coverage gaps and failures exactly
 
-- Research context: follow refs, search related docs/memories, check templates
-- Use `search` for discovery first. If a task/spec needs assembled execution context, use `mcp__knowns__retrieve({ "query": "<keywords>" })` before drafting or executing the plan. Fall back to CLI `knowns retrieve "<keywords>" --json` if MCP is unavailable.
-- Draft and save plan directly (no approval gate)
+Do not claim completion while validation or required verification fails.
 
-```json
-mcp__knowns__search({ "query": "<task keywords>", "type": "memory" })
-```
+## Phase 5: Commit Gate
 
-```json
-mcp__knowns__update_task({
-  "taskId": "<id>",
-  "plan": "1. Step one\n2. Step two\n3. Tests"
-})
-```
+Commit remains the one mandatory user gate in go mode:
 
-#### 3b. Implement
+1. Review the actual staged scope and exclude unrelated changes.
+2. Propose one conventional commit message.
+3. Ask for explicit approval before committing.
+4. Do not append generator or AI attribution unless explicitly requested or required by project conventions.
 
-- Work through plan steps
-- Check ACs as completed
-- Run tests/lint/build after each task
+## Context and Re-run Behavior
 
-```json
-mcp__knowns__update_task({
-  "taskId": "<id>",
-  "checkAc": [1, 2, 3],
-  "appendNotes": "Implemented: brief summary"
-})
-```
-
-#### 3c. Complete task
-
-```json
-mcp__knowns__stop_time({ "taskId": "<id>" })
-mcp__knowns__update_task({
-  "taskId": "<id>",
-  "status": "done"
-})
-```
-
-#### 3d. Quick validate
-
-```json
-mcp__knowns__validate({ "entity": "<id>" })
-```
-
-If errors → fix before moving to next task.
-
-**Progress report between tasks:**
-> "✓ Task X/Y done: [title]. Continuing..."
-
----
-
-### Phase 4: Full Verification
-
-After all tasks complete:
-
-```json
-mcp__knowns__validate({ "scope": "sdd" })
-```
-
-**Report SDD coverage:**
-```
-SDD Coverage Report
-═══════════════════
-Spec: specs/<name>
-Tasks: X/X complete (100%)
-ACs: Y/Z verified
-```
-
-If coverage < 100% → identify gaps and fix.
-
-Also run project-level checks:
-```bash
-# Build/test/lint — adapt to project
-go build ./...
-go test ./...
-```
-
----
-
-### Phase 5: Commit
-
-Stage all changes and commit with a single conventional commit:
-
-```bash
-git add -A
-git diff --staged --stat
-```
-
-Generate commit message:
-```
-feat(<scope>): implement <spec-name>
-
-- Task 1: <title>
-- Task 2: <title>
-- ...
-- All ACs verified via SDD
-```
-
-**This is the ONE gate in go mode — ask user before committing:**
-
-> Pipeline complete. X tasks done, SDD verified.
-> 
-> Ready to commit:
-> ```
-> feat(<scope>): implement <spec-name>
-> ```
-> Proceed? (yes/no/edit)
-
----
-
-## Context Budget
-
-If context exceeds ~60% during implementation:
-
-1. Finish the current task
-2. Commit completed work so far
-3. Report progress and remaining tasks
-4. Suggest: "Run `/kn-go specs/<name>` again to continue remaining tasks."
-
-The skill will detect already-done tasks and skip them on re-run.
-
----
-
-## Re-run Behavior
-
-When invoked on a spec that already has tasks:
-
-1. List existing tasks linked to the spec
-2. Filter to `todo` and `in-progress` only
-3. Skip `done` tasks
-4. Continue from where it left off
-
-```json
-mcp__knowns__list_tasks({ "spec": "specs/<name>" })
-```
-
----
-
-## Error Handling
-
-- **Build/test fails during a task:** Fix the error, re-run tests. If unfixable, mark task as `blocked`, append notes, continue to next task.
-- **Spec has conflicting requirements:** STOP and ask user to clarify.
-- **Task depends on blocked task:** Skip and report at the end.
-
----
+When context becomes constrained, finish the current safe checkpoint, report completed/blocked/remaining tasks, and instruct the user to invoke the same spec again. Re-runs must resolve existing tasks, skip done work, and continue without duplicating tasks or ACs.
 
 ## Shared Output Contract
 
-Required order for the final user-facing response:
+Return information in this order:
 
-1. Goal/result — state what was completed across the full pipeline run.
-2. Key details — tasks completed, tasks blocked, SDD coverage, build/test status.
-3. Next action — commit confirmation, or remaining work if interrupted.
-
-For `kn-go`, the key details should cover:
-
-- total tasks created and completed
-- any blocked or skipped tasks
-- SDD coverage percentage
-- build/test/lint status
-- commit proposal
-
----
-
-## Dry Run Mode
-
-With `--dry-run`:
-- Phase 1: validate spec ✓
-- Phase 2: generate task preview (don't create) ✓
-- Phase 3-5: skip
-
-Show what would be created and ask user to confirm before running for real.
-
----
+1. **Goal/result** — what the pipeline completed, partially completed, or blocked.
+2. **Key details** — tasks reused/created/completed, blockers, SDD coverage, Decision compliance, and verification status.
+3. **Next action** — commit approval or the exact unblock/resume command.
 
 ## Checklist
 
-- [ ] Spec is approved
-- [ ] Spec validated (no broken refs)
-- [ ] Tasks generated with fulfills mapping
-- [ ] Each task: planned → implemented → ACs checked → validated → done
-- [ ] SDD verification passed
-- [ ] Build/test/lint passed
-- [ ] User approved commit
-- [ ] Commit created
-
-## Red Flags
-
-- Running on a draft spec
-- Skipping task validation between tasks
-- Not checking ACs before marking done
-- Committing without user approval
-- Ignoring build/test failures
-- Not reporting progress between tasks
-- Continuing past context budget limit without checkpointing
+- [ ] User explicitly requested legacy go mode
+- [ ] Spec is approved and valid
+- [ ] Existing tasks resolved before creating missing tasks
+- [ ] Task ACs are outcome-oriented and checked only after completion
+- [ ] Each task was planned, verified, validated, and lifecycle-complete
+- [ ] Decision compliance and impact markers are complete
+- [ ] Integrated SDD and project verification passed or failures were reported
+- [ ] Commit waits for explicit approval

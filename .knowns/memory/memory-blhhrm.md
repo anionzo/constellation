@@ -3,6 +3,13 @@ id: blhhrm
 title: 'Quyết định công nghệ: Flutter (Dart) đa nền tảng + Lưu trữ Hybrid Local-First & Sync Online tùy chọn'
 layer: project
 category: decision
+status: archived
+confidence: high
+lastVerified: '2026-09-29T10:46:50.159Z'
+ttlDays: 365
+sources:
+  - apps/quire/pubspec.yaml
+  - packages/local_sync/lib
 tags:
   - architecture
   - flutter
@@ -12,7 +19,7 @@ tags:
   - sync
   - decision
 createdAt: '2026-09-24T15:45:13.884Z'
-updatedAt: '2026-09-24T15:45:13.884Z'
+updatedAt: '2026-09-29T10:46:50.160Z'
 ---
 
 Quyết định kiến trúc cho giai đoạn triển khai (Implementation):

@@ -1,6 +1,6 @@
 # KNOWNS
 
-Canonical repository guidance for agents working in this project.
+Human-readable repository guidance for agents working in this project. Runtime-critical AI bootstrap guidance is provided by Knowns MCP `initial` and on-demand `help`.
 
 ## Table of Contents
 
@@ -21,19 +21,23 @@ Canonical repository guidance for agents working in this project.
 
 ## Source of Truth
 
-- `KNOWNS.md` is the canonical repo-level guidance file.
+- MCP `initial` is the primary runtime bootstrap for AI agents.
+- MCP `help("tool.*")` and `help("workflow.*")` are the primary on-demand sources for tool schemas and workflow recipes.
+- `KNOWNS.md` is a human-readable project reference and fallback when MCP is unavailable.
 - `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `OPENCODE.md`, and `.github/copilot-instructions.md` are compatibility shims for runtimes that auto-detect those filenames.
 - If guidance appears in multiple places, follow this precedence order:
   1. System instructions
   2. Developer instructions
-  3. `KNOWNS.md`
-  4. Compatibility shim files
-  5. Other repository docs
-- If a shim file and `KNOWNS.md` differ, treat `KNOWNS.md` as correct.
+  3. MCP `initial` / `help`
+  4. Skills
+  5. `KNOWNS.md`
+  6. Compatibility shim files
+  7. Other repository docs
 
 ## TL;DR
 
-- Read `KNOWNS.md` first.
+- Call `initial` at session start — it returns project readiness, knowledge counts, code intelligence rules, workflow guidance, and available tools.
+- Use `help("tool.action")`, `help("tool.*")`, or `help("workflow.*")` when a domain/action schema is not visible.
 - Use Knowns as the memory layer for humans and the AI-friendly working layer for agents.
 - Search before reading; read only the sections and docs relevant to the current task.
 - Never manually edit Knowns-managed task or doc markdown.
@@ -47,12 +51,14 @@ Canonical repository guidance for agents working in this project.
 - Knowns is the project's memory layer for humans and the AI-friendly operating layer for agents.
 - Knowns manages tasks, docs, templates, specs, references, and workflow state in one place.
 - Tasks and docs may reference each other using `@task-<id>`, `@doc/<path>`, and `@template/<name>`.
-- `KNOWNS.md` defines repo-level operating rules; skills define step-by-step execution flows.
+- MCP `initial` defines runtime operating rules; skills define step-by-step execution flows.
+- `KNOWNS.md` provides a stable human-readable reference for those conventions.
 - Long guidance should be retrieved by section, not blindly injected in full on every request.
 
 ## How Agents Should Read This File
 
-- Always read `## Source of Truth` and `## TL;DR` first.
+- Prefer MCP `initial` and `help` first. Read this file when MCP guidance is unavailable or deeper project context is needed.
+- If reading this file, start with `## Source of Truth` and `## TL;DR`.
 - For short or obvious tasks, use the summary sections plus the relevant section only.
 - For tool usage questions, read `## Tool Selection` and `## Common Mistakes`.
 - For safety-sensitive work, read `## Critical Rules` and `## Git Safety`.
@@ -62,13 +68,17 @@ Canonical repository guidance for agents working in this project.
 
 ## Tool Selection
 
+- Call `initial` at session start — it includes project readiness, capabilities, and code intelligence rules.
+- Use `help("tool.action")` or `help("tool.*")` for detailed per-action documentation on demand.
 - Use Knowns MCP tools first for tasks, docs, templates, validation, and time tracking.
-- Use file reading and search tools for local code and text inspection.
+- Use Knowns `code` tools for code discovery, structure, and editing — not built-in Read/Grep/Edit.
 - Use shell commands for git, tests, builds, generators, and other terminal operations.
 - Prefer targeted retrieval over loading large files in full.
 - Use `knowns search` for discovery and quick relevance checks.
 - Use MCP `retrieve` tool when a workflow needs structured context with citations and context-pack assembly. Fall back to CLI `knowns retrieve` if MCP is unavailable.
-- Prefer `--plain` for human-facing inspection. Prefer `--json` for CLI `retrieve` when output will be consumed by an agent, script, or workflow.
+- Prefer `--json` for structured CLI reads consumed by agents, scripts, or workflows, including `get`, `list`, `search`, and `retrieve` commands.
+- Prefer `--plain` for human-facing inspection, quick content reads, and logs when JSON is unnecessary.
+- Do not rely on styled default CLI output for automation or parsing.
 
 ### Preferred Tool Matrix
 
@@ -82,16 +92,14 @@ Canonical repository guidance for agents working in this project.
 
 ## Memory Usage
 
-- Session start: `list_memories(layer="project")` to load accumulated project knowledge.
-- During work: `add_working_memory()` for ephemeral session-scoped cache (gone when session ends).
-- After task: `add_memory()` for reusable patterns, decisions, and conventions (alongside docs).
-- Cross-project: `promote_memory()` to move project knowledge to global (`project→global`).
+- Session start: `memory({ action: "list", layer: "project" })` to load accumulated project knowledge.
+- After task: use `memory({ action: "add" })` for reusable patterns and conventions; use the first-class Decision tool for durable project decisions.
+- Cross-project: `memory({ action: "promote" })` to move project knowledge to global (`project→global`).
 - Memory complements docs: memory is for fast agent recall, docs are for structured human-readable reference.
 - Never duplicate the full doc content into memory — store a summary and reference the doc with `@doc/<path>`.
-- During any skill: if you discover a reusable pattern, decision, convention, or failure, save it with `add_memory(layer="project")`. Capture knowledge as it emerges, don't wait for extraction.
+- During any skill: save reusable patterns, conventions, or failures with `memory({ action: "add", layer: "project" })`. Memory category `decision` is legacy; create a first-class System Decision instead.
 - Proactively save durable memory without waiting for the user to say "save this" when confidence is high.
-- Use `working` for session-only context, active investigations, temporary blockers, and other short-lived facts.
-- Use `project` for repo-specific rules, architecture decisions, conventions, recurring failure patterns, and implementation constraints.
+- Use `project` Memory for repo-specific patterns, conventions, recurring failures, and implementation context; use System Decisions for durable architecture or workflow choices.
 - Use `global` for stable user preferences or workflow rules that should carry across repositories and future sessions.
 - Ask the user only when the information appears durable but the correct scope (`working`, `project`, or `global`) is genuinely ambiguous.
 - After any meaningful user instruction, correction, or newly discovered pattern, quickly evaluate whether it should be stored as memory and save it when appropriate.
@@ -105,7 +113,7 @@ Canonical repository guidance for agents working in this project.
 - Use `appendNotes` for progress updates; `notes` replaces existing notes and should only be used intentionally.
 - Validate before marking work complete.
 - Use skills for detailed workflow execution instead of duplicating step-by-step process here.
-- Compatibility shim files must stay lightweight and must direct agents back to `KNOWNS.md` for behavioral rules instead of restating divergent guidance.
+- Compatibility shim files must stay lightweight and must direct agents to MCP `initial`/`help` first, with `KNOWNS.md` as fallback reference.
 
 ## Git Safety
 
@@ -118,7 +126,7 @@ Canonical repository guidance for agents working in this project.
 
 ## Context Retrieval Strategy
 
-- Treat `KNOWNS.md` as an indexed manual, not a prompt to fully inject every time.
+- Treat `KNOWNS.md` as an indexed manual, not a required startup prompt or content to fully inject every time.
 - Read in this order when context is limited:
   1. `## Source of Truth`
   2. `## TL;DR`
@@ -151,7 +159,8 @@ Canonical repository guidance for agents working in this project.
 - In `doc edit`, `-a` means `--append`.
 - Use raw task IDs where a command expects an ID value rather than a mention.
 - Use `--plain` for read, list, and search commands, not for create or edit commands.
-- Use `--json` for CLI `retrieve` when the result will be parsed or fed into an agent workflow; use `--plain` when inspecting manually.
+- Use `--json` for structured reads like `get`, `list`, `search`, and `retrieve` when the output will be parsed or fed into an agent workflow.
+- Use `--plain` when inspecting manually or when only clean text output is needed.
 - Use `--smart` when reading docs through the CLI.
 
 ### Retrieval Pitfalls
@@ -163,14 +172,14 @@ Canonical repository guidance for agents working in this project.
 
 ## Recommended File Roles
 
-- `KNOWNS.md`: canonical repo-level guide.
-- Compatibility shim files: lightweight entrypoints that introduce Knowns and redirect runtimes to `KNOWNS.md`.
+- `KNOWNS.md`: human-readable repo-level reference and fallback.
+- Compatibility shim files: lightweight entrypoints that introduce Knowns and redirect runtimes to MCP `initial`/`help`.
 - Other docs: deeper domain, feature, or workflow references.
 
 ## Compatibility Pattern
 
 - Keep shim files short.
-- In every shim file, explicitly say that `KNOWNS.md` is canonical.
+- In every shim file, explicitly say MCP `initial` is the primary bootstrap and `KNOWNS.md` is optional fallback/reference.
 - Preserve the `<!-- KNOWNS GUIDELINES START -->` and `<!-- KNOWNS GUIDELINES END -->` markers in shim files so tooling can detect and sync them reliably.
 
 ## Maintenance Rules
@@ -178,4 +187,4 @@ Canonical repository guidance for agents working in this project.
 - Update the Knowns generator when the repository's operational rules change.
 - Keep top sections stable so automated loaders can depend on them.
 - Prefer adding new sections over bloating the TL;DR.
-- Keep workflow details in skills when possible; keep `KNOWNS.md` focused on rules, conventions, and routing.
+- Keep workflow details in skills and MCP `help` when possible; keep `KNOWNS.md` focused on human-readable rules, conventions, and routing.

@@ -16,6 +16,7 @@ class QuireTokens {
   static const Color accentLight = Color(0xFFE76136); // Warm terracotta
   static const Color accentInkLight = Color(0xFFA52014);
   static const Color accentSoftLight = Color(0xFFFFE2D2);
+  static const Color onAccentLight = Color(0xFF241E19); // High-contrast label on accent (WCAG AA >= 4.5:1)
 
   // Dark Palette (Warm Charcoal - Never Pure Black)
   static const Color paperDark = Color(0xFF1A1612);
@@ -30,6 +31,7 @@ class QuireTokens {
   static const Color accentDark = Color(0xFFF0834E);
   static const Color accentInkDark = Color(0xFFFFA26E);
   static const Color accentSoftDark = Color(0xFF592A17);
+  static const Color onAccentDark = Color(0xFF1A1612);
 
   // Border Radii
   static const double rPhoto = 10.0;

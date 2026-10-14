@@ -24,13 +24,13 @@ description: Use when generating code from templates - list, run, or create temp
 ## Step 1: List Templates
 
 ```json
-mcp__knowns__list_templates({})
+mcp_knowns_templates({ "action": "list" })
 ```
 
 ## Step 2: Get Template Details
 
 ```json
-mcp__knowns__get_template({ "name": "<template-name>" })
+mcp_knowns_templates({ "action": "get", "name": "<template-name>" })
 ```
 
 Check: prompts, `doc:` link, files to generate.
@@ -38,22 +38,20 @@ Check: prompts, `doc:` link, files to generate.
 ## Step 3: Read Linked Documentation
 
 ```json
-mcp__knowns__get_doc({ "path": "<doc-path>", "smart": true })
+mcp_knowns_docs({ "action": "get", "path": "<doc-path>", "smart": true })
 ```
 
 ## Step 4: Run Template
 
 ```json
 // Dry run first
-mcp__knowns__run_template({
-  "name": "<template-name>",
+mcp_knowns_templates({ "action": "run", "name": "<template-name>",
   "variables": { "name": "MyComponent" },
   "dryRun": true
 })
 
 // Then run for real
-mcp__knowns__run_template({
-  "name": "<template-name>",
+mcp_knowns_templates({ "action": "run", "name": "<template-name>",
   "variables": { "name": "MyComponent" },
   "dryRun": false
 })
@@ -62,14 +60,15 @@ mcp__knowns__run_template({
 ## Step 5: Create New Template
 
 ```json
-mcp__knowns__create_template({
-  "name": "<template-name>",
+mcp_knowns_templates({ "action": "create", "name": "<template-name>",
   "description": "Description",
   "doc": "patterns/<related-doc>"
 })
 ```
 
 ## Template Config
+
+Use the current template schema returned by `templates({ action: "get" })`. A minimal example:
 
 ```yaml
 name: react-component
@@ -78,34 +77,32 @@ doc: patterns/react-component
 
 prompts:
   - name: name
+    type: text
     message: Component name?
     validate: required
 
-files:
-  - template: ".tsx.hbs"
-    destination: "src/components//.tsx"
+actions:
+  - type: add
+    template: component.tsx.hbs
+    path: src/components/{{pascalCase name}}.tsx
+    skipIfExists: true
 ```
 
-## CRITICAL: Syntax Pitfalls
+## Syntax Rules
 
-**NEVER write `$` + triple-brace:**
-```
-// ❌ WRONG
-$` + `{` + `{` + `{camelCase name}`
-
-// ✅ CORRECT - add space, use ~
-${ {{~camelCase name~}}}
-```
+- Use the template engine's documented `{{helper value}}` expressions directly.
+- Do not construct template delimiters through string concatenation or add JavaScript interpolation syntax around them.
+- Validate helper names and output paths with a dry run before writing files.
 
 ## Step 6: Validate (after creating template)
 
 ```json
-mcp__knowns__validate({ "scope": "templates" })
+mcp_knowns_validate({ "scope": "templates" })
 ```
 
 ## Shared Output Contract
 
-All built-in skills in scope must end with the same user-facing information order: `kn-init`, `kn-spec`, `kn-plan`, `kn-research`, `kn-implement`, `kn-verify`, `kn-doc`, `kn-template`, `kn-extract`, and `kn-commit`.
+All built-in skills in scope must end with the same user-facing information order: `kn-init`, `kn-spec`, `kn-flow`, `kn-plan`, `kn-research`, `kn-implement`, `kn-verify`, `kn-doc`, `kn-template`, `kn-extract`, and `kn-commit`.
 
 Required order for the final user-facing response:
 
@@ -115,7 +112,7 @@ Required order for the final user-facing response:
 
 Keep this concise for CLI use. Template-specific content may extend the key-details section, but must not replace or reorder the shared structure.
 
-Out of scope: explaining, syncing, or generating `.claude/skills/*`. Runtime auto-sync already handles platform copies, so this skill source only defines the built-in output contract.
+Do not manage platform-synced skill copies; this source defines the built-in workflow contract.
 
 For `kn-template`, the key details should cover:
 

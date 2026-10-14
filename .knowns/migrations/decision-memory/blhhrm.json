@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "migrationId": "decision-memory-blhhrm",
+  "memoryId": "blhhrm",
+  "selection": {
+    "memoryId": "blhhrm",
+    "resolution": "create_decision"
+  },
+  "originalMemory": {
+    "id": "blhhrm",
+    "title": "Quyết định công nghệ: Flutter (Dart) đa nền tảng + Lưu trữ Hybrid Local-First \u0026 Sync Online tùy chọn",
+    "layer": "project",
+    "category": "decision",
+    "content": "Quyết định kiến trúc cho giai đoạn triển khai (Implementation):\r\n1. Ngôn ngữ \u0026 Framework: Flutter (Dart) đa nền tảng, xuất bản đồng thời cho Mobile (iOS, Android) và Web App từ một bộ mã nguồn duy nhất.\r\n2. Chiến lược Lưu trữ: Hybrid Local-First. Mặc định lưu dữ liệu trực tiếp tại bộ nhớ cục bộ của máy (Local on-device: SQLite/Hive/Isar) đảm bảo chạy mượt offline, riêng tư và tốc độ phản hồi tức thì. Đồng thời hỗ trợ tùy chọn đồng bộ hóa lên cơ sở dữ liệu online của người dùng (User Online DB Sync) khi người dùng muốn đồng bộ dữ liệu giữa các thiết bị.",
+    "status": "active",
+    "lastVerified": "0001-01-01T00:00:00Z",
+    "tags": [
+      "architecture",
+      "flutter",
+      "dart",
+      "database",
+      "local-first",
+      "sync",
+      "decision"
+    ],
+    "createdAt": "2026-09-24T15:45:13.884Z",
+    "updatedAt": "2026-09-24T15:45:13.884Z",
+    "lifecycleMetadataMissing": [
+      "status",
+      "confidence",
+      "lastVerified",
+      "ttlDays",
+      "sources"
+    ]
+  },
+  "decisionId": "20260924-1545-quy-t-nh-c-ng-ngh-flutter-dart-a-n-n-t-ng-l-u-tr-hybrid-local-first-sync-online-t-y-ch-n",
+  "decisionCreated": true,
+  "addedSources": [
+    "@memory/blhhrm"
+  ],
+  "state": "applied",
+  "legacyExcluded": false,
+  "createdAt": "2026-09-29T10:45:54.504694Z",
+  "updatedAt": "2026-09-29T10:45:54.5777108Z"
+}

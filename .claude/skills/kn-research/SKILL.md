@@ -1,6 +1,6 @@
 ---
 name: kn-research
-description: Use when you need to understand existing code, find patterns, or explore the codebase before implementation
+description: Use when you need to understand existing code, find patterns, search project knowledge, investigate current external facts, or explore a large codebase before implementation
 ---
 
 # Researching the Codebase
@@ -9,118 +9,157 @@ description: Use when you need to understand existing code, find patterns, or ex
 
 **Core principle:** UNDERSTAND WHAT EXISTS BEFORE ADDING NEW CODE.
 
+Research is read-only by default. Do not create or update tasks, docs, memories, decisions, or source files unless the user explicitly requests persistence or an approved parent workflow already authorizes it.
+
 ## Inputs
 
 - Topic, feature, API, error, file pattern, or task ID
-- Any suspected file paths, package names, or existing references
+- Suspected paths, symbols, packages, refs, or external facts to verify
 
 ## Search Order
 
-1. Project docs and memories (unified search)
-2. Completed or related tasks
-3. Existing code paths and implementations
-4. Adjacent tests, templates, and validation logic
+Use the narrowest surface that can answer the question, then widen deliberately:
 
-## Step 1: Search Documentation and Memory
+1. Project docs, memories, and current decisions
+2. Structural relations from relevant specs/docs
+3. Related and completed tasks
+4. Existing code paths and implementations
+5. Adjacent tests, templates, and validation logic
+6. External sources only when the answer depends on current or upstream information
 
-```json
-mcp__knowns__search({ "query": "<topic>", "type": "doc" })
-mcp__knowns__search({ "query": "<topic>", "type": "memory" })
-mcp__knowns__get_doc({ "path": "<path>", "smart": true })
-```
+Do not let external results silently override local source code, project docs, task ACs, or explicit user instructions. Report conflicts.
 
-Unified search returns docs and memory entries. If relevant memories appear, include them in findings and note whether they're still current.
+## Step 1: Search Project Knowledge
 
-Use `search` for discovery-first research. Only use `retrieve` when the next consumer needs assembled context with citations rather than raw hits:
-```json
-mcp__knowns__retrieve({ "query": "<topic>" })
-```
-If MCP is unavailable, fall back to CLI: `knowns retrieve "<topic>" --json`
-
-## Step 2: Search Completed Tasks
+Use Knowns search for discovery:
 
 ```json
-mcp__knowns__search({ "query": "<keywords>", "type": "task" })
-mcp__knowns__get_task({ "taskId": "<id>" })
+mcp_knowns_search({ "action": "search", "query": "<topic>", "type": "doc" })
+mcp_knowns_search({ "action": "search", "query": "<topic>", "type": "memory" })
+mcp_knowns_docs({ "action": "get", "path": "<path>", "smart": true })
 ```
 
-## Step 3: Search Codebase
+Retrieve relevant accepted/current System Decisions separately when durable project guidance may affect the answer. Memory category `decision` is legacy and is not trusted as a replacement for first-class Decisions.
 
-```bash
-find . -name "*<pattern>*" -type f | grep -v node_modules | head -20
-grep -r "<pattern>" --include="*.ts" -l | head -20
+Use `retrieve` only when the next consumer needs an assembled context pack with citations:
+
+```json
+mcp_knowns_search({ "action": "retrieve", "query": "<topic>", "limit": 10 })
 ```
 
-## Step 4: Document Findings
+If MCP is unavailable, fall back to `knowns retrieve "<topic>" --json`.
 
-```markdown
-## Research: [Topic]
+## Step 2: Expand Structural Context
 
-### Existing Implementations
-- `src/path/file.ts`: Does X
+When Step 1 finds a relevant spec or doc, resolve its relationships before broad keyword task searches:
 
-### Patterns Found
-- Pattern 1: Used for...
-
-### Related Docs
-- @doc/path1 - Covers X
-
-### Recommendations
-1. Reuse X from Y
-2. Follow pattern Z
+```json
+mcp_knowns_search({ "action": "resolve", "ref": "@doc/<path>{implements}",
+  "direction": "inbound", "entityTypes": "task" })
 ```
+
+Follow explicit refs recursively. Use keyword task search afterward to find unlinked gaps, not to repeat already resolved context.
+
+## Step 3: Search Code
+
+Use code intelligence before raw file reads:
+
+```json
+mcp_knowns_code({ "action": "find", "query": "<symbol/topic>", "limit": 20 })
+mcp_knowns_code({ "action": "symbols", "path": "<file>" })
+mcp_knowns_code({ "action": "references", "query": "<symbol>", "path": "<file>" })
+```
+
+Inspect adjacent tests and call sites before drawing conclusions. Use raw file or shell search only when code intelligence is unavailable or returns no useful entry point after the query has been narrowed. Return to structural navigation when a symbol or likely file is found.
+
+## Step 4: Research External Facts When Needed
+
+Use external research only when local context cannot answer the question or the answer depends on current upstream facts such as library behavior, releases, issues, specifications, pricing, schedules, or regulations.
+
+Before searching:
+
+1. Inspect or discover the external tools available in the current runtime.
+2. Select the narrowest capability that can search or retrieve the required source type.
+3. Prefer capabilities that expose official or primary sources and exact source references.
+4. Fetch and verify the primary source when possible; search snippets alone are not sufficient evidence for important claims.
+5. Compare publication or update dates when freshness matters.
+
+Select tools by capability and source quality, not by provider or tool name. Do not require a specific external service.
+
+If no suitable search or retrieval capability is available:
+
+- state the limitation explicitly
+- ask for a URL, file, or access when appropriate
+- answer only from verified available context
+- mark current or external claims as incomplete instead of guessing
+
+Cite exact URLs or source references used. State clearly when upstream information conflicts with repository behavior.
+
+## Large Research and Delegation
+
+Split a large surface into independent tracks only when delegation is available, allowed, and likely to reduce the main context load. Each worker must have:
+
+- one concrete question
+- a bounded read/search scope
+- a required evidence format
+- no overlap with concurrent tracks
+
+Good tracks include finding an existing implementation and tests, tracing one integration path, or verifying one category of current upstream behavior. Inspect worker evidence before relying on it. If delegation is unavailable, execute the same tracks sequentially.
 
 ## Shared Output Contract
 
-All built-in skills in scope must end with the same user-facing information order: `kn-init`, `kn-spec`, `kn-plan`, `kn-research`, `kn-implement`, `kn-verify`, `kn-doc`, `kn-template`, `kn-extract`, and `kn-commit`.
+Return information in this order:
 
-Required order for the final user-facing response:
+1. **Goal/result** — what was researched, confirmed, ruled out, or left unresolved.
+2. **Key details** — evidence, reusable pieces, gaps, conflicts, constraints, and confidence.
+3. **Next action** — one command only when a natural handoff exists.
 
-1. Goal/result - state what was researched, clarified, or ruled out.
-2. Key details - include the most important supporting context, refs, constraints, gaps, or warnings.
-3. Next action - recommend a concrete follow-up command only when a natural handoff exists.
+Research findings should normally include:
 
-Keep this concise for CLI use. Research-specific content may extend the key-details section, but must not replace or reorder the shared structure.
+```markdown
+## Research: <topic>
 
-Out of scope: explaining, syncing, or generating `.claude/skills/*`. Runtime auto-sync already handles platform copies, so this skill source only defines the built-in output contract.
+### Result
+<concise conclusion>
 
-For `kn-research`, the key details should cover:
+### Evidence
+- `path:line` or @doc/path — local evidence
+- <URL or source ref> — external primary evidence
 
-- concrete files or docs found
-- what is reusable vs what is missing
-- architecture or convention constraints discovered
+### Reusable vs Missing
+- Reuse: <existing pattern or utility>
+- Missing/unverified: <gap or unavailable evidence>
 
-## Knowledge Spillover Rule
+### Conflicts and Constraints
+- <docs/code/upstream mismatch or architecture constraint>
 
-If the research surface becomes too large for one response or one task:
+### Recommendation
+- <concrete next step and reason>
 
-- create or update a Knowns doc for the reusable/domain knowledge
-- reference that doc from the current task or plan with `@doc/<path>`
-- keep the research summary short and point to the canonical doc instead of repeating everything inline
+### Confidence
+High | Medium | Low — <short reason>
+```
 
-If the research uncovers a broad follow-up topic that should be tracked independently:
+Omit empty sections. Never fabricate a pattern, source, or confidence level.
 
-- create a task for that general knowledge or follow-up work
-- reference it with `@task-<id>` from the current context
-- do not silently expand the original task with unrelated background work
+## Persistence Boundary
 
-## Fallbacks
+If findings are broadly reusable, recommend a canonical Knowns doc, task, or extraction workflow. Persist only when explicitly authorized; then use Knowns APIs, link the resulting `@doc/`, `@task-`, or `@decision/` reference, and keep the final response concise.
 
-- If search is noisy, narrow by file type, feature folder, or known reference IDs
-- If no existing pattern is found, state that explicitly rather than implying one exists
-- If docs and code disagree, call out the mismatch
+Do not manage platform-synced skill copies; this source defines the built-in workflow contract.
 
 ## Checklist
 
-- [ ] Searched documentation
-- [ ] Reviewed similar completed tasks
-- [ ] Found existing code patterns
-- [ ] Identified reusable components
+- [ ] Searched relevant project knowledge
+- [ ] Followed explicit refs and structural relations when present
+- [ ] Reviewed related tasks, code paths, and tests
+- [ ] Used external research only when needed and selected tools by capability
+- [ ] Cited evidence and reported conflicts or gaps
+- [ ] Kept research read-only unless persistence was authorized
 
 ## Next Step Suggestion
 
-Only suggest a next command when the findings clearly lead somewhere:
-
-- research for an active task -> `/kn-plan <task-id>`
-- research uncovered reusable knowledge -> `/kn-extract <task-id>` if the source task is complete
-- no clear handoff -> stop after the findings without forcing a next command
+- active task research → `/kn-plan <task-id>`
+- approved spec/task wave ready → `/kn-flow @doc/<spec-path>`
+- completed work produced reusable knowledge → `/kn-extract <task-id>`
+- no clear handoff → stop after findings
