@@ -10,6 +10,9 @@ class ChatMessage {
   final bool isMe;
   final String time;
   final Uint8List? imageBytes;
+  final String? quotedImageUrl;
+  final Uint8List? quotedImageBytes;
+  final String? quotedCaption;
 
   ChatMessage({
     required this.id,
@@ -17,15 +20,24 @@ class ChatMessage {
     required this.isMe,
     required this.time,
     this.imageBytes,
+    this.quotedImageUrl,
+    this.quotedImageBytes,
+    this.quotedCaption,
   });
 }
 
 class CircleChatSheet extends StatefulWidget {
   final FriendChip friend;
+  final String? initialQuotedImageUrl;
+  final Uint8List? initialQuotedImageBytes;
+  final String? initialQuotedCaption;
 
   const CircleChatSheet({
     Key? key,
     required this.friend,
+    this.initialQuotedImageUrl,
+    this.initialQuotedImageBytes,
+    this.initialQuotedCaption,
   }) : super(key: key);
 
   @override
@@ -36,11 +48,19 @@ class _CircleChatSheetState extends State<CircleChatSheet> {
   final TextEditingController _msgController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
+  String? _quotedImageUrl;
+  Uint8List? _quotedImageBytes;
+  String? _quotedCaption;
+
   late final List<ChatMessage> _messages;
 
   @override
   void initState() {
     super.initState();
+    _quotedImageUrl = widget.initialQuotedImageUrl;
+    _quotedImageBytes = widget.initialQuotedImageBytes;
+    _quotedCaption = widget.initialQuotedCaption;
+
     // Sample initial quiet messages
     _messages = [
       ChatMessage(
@@ -86,8 +106,16 @@ class _CircleChatSheetState extends State<CircleChatSheet> {
           isMe: true,
           time: timeStr,
           imageBytes: imageBytes,
+          quotedImageUrl: _quotedImageUrl,
+          quotedImageBytes: _quotedImageBytes,
+          quotedCaption: _quotedCaption,
         ),
       );
+
+      // Clear quote after sending
+      _quotedImageUrl = null;
+      _quotedImageBytes = null;
+      _quotedCaption = null;
     });
 
     _msgController.clear();
@@ -176,7 +204,7 @@ class _CircleChatSheetState extends State<CircleChatSheet> {
                   alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 12.0),
-                    constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                    constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.78),
                     padding: const EdgeInsets.all(12.0),
                     decoration: BoxDecoration(
                       color: msg.isMe
@@ -192,6 +220,50 @@ class _CircleChatSheetState extends State<CircleChatSheet> {
                     child: Column(
                       crossAxisAlignment: msg.isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                       children: [
+                        // Quoted Moment Preview block if present
+                        if (msg.quotedImageUrl != null || msg.quotedImageBytes != null) ...[
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            margin: const EdgeInsets.only(bottom: 8),
+                            decoration: BoxDecoration(
+                              color: isDark ? QuireTokens.s2Dark : QuireTokens.s2Light,
+                              borderRadius: BorderRadius.circular(QuireTokens.rPhoto),
+                              border: Border(left: BorderSide(color: QuireTokens.accentLight, width: 3)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: msg.quotedImageBytes != null
+                                      ? Image.memory(msg.quotedImageBytes!, width: 38, height: 38, fit: BoxFit.cover)
+                                      : Image.network(msg.quotedImageUrl!, width: 38, height: 38, fit: BoxFit.cover),
+                                ),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Khoảnh khắc của ${widget.friend.name}',
+                                        style: TextStyle(fontFamily: QuireTokens.fontMono, fontSize: 9, fontWeight: FontWeight.bold, color: QuireTokens.accentLight),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        msg.quotedCaption ?? 'Không có chú thích',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(fontFamily: QuireTokens.fontSerif, fontSize: 11.5, color: isDark ? QuireTokens.ink2Dark : QuireTokens.ink2Light),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+
+                        // Attached photo
                         if (msg.imageBytes != null) ...[
                           ClipRRect(
                             borderRadius: BorderRadius.circular(QuireTokens.rPhoto),
@@ -204,6 +276,8 @@ class _CircleChatSheetState extends State<CircleChatSheet> {
                           ),
                           const SizedBox(height: 8),
                         ],
+
+                        // Message Text
                         Text(
                           msg.text,
                           style: TextStyle(
@@ -228,6 +302,45 @@ class _CircleChatSheetState extends State<CircleChatSheet> {
           ),
           Divider(height: 1, color: ruleColor),
 
+          // Quoted Banner above input bar
+          if (_quotedImageUrl != null || _quotedImageBytes != null) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: isDark ? QuireTokens.s2Dark : QuireTokens.s2Light,
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: _quotedImageBytes != null
+                        ? Image.memory(_quotedImageBytes!, width: 34, height: 34, fit: BoxFit.cover)
+                        : Image.network(_quotedImageUrl!, width: 34, height: 34, fit: BoxFit.cover),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Đang phản hồi khoảnh khắc của ${widget.friend.name}', style: TextStyle(fontFamily: QuireTokens.fontMono, fontSize: 9.5, fontWeight: FontWeight.bold, color: QuireTokens.accentLight)),
+                        Text(_quotedCaption ?? 'Khoảnh khắc', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontFamily: QuireTokens.fontSerif, fontSize: 11, color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light)),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 16),
+                    onPressed: () {
+                      setState(() {
+                        _quotedImageUrl = null;
+                        _quotedImageBytes = null;
+                        _quotedCaption = null;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+            Divider(height: 1, color: ruleColor),
+          ],
+
           // Message Input Bar
           Padding(
             padding: const EdgeInsets.all(12.0),
@@ -249,8 +362,10 @@ class _CircleChatSheetState extends State<CircleChatSheet> {
                     child: TextField(
                       controller: _msgController,
                       style: TextStyle(fontFamily: QuireTokens.fontSerif, color: isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
-                      decoration: const InputDecoration(
-                        hintText: 'Nhập tin nhắn riêng tư...',
+                      decoration: InputDecoration(
+                        hintText: (_quotedImageUrl != null || _quotedImageBytes != null)
+                            ? 'Viết phản hồi về bức ảnh này...'
+                            : 'Nhập tin nhắn riêng tư...',
                         border: InputBorder.none,
                       ),
                       onSubmitted: (_) => _sendMessage(),

@@ -10,6 +10,7 @@ import '../../../features/photo_upload/services/quire_moment_uploader.dart';
 import '../../../features/photo_upload/services/camera_gallery_service.dart';
 import '../../../features/photo_upload/services/native_camera_gallery_service.dart';
 import '../chat/circle_chat_sheet.dart';
+import '../chat/circle_inbox_sheet.dart';
 
 class MomentsTabView extends StatefulWidget {
   final List<FriendChip> friends;
@@ -178,12 +179,31 @@ class _MomentsTabViewState extends State<MomentsTabView> {
     );
   }
 
-  void _openChatWith(FriendChip friend) {
+  void _openChatWith(
+    FriendChip friend, {
+    String? quotedImageUrl,
+    Uint8List? quotedImageBytes,
+    String? quotedCaption,
+  }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => CircleChatSheet(friend: friend),
+      builder: (ctx) => CircleChatSheet(
+        friend: friend,
+        initialQuotedImageUrl: quotedImageUrl,
+        initialQuotedImageBytes: quotedImageBytes,
+        initialQuotedCaption: quotedCaption,
+      ),
+    );
+  }
+
+  void _openInbox() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => CircleInboxSheet(friends: widget.friends),
     );
   }
 
@@ -440,10 +460,19 @@ class _MomentsTabViewState extends State<MomentsTabView> {
                 Text('Từ những người bạn quen', style: QuireTokens.title(isDark: isDark)),
               ],
             ),
-            IconButton(
-              icon: const Icon(Icons.camera_alt_outlined, size: 24),
-              tooltip: 'Chụp ảnh nhanh',
-              onPressed: _openPhotoSourceSelector,
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chat_bubble_outline, size: 22),
+                  tooltip: 'Hộp thư vòng bạn bè',
+                  onPressed: _openInbox,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.camera_alt_outlined, size: 24),
+                  tooltip: 'Chụp ảnh nhanh',
+                  onPressed: _openPhotoSourceSelector,
+                ),
+              ],
             ),
           ],
         ),
@@ -598,10 +627,15 @@ class _MomentsTabViewState extends State<MomentsTabView> {
                             (f) => f.name == authorName,
                             orElse: () => FriendChip(id: 'temp', name: authorName, initials: authorInitials),
                           );
-                          _openChatWith(friend);
+                          _openChatWith(
+                            friend,
+                            quotedImageUrl: moment['imageUrl'] as String?,
+                            quotedImageBytes: moment['imageBytes'] as Uint8List?,
+                            quotedCaption: moment['caption'] as String?,
+                          );
                         },
-                        icon: const Icon(Icons.chat_bubble_outline, size: 16),
-                        label: Text('Nhắn tin', style: QuireTokens.meta(isDark: isDark)),
+                        icon: const Icon(Icons.reply_outlined, size: 16),
+                        label: Text('Phản hồi ảnh', style: QuireTokens.meta(isDark: isDark)),
                       ),
                       const SizedBox(width: 6),
                       TextButton.icon(

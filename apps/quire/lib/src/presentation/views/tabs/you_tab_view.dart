@@ -37,6 +37,8 @@ class YouTabView extends StatefulWidget {
 
 class _YouTabViewState extends State<YouTabView> {
   bool _readReceiptsEnabled = false; // Quiet invariant: Off by default
+  bool _autoPurgeEnabled = true;
+  String _autoPurgeDuration = '30 ngày'; // '24 giờ', '7 ngày', '30 ngày'
   final TextEditingController _addFriendController = TextEditingController();
 
   @override
@@ -452,6 +454,27 @@ class _YouTabViewState extends State<YouTabView> {
             ],
           ),
         ),
+        const SizedBox(height: 16),
+
+        // 4 Quick Cards with Cover Thumbs (from prototype.html)
+        Container(
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: BorderRadius.circular(QuireTokens.rCard),
+            border: Border.all(color: ruleColor),
+          ),
+          child: Column(
+            children: [
+              _buildQuickRow('Đã lưu (Saved)', '9 bài viết & bộ sưu tập', 'https://picsum.photos/seed/saved_thumb/120/120', ruleColor, isDark),
+              Divider(height: 1, indent: 68, color: ruleColor),
+              _buildQuickRow('Khoảnh khắc của bạn', '12 đã chia sẻ · 4 tuần này', 'https://picsum.photos/seed/shared_thumb/120/120', ruleColor, isDark),
+              Divider(height: 1, indent: 68, color: ruleColor),
+              _buildQuickRow('Lịch sử đọc', 'Bốn bài tháng này', 'https://picsum.photos/seed/history_thumb/120/120', ruleColor, isDark),
+              Divider(height: 1, indent: 68, color: ruleColor),
+              _buildQuickRow('Mời bạn thân', 'Còn ba lời mời kết nối', 'https://picsum.photos/seed/invite_thumb/120/120', ruleColor, isDark),
+            ],
+          ),
+        ),
         const SizedBox(height: 24),
 
         // Settings Section
@@ -576,16 +599,48 @@ class _YouTabViewState extends State<YouTabView> {
                 },
               ),
               const Divider(),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Tự huỷ khoảnh khắc', style: QuireTokens.body(isDark: isDark)),
-                    Text('Sau 30 ngày', style: QuireTokens.meta(isDark: isDark)),
-                  ],
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                activeTrackColor: QuireTokens.accentLight,
+                title: Text('Tự huỷ khoảnh khắc', style: QuireTokens.body(isDark: isDark)),
+                subtitle: Text(
+                  _autoPurgeEnabled
+                      ? 'Tự động dọn dẹp sau $_autoPurgeDuration từ khi đăng'
+                      : 'Đang tắt: Giữ vĩnh viễn (Không tự huỷ)',
+                  style: QuireTokens.meta(isDark: isDark),
                 ),
+                value: _autoPurgeEnabled,
+                onChanged: (val) {
+                  setState(() => _autoPurgeEnabled = val);
+                },
               ),
+              if (_autoPurgeEnabled) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: ['24 giờ', '7 ngày', '30 ngày'].map((dur) {
+                    final isSel = _autoPurgeDuration == dur;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: ChoiceChip(
+                        label: Text(dur),
+                        selected: isSel,
+                        onSelected: (_) => setState(() => _autoPurgeDuration = dur),
+                        selectedColor: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
+                        labelStyle: TextStyle(
+                          fontFamily: QuireTokens.fontMono,
+                          fontSize: 10.5,
+                          fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                          color: isSel ? QuireTokens.accentInkLight : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                          side: BorderSide(color: isSel ? QuireTokens.accentLight : ruleColor),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
             ],
           ),
         ),
@@ -645,6 +700,31 @@ class _YouTabViewState extends State<YouTabView> {
         ],
         const SizedBox(height: 32),
       ],
+    );
+  }
+
+  Widget _buildQuickRow(String title, String subtitle, String imageUrl, Color ruleColor, bool isDark) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+      leading: ClipRRect(
+        borderRadius: BorderRadius.circular(QuireTokens.rPhoto),
+        child: Image.network(
+          imageUrl,
+          width: 44,
+          height: 44,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Container(
+            width: 44,
+            height: 44,
+            color: isDark ? QuireTokens.s2Dark : QuireTokens.s2Light,
+            child: const Icon(Icons.bookmark_border, size: 20),
+          ),
+        ),
+      ),
+      title: Text(title, style: QuireTokens.h3(isDark: isDark).copyWith(fontSize: 15)),
+      subtitle: Text(subtitle, style: QuireTokens.meta(isDark: isDark)),
+      trailing: const Icon(Icons.chevron_right, size: 18),
+      onTap: () {},
     );
   }
 }
