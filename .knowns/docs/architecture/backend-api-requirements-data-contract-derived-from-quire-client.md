@@ -3,7 +3,7 @@ id: doc-c7681defdbceda03bc7b25cc2d298cdc
 title: 'Backend API Requirements & Data Contract (Derived from Quire Client)'
 description: 'Backend API Requirements and Data Contract derived from Quire Client features: Auth, Circle, Soft-Purge Moments, Articles visibility, and Chat'
 createdAt: '2026-10-14T09:04:26.466Z'
-updatedAt: '2026-10-14T09:04:26.466Z'
+updatedAt: '2026-10-14T09:16:19.518Z'
 tags:
   - backend
   - api

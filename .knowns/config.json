@@ -37,12 +37,11 @@
       "dimensions": 384,
       "maxTokens": 256
     },
-    "serverPort": 6420,
+    "serverPort": 6421,
     "platforms": [
       "claude-code",
       "opencode",
       "agents"
-    ],
-    "enableChatUI": true
+    ]
   }
 }
