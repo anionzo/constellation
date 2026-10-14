@@ -89,10 +89,20 @@ class QuireTokens {
         color: isDark ? ink3Dark : ink3Light,
       );
 
+  /// Standard button text style (dark ink on light, light ink on dark).
+  /// Use this for OutlinedButton, TextButton, GhostButton.
   static TextStyle button({bool isDark = false}) => TextStyle(
         fontFamily: fontSerif,
         fontSize: 14.0,
         fontWeight: FontWeight.w500,
-        color: isDark ? paperDark : paperLight,
+        color: isDark ? inkDark : inkLight,
+      );
+
+  /// Button text style specifically for solid primary accent buttons (terracotta background).
+  static TextStyle buttonOnAccent({bool isDark = false}) => TextStyle(
+        fontFamily: fontSerif,
+        fontSize: 14.0,
+        fontWeight: FontWeight.w500,
+        color: isDark ? onAccentDark : onAccentLight,
       );
 }

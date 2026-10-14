@@ -11,6 +11,7 @@ class DiscoverTabView extends StatefulWidget {
 class _DiscoverTabViewState extends State<DiscoverTabView> {
   final List<String> _topics = ['Tất cả', 'Kiến trúc', 'Nội thất', 'Du lịch', 'Tản văn'];
   int _selectedTopicIndex = 0;
+  String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
 
   final List<Map<String, String>> _curatedList = [
@@ -72,6 +73,7 @@ class _DiscoverTabViewState extends State<DiscoverTabView> {
               Expanded(
                 child: TextField(
                   controller: _searchController,
+                  onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
                   style: TextStyle(fontFamily: QuireTokens.fontSerif, color: isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
                   decoration: InputDecoration(
                     hintText: 'Kiến trúc, tản văn, du lịch...',
@@ -80,6 +82,15 @@ class _DiscoverTabViewState extends State<DiscoverTabView> {
                       color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light,
                     ),
                     border: InputBorder.none,
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 16),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
                   ),
                 ),
               ),
@@ -124,62 +135,90 @@ class _DiscoverTabViewState extends State<DiscoverTabView> {
         Text('ĐỌC NHIỀU NHẤT TUẦN', style: QuireTokens.eyebrow(isDark: isDark)),
         const SizedBox(height: 12),
 
-        // Curated List Cards
-        ..._curatedList.map((item) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: 14.0),
-            padding: const EdgeInsets.all(12.0),
-            decoration: BoxDecoration(
-              color: surfaceColor,
-              borderRadius: BorderRadius.circular(QuireTokens.rCard),
-              border: Border.all(color: ruleColor),
-            ),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(QuireTokens.rPhoto),
-                  child: Image.network(
-                    item['imageUrl']!,
-                    width: 80,
-                    height: 80,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 80,
-                      height: 80,
-                      color: isDark ? QuireTokens.s2Dark : QuireTokens.s2Light,
-                      child: const Icon(Icons.menu_book),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${item['category']} · ${item['readTime']}'.toUpperCase(),
-                        style: QuireTokens.meta(isDark: isDark).copyWith(fontSize: 9),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item['title']!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: QuireTokens.h3(isDark: isDark).copyWith(fontSize: 15),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        item['author']!,
-                        style: QuireTokens.meta(isDark: isDark).copyWith(fontSize: 10),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
+        // Filtered Curated List Cards
+        ..._buildFilteredList(surfaceColor, ruleColor, isDark),
       ],
     );
+  }
+
+  List<Widget> _buildFilteredList(Color surfaceColor, Color ruleColor, bool isDark) {
+    final selectedTopic = _topics[_selectedTopicIndex];
+    final filtered = _curatedList.where((item) {
+      final matchesTopic = selectedTopic == 'Tất cả' || item['category'] == selectedTopic;
+      final matchesQuery = _searchQuery.isEmpty ||
+          item['title']!.toLowerCase().contains(_searchQuery) ||
+          item['author']!.toLowerCase().contains(_searchQuery) ||
+          item['category']!.toLowerCase().contains(_searchQuery);
+      return matchesTopic && matchesQuery;
+    }).toList();
+
+    if (filtered.isEmpty) {
+      return [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 36.0),
+          child: Center(
+            child: Text(
+              'Không tìm thấy bài viết phù hợp.',
+              style: QuireTokens.meta(isDark: isDark),
+            ),
+          ),
+        ),
+      ];
+    }
+
+    return filtered.map((item) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 14.0),
+        padding: const EdgeInsets.all(12.0),
+        decoration: BoxDecoration(
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(QuireTokens.rCard),
+          border: Border.all(color: ruleColor),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(QuireTokens.rPhoto),
+              child: Image.network(
+                item['imageUrl']!,
+                width: 80,
+                height: 80,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 80,
+                  height: 80,
+                  color: isDark ? QuireTokens.s2Dark : QuireTokens.s2Light,
+                  child: const Icon(Icons.menu_book),
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${item['category']} · ${item['readTime']}'.toUpperCase(),
+                    style: QuireTokens.meta(isDark: isDark).copyWith(fontSize: 9),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item['title']!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: QuireTokens.h3(isDark: isDark).copyWith(fontSize: 15),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item['author']!,
+                    style: QuireTokens.meta(isDark: isDark).copyWith(fontSize: 10),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList();
   }
 }

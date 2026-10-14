@@ -50,6 +50,28 @@ class QuireTheme {
           systemNavigationBarIconBrightness: Brightness.dark,
         ),
       ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: QuireTokens.inkLight,
+          side: const BorderSide(color: QuireTokens.ruleLight),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(QuireTokens.rBtn)),
+          textStyle: QuireTokens.button(isDark: false),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: QuireTokens.accentLight,
+          foregroundColor: QuireTokens.onAccentLight,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(QuireTokens.rBtn)),
+          textStyle: QuireTokens.buttonOnAccent(isDark: false),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: QuireTokens.inkLight,
+          textStyle: QuireTokens.button(isDark: false),
+        ),
+      ),
     );
   }
 
@@ -95,6 +117,28 @@ class QuireTheme {
           statusBarBrightness: Brightness.dark,
           systemNavigationBarColor: QuireTokens.paperDark,
           systemNavigationBarIconBrightness: Brightness.light,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: QuireTokens.inkDark,
+          side: const BorderSide(color: QuireTokens.ruleDark),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(QuireTokens.rBtn)),
+          textStyle: QuireTokens.button(isDark: true),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: QuireTokens.accentDark,
+          foregroundColor: QuireTokens.onAccentDark,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(QuireTokens.rBtn)),
+          textStyle: QuireTokens.buttonOnAccent(isDark: true),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: QuireTokens.inkDark,
+          textStyle: QuireTokens.button(isDark: true),
         ),
       ),
     );

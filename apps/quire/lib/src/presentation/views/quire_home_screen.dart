@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../theme/quire_tokens.dart';
 import '../theme/quire_theme.dart';
@@ -35,20 +36,48 @@ class QuireHomeScreen extends StatefulWidget {
 class _QuireHomeScreenState extends State<QuireHomeScreen> {
   int _currentTabIndex = 1; // Default to Moments tab
 
-  // 11 Close Friends Circle Mock (Finite Circle Invariant)
-  final List<FriendChip> _friends = const [
-    FriendChip(id: 'f1', name: 'Mai', initials: 'M'),
-    FriendChip(id: 'f2', name: 'Tuấn', initials: 'T'),
-    FriendChip(id: 'f3', name: 'Linh', initials: 'L'),
-    FriendChip(id: 'f4', name: 'An', initials: 'A'),
-    FriendChip(id: 'f5', name: 'Hà', initials: 'H'),
-    FriendChip(id: 'f6', name: 'Khoa', initials: 'K'),
-    FriendChip(id: 'f7', name: 'Trang', initials: 'TR'),
-    FriendChip(id: 'f8', name: 'Duy', initials: 'D'),
-    FriendChip(id: 'f9', name: 'Bảo', initials: 'B'),
-    FriendChip(id: 'f10', name: 'Việt', initials: 'V'),
-    FriendChip(id: 'f11', name: 'Quỳnh', initials: 'Q'),
-  ];
+  String _userName = 'Bạn';
+  String _userBio = 'Thành viên từ tháng 3 · Lisbon';
+  Uint8List? _userAvatarBytes;
+  late List<FriendChip> _friends;
+
+  @override
+  void initState() {
+    super.initState();
+    _friends = [
+      const FriendChip(id: 'f1', name: 'Mai', initials: 'M'),
+      const FriendChip(id: 'f2', name: 'Tuấn', initials: 'T'),
+      const FriendChip(id: 'f3', name: 'Linh', initials: 'L'),
+      const FriendChip(id: 'f4', name: 'An', initials: 'A'),
+      const FriendChip(id: 'f5', name: 'Hà', initials: 'H'),
+      const FriendChip(id: 'f6', name: 'Khoa', initials: 'K'),
+      const FriendChip(id: 'f7', name: 'Trang', initials: 'TR'),
+      const FriendChip(id: 'f8', name: 'Duy', initials: 'D'),
+      const FriendChip(id: 'f9', name: 'Bảo', initials: 'B'),
+      const FriendChip(id: 'f10', name: 'Việt', initials: 'V'),
+      const FriendChip(id: 'f11', name: 'Quỳnh', initials: 'Q'),
+    ];
+  }
+
+  void _onProfileUpdated(String name, String bio, Uint8List? avatarBytes) {
+    setState(() {
+      if (name.isNotEmpty) _userName = name;
+      if (bio.isNotEmpty) _userBio = bio;
+      _userAvatarBytes = avatarBytes;
+    });
+  }
+
+  void _onAddFriend(FriendChip newFriend) {
+    setState(() {
+      _friends.add(newFriend);
+    });
+  }
+
+  void _onRemoveFriend(String friendId) {
+    setState(() {
+      _friends.removeWhere((f) => f.id == friendId);
+    });
+  }
 
 
   @override
@@ -76,6 +105,12 @@ class _QuireHomeScreenState extends State<QuireHomeScreen> {
                 themeController: widget.themeController ?? ThemeController(),
                 friends: _friends,
                 currentUserEmail: widget.currentUserEmail,
+                currentUserName: _userName,
+                currentUserBio: _userBio,
+                currentUserAvatarBytes: _userAvatarBytes,
+                onProfileUpdated: _onProfileUpdated,
+                onAddFriend: _onAddFriend,
+                onRemoveFriend: _onRemoveFriend,
                 onSignOut: widget.onSignOut,
               ),
             ],

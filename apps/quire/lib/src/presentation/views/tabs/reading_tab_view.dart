@@ -33,6 +33,7 @@ class ReadingTabView extends StatefulWidget {
 }
 
 class _ReadingTabViewState extends State<ReadingTabView> {
+  bool _showOnlyBookmarked = false;
   final List<ArticleItem> _articles = [
     ArticleItem(
       id: 'art_1',
@@ -205,10 +206,42 @@ Vilhelm Hammershøi vẽ những căn phòng vắng ở Copenhagen với gam mà
         ),
         const SizedBox(height: 4),
         Text('5 bài mới hôm nay', style: QuireTokens.title(isDark: isDark)),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            ChoiceChip(
+              label: const Text('Tất cả'),
+              selected: !_showOnlyBookmarked,
+              onSelected: (_) => setState(() => _showOnlyBookmarked = false),
+              selectedColor: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
+              labelStyle: TextStyle(
+                fontFamily: QuireTokens.fontMono,
+                fontSize: 11,
+                fontWeight: !_showOnlyBookmarked ? FontWeight.bold : FontWeight.normal,
+                color: !_showOnlyBookmarked ? QuireTokens.accentInkLight : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999), side: BorderSide(color: ruleColor)),
+            ),
+            const SizedBox(width: 8),
+            ChoiceChip(
+              label: Text('Đã lưu (${_articles.where((a) => a.isBookmarked).length})'),
+              selected: _showOnlyBookmarked,
+              onSelected: (_) => setState(() => _showOnlyBookmarked = true),
+              selectedColor: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
+              labelStyle: TextStyle(
+                fontFamily: QuireTokens.fontMono,
+                fontSize: 11,
+                fontWeight: _showOnlyBookmarked ? FontWeight.bold : FontWeight.normal,
+                color: _showOnlyBookmarked ? QuireTokens.accentInkLight : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999), side: BorderSide(color: ruleColor)),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
 
         // Articles Feed
-        ..._articles.map((article) {
+        ...(_showOnlyBookmarked ? _articles.where((a) => a.isBookmarked).toList() : _articles).map((article) {
           return Container(
             margin: const EdgeInsets.only(bottom: 20.0),
             decoration: BoxDecoration(

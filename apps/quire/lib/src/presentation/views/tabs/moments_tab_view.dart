@@ -177,151 +177,234 @@ class _MomentsTabViewState extends State<MomentsTabView> {
     );
   }
 
-  void _openStory(String name, String initials) {
+  void _openStory(int initialIndex) {
+    int currentIndex = initialIndex.clamp(0, widget.friends.isNotEmpty ? widget.friends.length - 1 : 0);
+    bool isLiked = false;
+    int likeCount = 3;
+
     showDialog(
       context: context,
       barrierColor: Colors.black87,
       builder: (ctx) {
-        final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 400, maxHeight: 680),
-            decoration: BoxDecoration(
-              color: isDark ? QuireTokens.surfaceDark : QuireTokens.surfaceLight,
-              borderRadius: BorderRadius.circular(QuireTokens.rSheet),
-              border: Border.all(color: isDark ? QuireTokens.ruleDark : QuireTokens.ruleLight),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Story Top Bar & Segmented Progress
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 3,
-                              decoration: BoxDecoration(
-                                color: QuireTokens.accentLight,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Container(
-                              height: 3,
-                              decoration: BoxDecoration(
-                                color: isDark ? QuireTokens.ruleDark : QuireTokens.ruleLight,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return StatefulBuilder(
+          builder: (context, setStoryState) {
+            final isDark = Theme.of(ctx).brightness == Brightness.dark;
+            final friend = widget.friends[currentIndex];
+            final storyCaptions = [
+              'Tản bộ chiều chủ nhật, không vội vã.',
+              'Góc sách quen ở quán cà phê cũ.',
+              'Mưa đầu mùa trên hiên nhà.',
+              'Ánh hoàng hôn buông trên bến cảng.',
+              'Tách trà nóng và một trang tản văn hay.',
+            ];
+            final caption = storyCaptions[currentIndex % storyCaptions.length];
+
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 400, maxHeight: 680),
+                decoration: BoxDecoration(
+                  color: isDark ? QuireTokens.surfaceDark : QuireTokens.surfaceLight,
+                  borderRadius: BorderRadius.circular(QuireTokens.rSheet),
+                  border: Border.all(color: isDark ? QuireTokens.ruleDark : QuireTokens.ruleLight),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Story Top Bar & Segmented Progress across friends
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
                         children: [
                           Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 16,
-                                backgroundColor: isDark ? QuireTokens.s2Dark : QuireTokens.s2Light,
-                                child: Text(
-                                  initials,
-                                  style: TextStyle(
-                                    fontFamily: QuireTokens.fontMono,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark ? QuireTokens.inkDark : QuireTokens.inkLight,
+                            children: List.generate(
+                              widget.friends.length.clamp(1, 6),
+                              (i) => Expanded(
+                                child: Container(
+                                  margin: EdgeInsets.only(right: i < widget.friends.length.clamp(1, 6) - 1 ? 4.0 : 0),
+                                  height: 3,
+                                  decoration: BoxDecoration(
+                                    color: i == (currentIndex % 6)
+                                        ? QuireTokens.accentLight
+                                        : (isDark ? QuireTokens.ruleDark : QuireTokens.ruleLight),
+                                    borderRadius: BorderRadius.circular(2),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 10),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
                                 children: [
-                                  Text(name, style: QuireTokens.h3(isDark: isDark).copyWith(fontSize: 15)),
-                                  Text('2 / 5 · 2 giờ trước', style: QuireTokens.meta(isDark: isDark).copyWith(fontSize: 9)),
+                                  CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: isDark ? QuireTokens.s2Dark : QuireTokens.s2Light,
+                                    child: Text(
+                                      friend.initials,
+                                      style: TextStyle(
+                                        fontFamily: QuireTokens.fontMono,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDark ? QuireTokens.inkDark : QuireTokens.inkLight,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(friend.name, style: QuireTokens.h3(isDark: isDark).copyWith(fontSize: 15)),
+                                      Text('${currentIndex + 1} / ${widget.friends.length} · 2 giờ trước',
+                                          style: QuireTokens.meta(isDark: isDark).copyWith(fontSize: 9)),
+                                    ],
+                                  ),
                                 ],
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, size: 20),
+                                onPressed: () => Navigator.pop(ctx),
                               ),
                             ],
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.close, size: 20),
-                            onPressed: () => Navigator.pop(ctx),
-                          ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
+                    ),
 
-                // Story Image
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(QuireTokens.rPhoto),
-                      child: Image.network(
-                        'https://picsum.photos/seed/story_${initials}/800/1000',
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: isDark ? QuireTokens.s2Dark : QuireTokens.s2Light,
-                          child: const Icon(Icons.photo, size: 64),
+                    // Story Image with Left/Right Tap Navigation
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(QuireTokens.rPhoto),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.network(
+                                'https://picsum.photos/seed/story_${friend.initials}/800/1000',
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  color: isDark ? QuireTokens.s2Dark : QuireTokens.s2Light,
+                                  child: const Icon(Icons.photo, size: 64),
+                                ),
+                              ),
+                              // Tap left: previous friend
+                              Positioned(
+                                left: 0,
+                                top: 0,
+                                bottom: 0,
+                                width: 140,
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.translucent,
+                                  onTap: () {
+                                    if (currentIndex > 0) {
+                                      setStoryState(() {
+                                        currentIndex--;
+                                        isLiked = false;
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                              // Tap right: next friend
+                              Positioned(
+                                right: 0,
+                                top: 0,
+                                bottom: 0,
+                                width: 140,
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.translucent,
+                                  onTap: () {
+                                    if (currentIndex < widget.friends.length - 1) {
+                                      setStoryState(() {
+                                        currentIndex++;
+                                        isLiked = false;
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
 
-                // Story Caption & Action
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Tản bộ chiều chủ nhật, không vội vã.',
-                        style: QuireTokens.body(isDark: isDark).copyWith(
-                          fontStyle: FontStyle.italic,
-                          fontSize: 15.0,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: isDark ? QuireTokens.ruleDark : QuireTokens.ruleLight),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(QuireTokens.rBtn),
+                    // Story Caption & Interactive Actions
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          Text(
+                            caption,
+                            style: QuireTokens.body(isDark: isDark).copyWith(
+                              fontStyle: FontStyle.italic,
+                              fontSize: 15.0,
                             ),
                           ),
-                          onPressed: () {
-                            Navigator.pop(ctx);
-                            _openPhotoSourceSelector();
-                          },
-                          icon: const Icon(Icons.camera_alt_outlined, size: 18),
-                          label: Text(
-                            'Đáp lại bằng ảnh',
-                            style: QuireTokens.button(isDark: isDark),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              // In-story like button
+                              IconButton(
+                                icon: Icon(
+                                  isLiked ? Icons.favorite : Icons.favorite_border,
+                                  color: isLiked ? const Color(0xFFC13832) : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+                                  size: 22,
+                                ),
+                                onPressed: () {
+                                  setStoryState(() {
+                                    isLiked = !isLiked;
+                                    likeCount = isLiked ? likeCount + 1 : likeCount - 1;
+                                  });
+                                },
+                              ),
+                              Text(
+                                '$likeCount',
+                                style: TextStyle(
+                                  fontFamily: QuireTokens.fontMono,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isLiked ? const Color(0xFFC13832) : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              // Reply with photo action
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: isDark ? QuireTokens.inkDark : QuireTokens.inkLight,
+                                    side: BorderSide(color: isDark ? QuireTokens.ruleDark : QuireTokens.ruleLight),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(QuireTokens.rBtn),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    _openPhotoSourceSelector();
+                                  },
+                                  icon: const Icon(Icons.camera_alt_outlined, size: 18),
+                                  label: Text(
+                                    'Đáp lại bằng ảnh',
+                                    style: QuireTokens.button(isDark: isDark),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -348,6 +431,7 @@ class _MomentsTabViewState extends State<MomentsTabView> {
           height: 88,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
             itemCount: widget.friends.length + 1,
             separatorBuilder: (_, __) => const SizedBox(width: 14),
             itemBuilder: (context, index) {
@@ -370,7 +454,7 @@ class _MomentsTabViewState extends State<MomentsTabView> {
                   QuireCircleAvatar(
                     initials: friend.initials,
                     hasUnreadStory: index == 1, // Mai has unread dashed ring
-                    onTap: () => _openStory(friend.name, friend.initials),
+                    onTap: () => _openStory(index - 1),
                   ),
                   const SizedBox(height: 6),
                   Text(friend.name, style: QuireTokens.meta(isDark: isDark)),

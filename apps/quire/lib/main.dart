@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:local_sync/local_sync.dart';
@@ -138,6 +139,7 @@ class _QuireAppState extends State<QuireApp> with WidgetsBindingObserver {
     return MaterialApp(
       title: 'Quire',
       debugShowCheckedModeBanner: false,
+      scrollBehavior: const AppScrollBehavior(),
       theme: QuireTheme.light(),
       darkTheme: QuireTheme.dark(),
       themeMode: _themeController.value,
@@ -192,6 +194,19 @@ class _QuireAppState extends State<QuireApp> with WidgetsBindingObserver {
     }
     return const SizedBox.shrink();
   }
+}
+
+/// Enables mouse, touch, trackpad, and stylus drag scrolling across web and desktop.
+class AppScrollBehavior extends MaterialScrollBehavior {
+  const AppScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+  };
 }
 
 /// Static / In-memory SystemConfigRepository for standalone execution and testing.

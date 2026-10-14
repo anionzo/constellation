@@ -143,15 +143,14 @@ class _QuireComposeSheetState extends State<QuireComposeSheet> {
           ],
         ),
         const SizedBox(height: 12),
-        // Thumbnail & Caption Row
+        // Thumbnail preview & Photo info row
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(QuireTokens.rPhoto),
               child: Container(
-                width: 72,
-                height: 72,
+                width: 64,
+                height: 64,
                 color: QuireTokens.s2Light,
                 child: Image.memory(
                   widget.input.rawBytes,
@@ -162,23 +161,52 @@ class _QuireComposeSheetState extends State<QuireComposeSheet> {
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: TextField(
-                controller: _noteController,
-                style: QuireTokens.body(),
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  hintText: 'Thêm lời nhắn (tuỳ chọn)...',
-                  hintStyle: TextStyle(fontFamily: QuireTokens.fontSerif, color: QuireTokens.ink3Light),
-                  border: InputBorder.none,
-                ),
-                onChanged: (text) => widget.stateMachine.updateCaption(text),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('ẢNH KHOẢNH KHẮC', style: QuireTokens.eyebrow()),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Chuẩn WebP 4:5 · Tự hủy sau 30 ngày',
+                    style: QuireTokens.meta().copyWith(fontSize: 10),
+                  ),
+                ],
               ),
             ),
           ],
         ),
         const SizedBox(height: 16),
-        Text('GỬI ĐẾN AI', style: QuireTokens.eyebrow()),
-        const SizedBox(height: 10),
+
+        // Prominent Caption Input Field
+        Text('LỜI NHẮN / CHÚ THÍCH CỦA BẠN', style: QuireTokens.eyebrow()),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
+          decoration: BoxDecoration(
+            color: QuireTokens.s2Light,
+            borderRadius: BorderRadius.circular(QuireTokens.rField),
+            border: Border.all(color: QuireTokens.ruleLight),
+          ),
+          child: TextField(
+            controller: _noteController,
+            style: QuireTokens.body().copyWith(color: QuireTokens.inkLight, fontSize: 14.5),
+            maxLines: 2,
+            decoration: const InputDecoration(
+              hintText: 'Viết một điều gì đó về khoảnh khắc này...',
+              hintStyle: TextStyle(
+                fontFamily: QuireTokens.fontSerif,
+                color: QuireTokens.ink3Light,
+                fontSize: 14.0,
+              ),
+              border: InputBorder.none,
+              icon: Icon(Icons.edit_note_outlined, size: 22, color: QuireTokens.ink2Light),
+            ),
+            onChanged: (text) => widget.stateMachine.updateCaption(text),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text('GỬI ĐẾN AI (MẶC ĐỊNH CẢ VÒNG)', style: QuireTokens.eyebrow()),
+        const SizedBox(height: 8),
         // Friend Chips Selector (Finite Circle 4-11 friends)
         Wrap(
           spacing: 8.0,
