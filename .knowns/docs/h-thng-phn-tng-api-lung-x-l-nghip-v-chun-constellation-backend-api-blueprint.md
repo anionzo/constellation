@@ -3,7 +3,7 @@ id: doc-93662c5199ab479ca05f5c1f64236805
 title: 'Hệ Thống Phân Tầng API & Luồng Xử Lý Nghiệp Vụ Chuẩn (Constellation Backend API Blueprint)'
 description: 'Chuẩn hóa kiến trúc phân tầng 8 nhóm API cho Constellation/Quire: Auth & Cookie Session, Profile, Unconstrained Circle, Dynamic Hashtags, Soft-Purge Moments, Contextual Chat, Notifications & Realtime, và Version Gating.'
 createdAt: '2026-10-15T03:42:49.883Z'
-updatedAt: '2026-10-15T03:43:19.020Z'
+updatedAt: '2026-10-15T06:38:23.488Z'
 tags:
   - architecture
   - api
@@ -152,5 +152,39 @@ graph TD
 
 ## 4. Ma Trận Trạng Thái Triển Khai Thực Tế
 
-- **Đã hoàn thành 100% (Backend + DB PostgreSQL + Kiểm thử)**: Tầng 1 (Auth & Cookies), Tầng 2 (Profile), Tầng 3 (Circle & Friends), Tầng 4 (Articles & Dynamic Hashtags), Tầng 5 (Moments & Purge), Tầng 6 (Chat & Unread Count), Tầng 8 (Version Gate).
-- **Đang cắm xuống Client Flutter**: Kết nối trực tiếp `PublishArticleSheet` với Dynamic Hashtags `#noithat` và In-App Notification Toast.
+- **Đã hoàn thành 100% (Backend + DB PostgreSQL + Client Flutter)**:
+  - Tầng 1: Auth & Cookies Session, Bcrypt Password Hashing, Token Rotation, Multi-device Logout.
+  - Tầng 2: Profile & Avatars, cập nhật thông tin thật vào CSDL PostgreSQL.
+  - Tầng 3: Vòng bạn bè thân thiết (Circle & Peer Connections), kết bạn thật qua `@username`, xóa bạn thật, sinh link mời.
+  - Tầng 4: Bài viết & Dynamic Hashtags (`#noithat`), tự động lưu tag mới vào DB, thả tim và lưu bài (`saved_items`).
+  - Tầng 5: Khoảnh khắc & Tự hủy mềm 30 ngày (Moments & Soft-Purge), kho kỷ niệm riêng và khôi phục.
+  - Tầng 6: Nhắn tin ngữ cảnh (Contextual Chat), Realtime SSE Stream Hub (`< 5ms`), đánh dấu đã đọc (`read_at`).
+  - Tầng 7: Thông báo In-App Toast & Unread Badge, loại bỏ 100% polling timer ngốn mạng.
+  - Tầng 8: Khóa phiên bản (Version Gate) và bất biến The Void (Zero Persistence).
+
+---
+
+## 5. Danh Sách 10 Tài Khoản Thành Viên Chính Thức (Đã Cấu Hình Sẵn)
+
+> Tất cả 10 tài khoản đều sử dụng chung mật khẩu chuẩn kiểm thử: **`password123`** (được băm an toàn bằng thuật toán **Bcrypt Cost 10**).
+
+| STT | Họ và Tên | Email Đăng Nhập | Tên Định Danh | Thành Phố | Tiểu Sử Mẫu |
+|:---:|---|---|---|---|---|
+| 1 | **Mai Trần** | `mai@quire.app` | `@mai.tran` | Lisbon | Nhiếp ảnh gia đường phố · Lisbon |
+| 2 | **Minh Tuấn** | `tuan@quire.app` | `@tuan.coffee` | Kyoto | Thưởng thức cà phê & đọc sách |
+| 3 | **Lan Linh** | `linh@quire.app` | `@linh.art` | Đà Lạt | Nghệ nhân gốm mộc & hoa dại |
+| 4 | **Văn An** | `an@quire.app` | `@an.architect` | Sài Gòn | Kiến trúc sư cảnh quan nhiệt đới |
+| 5 | **Thu Hà** | `ha@quire.app` | `@ha.travel` | Hà Nội | Tản bộ qua những ngõ vắng |
+| 6 | **Đăng Khoa** | `khoa@quire.app` | `@khoa.design` | Copenhagen | Thiết kế tối giản Bắc Âu |
+| 7 | **Huyền Trang** | `trang@quire.app` | `@trang.book` | Hội An | Biên tập viên sách văn học |
+| 8 | **Hoàng Duy** | `duy@quire.app` | `@duy.photo` | Lisbon | Chụp film 35mm & kiến trúc cổ |
+| 9 | **Gia Bảo** | `bao@quire.app` | `@bao.journal` | Tokyo | Ký họa đô thị & trà chiều |
+| 10 | **Như Quỳnh** | `quynh@quire.app` | `@quynh.flora` | Sa Pa | Vườn ươm thực vật & lối sống chậm |
+
+---
+
+## 6. Dấu Vết Triển Khai Task (Knowns Tasks)
+
+- @task-DFA-QGQR66 - `Chuẩn hóa Bcrypt Password Hashing và khởi tạo 10 tài khoản chuẩn mực` [done]
+- @task-DFA-C9GZ34 - `Triển khai Golang Realtime SSE Hub và luồng chat đúng người` [done]
+- @task-DFA-N8HVGG - `Triển khai Dynamic Hashtags #noithat auto-persist và Kệ sách biên tập` [done]

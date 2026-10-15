@@ -45,20 +45,10 @@ class _QuireHomeScreenState extends State<QuireHomeScreen> {
   String _userBio = 'Thành viên từ tháng 3 · Lisbon';
   Uint8List? _userAvatarBytes;
   List<FriendChip> _friends = [];
-  Timer? _notificationPoller;
-  int _lastUnreadCount = 0;
-
   @override
   void initState() {
     super.initState();
     _loadFriendsFromBackend();
-    _startNotificationPolling();
-  }
-
-  @override
-  void dispose() {
-    _notificationPoller?.cancel();
-    super.dispose();
   }
 
   Future<void> _loadFriendsFromBackend() async {
@@ -78,29 +68,6 @@ class _QuireHomeScreenState extends State<QuireHomeScreen> {
     } catch (_) {}
   }
 
-  void _startNotificationPolling() {
-    _notificationPoller = Timer.periodic(const Duration(seconds: 4), (_) async {
-      if (!mounted || widget.bffClient == null) return;
-      try {
-        final unread = await widget.bffClient!.getUnreadMessageCount();
-        if (unread > _lastUnreadCount && mounted) {
-          _lastUnreadCount = unread;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Bạn có $unread tin nhắn mới trong hộp thư vòng bạn bè!',
-                style: const TextStyle(fontFamily: QuireTokens.fontSerif),
-              ),
-              backgroundColor: QuireTokens.accentLight,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
-      } catch (_) {}
-    });
-  }
 
   void _onProfileUpdated(String name, String username, String bio, Uint8List? avatarBytes) {
     setState(() {
@@ -145,7 +112,7 @@ class _QuireHomeScreenState extends State<QuireHomeScreen> {
                 friends: _friends,
                 momentUploader: widget.momentUploader,
               ),
-              const DiscoverTabView(),
+              DiscoverTabView(bffClient: widget.bffClient),
               YouTabView(
                 bffClient: widget.bffClient,
                 themeController: widget.themeController ?? ThemeController(),

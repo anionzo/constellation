@@ -30,15 +30,25 @@ class MomentsTabView extends StatefulWidget {
 
 class _MomentsTabViewState extends State<MomentsTabView> {
   final CameraGalleryService _cameraService = NativeCameraGalleryService();
+  int _unreadCount = 0;
+
   @override
   void initState() {
     super.initState();
     _loadMomentsFromBackend();
+    _loadUnreadCount();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    if (widget.bffClient == null) return;
+    try {
+      final count = await widget.bffClient!.getUnreadMessageCount();
+      if (mounted) setState(() => _unreadCount = count);
+    } catch (_) {}
   }
 
   bool _isLoading = true;
   final List<Map<String, dynamic>> _moments = [];
-
   Future<void> _loadMomentsFromBackend() async {
     setState(() => _isLoading = true);
     if (widget.bffClient == null) {
@@ -485,10 +495,31 @@ class _MomentsTabViewState extends State<MomentsTabView> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.chat_bubble_outline, size: 22),
-                  tooltip: 'Hộp thư vòng bạn bè',
-                  onPressed: _openInbox,
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chat_bubble_outline, size: 22),
+                      tooltip: 'Hộp thư vòng bạn bè',
+                      onPressed: () {
+                        setState(() => _unreadCount = 0);
+                        _openInbox();
+                      },
+                    ),
+                    if (_unreadCount > 0)
+                      Positioned(
+                        right: 6,
+                        top: 6,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: QuireTokens.accentLight,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 IconButton(
                   icon: const Icon(Icons.camera_alt_outlined, size: 24),
@@ -661,15 +692,16 @@ class _MomentsTabViewState extends State<MomentsTabView> {
                   child: Row(
                     children: [
                       TextButton.icon(
-                        onPressed: () {
+                        onPressed: () async {
+                          final willLike = !isLiked;
                           setState(() {
-                            moment['liked'] = !isLiked;
-                            moment['likesCount'] = isLiked ? count - 1 : count + 1;
+                            moment['liked'] = willLike;
+                            moment['likesCount'] = willLike ? count + 1 : (count > 0 ? count - 1 : 0);
                           });
+                          await widget.bffClient?.toggleLikeMoment(moment['id']?.toString() ?? '');
                         },
                         icon: Icon(
                           isLiked ? Icons.favorite : Icons.favorite_border,
-                          size: 18,
                           color: isLiked ? const Color(0xFFC13832) : (isDark ? QuireTokens.ink2Dark : QuireTokens.ink2Light),
                         ),
                         label: Text(

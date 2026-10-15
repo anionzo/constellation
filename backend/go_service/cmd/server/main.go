@@ -16,6 +16,7 @@ import (
 	"constellation/backend/go_service/internal/handler"
 	"constellation/backend/go_service/internal/middleware"
 	"constellation/backend/go_service/internal/repository"
+	"constellation/backend/go_service/internal/realtime"
 )
 
 func main() {
@@ -34,9 +35,8 @@ func main() {
 		log.Println("[Constellation BFF] PostgreSQL unavailable, using in-memory repository baseline.")
 		repo = repository.NewMemoryRepository()
 	}
-
-	h := handler.NewHandler(repo, cfg)
-
+	hub := realtime.NewHub()
+	h := handler.NewHandler(repo, cfg, hub)
 	r := chi.NewRouter()
 
 	// Global Middlewares
@@ -68,6 +68,7 @@ func main() {
 	r.Get("/api/v1/articles", h.GetArticles)
 	r.Get("/api/v1/moments/feed", h.GetFeed)
 	r.Get("/api/v1/articles/topics", h.GetArticleTopics)
+	r.Get("/api/v1/chat/stream", h.StreamEvents)
 
 	// Protected Endpoints (Supabase JWT Verification with Revocation Check)
 	r.Group(func(protected chi.Router) {

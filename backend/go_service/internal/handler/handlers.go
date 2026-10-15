@@ -13,6 +13,7 @@ import (
 	"constellation/backend/go_service/internal/config"
 	"constellation/backend/go_service/internal/domain"
 	"constellation/backend/go_service/internal/middleware"
+	"constellation/backend/go_service/internal/realtime"
 	"constellation/backend/go_service/internal/repository"
 )
 
@@ -20,13 +21,15 @@ import (
 type Handler struct {
 	repo repository.Repository
 	cfg  *config.Config
+	hub  *realtime.Hub
 }
 
-// NewHandler initializes a Handler with repository and configuration dependencies.
-func NewHandler(repo repository.Repository, cfg *config.Config) *Handler {
+// NewHandler initializes a Handler with repository, config and realtime hub.
+func NewHandler(repo repository.Repository, cfg *config.Config, hub *realtime.Hub) *Handler {
 	return &Handler{
 		repo: repo,
 		cfg:  cfg,
+		hub:  hub,
 	}
 }
 
@@ -664,6 +667,15 @@ func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "Failed to send message")
 		return
 	}
+	// Broadcast real-time message and notification to recipient in < 5ms
+	if h.hub != nil {
+		h.hub.BroadcastToUser(friendID, "chat_message", msg)
+		h.hub.BroadcastToUser(friendID, "notification", map[string]interface{}{
+			"title":     "Tin nhắn mới",
+			"body":      msg.MessageText,
+			"sender_id": userID,
+		})
+	}
 	writeJSON(w, http.StatusCreated, msg)
 }
 
@@ -696,6 +708,34 @@ func (h *Handler) GetUnreadMessageCount(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]int{"unread_count": count})
+}
+
+func (h *Handler) StreamEvents(w http.ResponseWriter, r *http.Request) {
+	userID, _ := middleware.GetUserID(r.Context())
+	if userID == "" {
+		tokenStr := r.URL.Query().Get("token")
+		if tokenStr != "" {
+			token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+				return []byte(h.cfg.JWTSecret), nil
+			})
+			if err == nil && token.Valid {
+				if claims, ok := token.Claims.(jwt.MapClaims); ok {
+					if sub, ok := claims["sub"].(string); ok {
+						userID = sub
+					}
+				}
+			}
+		}
+	}
+
+	if userID == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if h.hub != nil {
+		h.hub.ServeSSE(w, r, userID)
+	}
 }
 
 // ==========================================

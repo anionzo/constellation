@@ -305,7 +305,7 @@ class _YouTabViewState extends State<YouTabView> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(QuireTokens.rBtn)),
                           elevation: 0,
                         ),
-                        onPressed: () {
+                        onPressed: () async {
                           var uname = usernameController.text.trim();
                           if (!uname.startsWith('@')) uname = '@$uname';
                           widget.onProfileUpdated?.call(
@@ -314,7 +314,13 @@ class _YouTabViewState extends State<YouTabView> {
                             bioController.text.trim(),
                             selectedAvatar,
                           );
-                          Navigator.pop(ctx);
+                          await widget.bffClient?.updateMyProfile(
+                            displayName: nameController.text.trim(),
+                            username: uname,
+                            bio: bioController.text.trim(),
+                            city: 'Lisbon',
+                          );
+                          if (ctx.mounted) Navigator.pop(ctx);
                         },
                         child: Text(
                           'Lưu thay đổi',
@@ -467,8 +473,9 @@ class _YouTabViewState extends State<YouTabView> {
                                 ),
                               ),
                               deleteIcon: const Icon(Icons.close, size: 14),
-                              onDeleted: () {
+                              onDeleted: () async {
                                 widget.onRemoveFriend?.call(f.id);
+                                await widget.bffClient?.removeFriend(f.id);
                                 setSheetState(() {});
                               },
                             );

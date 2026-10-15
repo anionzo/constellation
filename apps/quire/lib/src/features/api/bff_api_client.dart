@@ -462,6 +462,83 @@ class BffApiClient {
     return null;
   }
 
+  Future<bool> removeFriend(String friendId) async {
+    try {
+      final res = await _client.delete(
+        Uri.parse('$baseUrl/api/v1/circle/friends/$friendId'),
+        headers: _headers,
+      );
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> toggleLikeArticle(String articleId) async {
+    try {
+      final res = await _client.post(
+        Uri.parse('$baseUrl/api/v1/articles/$articleId/like'),
+        headers: _headers,
+      );
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> toggleLikeMoment(String momentId) async {
+    try {
+      final res = await _client.post(
+        Uri.parse('$baseUrl/api/v1/moments/$momentId/like'),
+        headers: _headers,
+      );
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getReceivedFriendRequests() async {
+    try {
+      final res = await _client.get(
+        Uri.parse('$baseUrl/api/v1/circle/requests/received'),
+        headers: _headers,
+      );
+      if (res.statusCode == 200) {
+        final json = jsonDecode(res.body) as Map<String, dynamic>;
+        final list = json['data'] as List<dynamic>?;
+        if (list != null) {
+          return list.map((e) => e as Map<String, dynamic>).toList();
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  Future<bool> acceptFriendRequest(String requestId) async {
+    try {
+      final res = await _client.post(
+        Uri.parse('$baseUrl/api/v1/circle/requests/$requestId/accept'),
+        headers: _headers,
+      );
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> declineFriendRequest(String requestId) async {
+    try {
+      final res = await _client.post(
+        Uri.parse('$baseUrl/api/v1/circle/requests/$requestId/decline'),
+        headers: _headers,
+      );
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
   // ==========================================
   // Chat Receipts & Unread Notifications
   // ==========================================
@@ -504,6 +581,53 @@ class BffApiClient {
       }
     } catch (_) {}
     return [];
+  }
+
+  // ==========================================
+  // Moments Archive & Invites
+  // ==========================================
+
+  Future<List<Map<String, dynamic>>> getMomentsArchive() async {
+    try {
+      final res = await _client.get(Uri.parse('$baseUrl/api/v1/moments/archive'), headers: _headers);
+      if (res.statusCode == 200) {
+        final json = jsonDecode(res.body) as Map<String, dynamic>;
+        final list = json['data'] as List<dynamic>?;
+        if (list != null) {
+          return list.map((e) => e as Map<String, dynamic>).toList();
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  Future<bool> restoreMoment(String momentId) async {
+    try {
+      final res = await _client.post(Uri.parse('$baseUrl/api/v1/moments/$momentId/restore'), headers: _headers);
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteMomentPermanently(String momentId) async {
+    try {
+      final res = await _client.delete(Uri.parse('$baseUrl/api/v1/moments/$momentId'), headers: _headers);
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<String?> generateInviteLink() async {
+    try {
+      final res = await _client.post(Uri.parse('$baseUrl/api/v1/circle/invites/generate'), headers: _headers);
+      if (res.statusCode == 200) {
+        final json = jsonDecode(res.body) as Map<String, dynamic>;
+        return json['invite_url']?.toString();
+      }
+    } catch (_) {}
+    return null;
   }
 }
 
