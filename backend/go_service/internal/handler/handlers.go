@@ -643,6 +643,60 @@ func (h *Handler) GetVersionGate(w http.ResponseWriter, r *http.Request) {
 }
 
 // ==========================================
+// 6. Authentication Handlers
+// ==========================================
+
+func (h *Handler) HandleSignUp(w http.ResponseWriter, r *http.Request) {
+	var req domain.AuthSignUpRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Dữ liệu yêu cầu không hợp lệ")
+		return
+	}
+
+	req.Email = strings.TrimSpace(req.Email)
+	req.Password = strings.TrimSpace(req.Password)
+	if req.Email == "" || !strings.Contains(req.Email, "@") {
+		writeError(w, http.StatusBadRequest, "Email không hợp lệ")
+		return
+	}
+	if len(req.Password) < 6 {
+		writeError(w, http.StatusBadRequest, "Mật khẩu phải có tối thiểu 6 ký tự")
+		return
+	}
+
+	res, err := h.repo.SignUp(r.Context(), req.Email, req.Password, req.DisplayName)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, res)
+}
+
+func (h *Handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
+	var req domain.AuthLoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Dữ liệu yêu cầu không hợp lệ")
+		return
+	}
+
+	req.Email = strings.TrimSpace(req.Email)
+	req.Password = strings.TrimSpace(req.Password)
+	if req.Email == "" || req.Password == "" {
+		writeError(w, http.StatusBadRequest, "Vui lòng nhập đầy đủ email và mật khẩu")
+		return
+	}
+
+	res, err := h.repo.Login(r.Context(), req.Email, req.Password)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, res)
+}
+
+// ==========================================
 // JSON Response Helpers
 // ==========================================
 

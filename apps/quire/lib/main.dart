@@ -11,6 +11,7 @@ import 'src/presentation/views/calm_auth_view.dart';
 import 'src/presentation/views/quire_home_screen.dart';
 import 'src/features/photo_upload/services/quire_moment_uploader.dart';
 import 'src/features/version_gate/dispatcher_sync_lock_bridge.dart';
+import 'src/features/api/bff_api_client.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,6 +55,7 @@ class _QuireAppState extends State<QuireApp> with WidgetsBindingObserver {
   late final SyncDispatcher _syncDispatcher;
   late final ThemeController _themeController;
   VersionGateStatus? _currentGateStatus;
+  final BffApiClient _bffClient = BffApiClient();
   bool _isAuthenticated = false;
   String _currentUserEmail = 'Khách trải nghiệm';
 
@@ -147,6 +149,7 @@ class _QuireAppState extends State<QuireApp> with WidgetsBindingObserver {
           ? _buildBlockedView()
           : (!_isAuthenticated
               ? CalmAuthView(
+                  bffClient: _bffClient,
                   onEnterAsGuest: () {
                     setState(() {
                       _isAuthenticated = true;

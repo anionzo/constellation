@@ -46,6 +46,66 @@ class BffApiClient {
   }
 
   // ==========================================
+  // Auth APIs (Email & Password)
+  // ==========================================
+
+  Future<Map<String, dynamic>> signUp({
+    required String email,
+    required String password,
+    required String displayName,
+  }) async {
+    try {
+      final res = await _client.post(
+        Uri.parse('$baseUrl/api/v1/auth/signup'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+          'display_name': displayName,
+        }),
+      );
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      if (res.statusCode == 201) {
+        final token = data['token'] as String?;
+        if (token != null) {
+          setAuthToken(token);
+        }
+        return {'success': true, 'data': data};
+      }
+      return {'success': false, 'error': data['error'] ?? 'Lỗi đăng ký tài khoản'};
+    } catch (e) {
+      return {'success': false, 'error': 'Không thể kết nối máy chủ ($e)'};
+    }
+  }
+
+  Future<Map<String, dynamic>> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final res = await _client.post(
+        Uri.parse('$baseUrl/api/v1/auth/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      if (res.statusCode == 200) {
+        final token = data['token'] as String?;
+        if (token != null) {
+          setAuthToken(token);
+        }
+        return {'success': true, 'data': data};
+      }
+      return {'success': false, 'error': data['error'] ?? 'Lỗi đăng nhập'};
+    } catch (e) {
+      return {'success': false, 'error': 'Không thể kết nối máy chủ ($e)'};
+    }
+  }
+
+  // ==========================================
   // Profile APIs
   // ==========================================
 

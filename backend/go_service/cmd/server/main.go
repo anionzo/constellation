@@ -29,7 +29,7 @@ func main() {
 	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
 	if err == nil && pool.Ping(ctx) == nil {
 		log.Println("[Constellation BFF] Connected successfully to PostgreSQL database pool.")
-		repo = repository.NewPostgresRepository(pool)
+		repo = repository.NewPostgresRepository(pool, cfg.JWTSecret)
 	} else {
 		log.Println("[Constellation BFF] PostgreSQL unavailable, using in-memory repository baseline.")
 		repo = repository.NewMemoryRepository()
@@ -57,6 +57,10 @@ func main() {
 
 	// Public System Endpoints
 	r.Get("/api/v1/system/version-gate", h.GetVersionGate)
+
+	// Public Auth Endpoints (Email & Password)
+	r.Post("/api/v1/auth/signup", h.HandleSignUp)
+	r.Post("/api/v1/auth/login", h.HandleLogin)
 
 	// Protected Endpoints (Supabase JWT Verification)
 	r.Group(func(protected chi.Router) {

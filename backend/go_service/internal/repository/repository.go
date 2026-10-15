@@ -44,11 +44,24 @@ type Repository interface {
 	GetInbox(ctx context.Context, userID string) ([]domain.ChatInboxItem, error)
 	GetMessages(ctx context.Context, userID, friendID string, cursorTime *time.Time, cursorID *string, limit int) ([]domain.ChatMessage, bool, *string, error)
 	SendMessage(ctx context.Context, msg *domain.ChatMessage) error
+
+	// Auth
+	SignUp(ctx context.Context, email, password, displayName string) (*domain.AuthResponse, error)
+	Login(ctx context.Context, email, password string) (*domain.AuthResponse, error)
 }
 
 // MemoryRepository is an in-memory thread-safe implementation of Repository for testing and standalone execution.
+type memoryUser struct {
+	ID          string
+	Email       string
+	Password    string
+	DisplayName string
+	Username    string
+}
+
 type MemoryRepository struct {
 	mu           sync.RWMutex
+	users        map[string]*memoryUser
 	profiles     map[string]*domain.Profile
 	friends      map[string][]domain.CircleFriend
 	requests     map[string][]domain.CircleRequest
@@ -62,11 +75,21 @@ type MemoryRepository struct {
 // NewMemoryRepository initializes sample seed data matching Quire's quiet editorial universe.
 func NewMemoryRepository() *MemoryRepository {
 	repo := &MemoryRepository{
+		users:     make(map[string]*memoryUser),
 		profiles:  make(map[string]*domain.Profile),
 		friends:   make(map[string][]domain.CircleFriend),
 		requests:  make(map[string][]domain.CircleRequest),
 		invites:   make(map[string]*domain.CircleInvite),
 		bookmarks: make(map[string]map[string]bool),
+	}
+
+	// Default user for test/memory mode
+	repo.users["ban@example.com"] = &memoryUser{
+		ID:          "usr_1",
+		Email:       "ban@example.com",
+		Password:    "123456",
+		DisplayName: "Bạn",
+		Username:    "@ban.quire",
 	}
 
 	// Default user profile
@@ -528,4 +551,69 @@ func (m *MemoryRepository) SendMessage(ctx context.Context, msg *domain.ChatMess
 	msg.SentAt = time.Now()
 	m.chatMessages = append(m.chatMessages, msg)
 	return nil
+}
+
+func (m *MemoryRepository) SignUp(ctx context.Context, email, password, displayName string) (*domain.AuthResponse, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	email = strings.TrimSpace(strings.ToLower(email))
+	if _, exists := m.users[email]; exists {
+		return nil, fmt.Errorf("email đã được đăng ký")
+	}
+
+	uid := fmt.Sprintf("usr_%d", time.Now().UnixNano())
+	uname := "@" + strings.ToLower(strings.ReplaceAll(displayName, " ", "."))
+
+	user := &memoryUser{
+		ID:          uid,
+		Email:       email,
+		Password:    password,
+		DisplayName: displayName,
+		Username:    uname,
+	}
+	m.users[email] = user
+
+	// Create associated profile
+	m.profiles[uid] = &domain.Profile{
+		ID:          uid,
+		Email:       email,
+		Username:    uname,
+		DisplayName: displayName,
+		City:        "Lisbon",
+		Bio:         "Thành viên mới của Quire",
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	return &domain.AuthResponse{
+		Token: fmt.Sprintf("mock-jwt-token-%s", uid),
+		User: domain.AuthUserInfo{
+			ID:          uid,
+			Email:       email,
+			DisplayName: displayName,
+			Username:    uname,
+		},
+	}, nil
+}
+
+func (m *MemoryRepository) Login(ctx context.Context, email, password string) (*domain.AuthResponse, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	email = strings.TrimSpace(strings.ToLower(email))
+	user, exists := m.users[email]
+	if !exists || user.Password != password {
+		return nil, fmt.Errorf("email hoặc mật khẩu không chính xác")
+	}
+
+	return &domain.AuthResponse{
+		Token: fmt.Sprintf("mock-jwt-token-%s", user.ID),
+		User: domain.AuthUserInfo{
+			ID:          user.ID,
+			Email:       user.Email,
+			DisplayName: user.DisplayName,
+			Username:    user.Username,
+		},
+	}, nil
 }

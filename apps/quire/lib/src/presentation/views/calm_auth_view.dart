@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import '../../features/api/bff_api_client.dart';
 import '../theme/quire_tokens.dart';
 
+enum AuthMode { signIn, signUp }
+
 /// Calm Authentication screen embodying Quiet Editorial principles.
-/// Features frictionless Email OTP login and a single-tap "Guest Mode" bypass.
+/// Supports Email & Password Login, Registration, and a single-tap "Guest Mode" bypass.
 class CalmAuthView extends StatefulWidget {
   final void Function(String email) onAuthenticated;
   final VoidCallback onEnterAsGuest;
+  final BffApiClient? bffClient;
 
   const CalmAuthView({
     Key? key,
     required this.onAuthenticated,
     required this.onEnterAsGuest,
+    this.bffClient,
   }) : super(key: key);
 
   @override
@@ -19,40 +24,89 @@ class CalmAuthView extends StatefulWidget {
 
 class _CalmAuthViewState extends State<CalmAuthView> {
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _otpController = TextEditingController();
-  bool _isOtpSent = false;
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+
+  AuthMode _mode = AuthMode.signIn;
+  bool _obscurePassword = true;
+  bool _isLoading = false;
   String _errorMessage = '';
+
+  late final BffApiClient _client;
+
+  @override
+  void initState() {
+    super.initState();
+    _client = widget.bffClient ?? BffApiClient();
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
-    _otpController.dispose();
+    _passwordController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
-  void _sendOtp() {
+  Future<void> _submit() async {
     final email = _emailController.text.trim();
-    if (email.isEmpty || !email.contains('@')) {
-      setState(() {
-        _errorMessage = 'Vui lòng nhập địa chỉ email hợp lệ.';
-      });
-      return;
-    }
-    setState(() {
-      _errorMessage = '';
-      _isOtpSent = true;
-    });
-  }
+    final password = _passwordController.text.trim();
+    final name = _nameController.text.trim();
 
-  void _verifyAndLogin() {
-    final otp = _otpController.text.trim();
-    if (otp.length < 4) {
-      setState(() {
-        _errorMessage = 'Mã xác nhận gồm 6 chữ số.';
-      });
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() => _errorMessage = 'Vui lòng nhập địa chỉ email hợp lệ.');
       return;
     }
-    widget.onAuthenticated(_emailController.text.trim());
+    if (password.length < 6) {
+      setState(() => _errorMessage = 'Mật khẩu phải có tối thiểu 6 ký tự.');
+      return;
+    }
+    if (_mode == AuthMode.signUp && name.isEmpty) {
+      setState(() => _errorMessage = 'Vui lòng nhập họ và tên của bạn.');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      if (_mode == AuthMode.signIn) {
+        final res = await _client.login(email: email, password: password);
+        if (!mounted) return;
+        if (res['success'] == true) {
+          widget.onAuthenticated(email);
+        } else {
+          setState(() {
+            _errorMessage = res['error']?.toString() ?? 'Email hoặc mật khẩu không chính xác.';
+          });
+        }
+      } else {
+        final res = await _client.signUp(
+          email: email,
+          password: password,
+          displayName: name,
+        );
+        if (!mounted) return;
+        if (res['success'] == true) {
+          widget.onAuthenticated(email);
+        } else {
+          setState(() {
+            _errorMessage = res['error']?.toString() ?? 'Lỗi khi đăng ký tài khoản.';
+          });
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Không thể kết nối máy chủ: $e';
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -69,7 +123,7 @@ class _CalmAuthViewState extends State<CalmAuthView> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 400),
+              constraints: const BoxConstraints(maxWidth: 420),
               padding: const EdgeInsets.all(28.0),
               decoration: BoxDecoration(
                 color: surfaceColor,
@@ -80,37 +134,133 @@ class _CalmAuthViewState extends State<CalmAuthView> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('QUIRE · BẮT ĐẦU', style: QuireTokens.eyebrow(isDark: isDark)),
+                  Text('QUIRE · TÀI KHOẢN', style: QuireTokens.eyebrow(isDark: isDark)),
                   const SizedBox(height: 6),
                   Text(
-                    _isOtpSent ? 'Nhập mã xác nhận' : 'Chào mừng bạn',
+                    _mode == AuthMode.signIn ? 'Chào mừng trở lại' : 'Tạo tài khoản mới',
                     style: QuireTokens.title(isDark: isDark),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _isOtpSent
-                        ? 'Mã đăng nhập đã được gửi đến ${_emailController.text.trim()}.'
-                        : 'Đọc trọn một bài, chia sẻ một tấm ảnh cho đúng người. Yên lặng và riêng tư.',
+                    _mode == AuthMode.signIn
+                        ? 'Đăng nhập để đọc bài viết và xem khoảnh khắc vòng bạn bè.'
+                        : 'Tham gia không gian yên tĩnh và riêng tư cùng những người thân thiết.',
                     style: QuireTokens.body(isDark: isDark).copyWith(
                       color: isDark ? QuireTokens.ink2Dark : QuireTokens.ink2Light,
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
+
+                  // Mode Toggle Tabs (Đăng nhập / Đăng ký)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? QuireTokens.s2Dark : QuireTokens.s2Light,
+                      borderRadius: BorderRadius.circular(QuireTokens.rBtn),
+                      border: Border.all(color: ruleColor),
+                    ),
+                    padding: const EdgeInsets.all(3.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            key: const ValueKey('tab_signin'),
+                            style: TextButton.styleFrom(
+                              backgroundColor: _mode == AuthMode.signIn
+                                  ? (isDark ? QuireTokens.surfaceDark : Colors.white)
+                                  : Colors.transparent,
+                              foregroundColor: _mode == AuthMode.signIn
+                                  ? (isDark ? QuireTokens.inkDark : QuireTokens.inkLight)
+                                  : (isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(QuireTokens.rBtn - 2),
+                              ),
+                              elevation: _mode == AuthMode.signIn ? 1 : 0,
+                            ),
+                            onPressed: () {
+                              if (_mode != AuthMode.signIn) {
+                                setState(() {
+                                  _mode = AuthMode.signIn;
+                                  _errorMessage = '';
+                                });
+                              }
+                            },
+                            child: Text(
+                              'Đăng nhập',
+                              style: QuireTokens.button(isDark: isDark).copyWith(
+                                fontWeight: _mode == AuthMode.signIn ? FontWeight.w600 : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: TextButton(
+                            key: const ValueKey('tab_signup'),
+                            style: TextButton.styleFrom(
+                              backgroundColor: _mode == AuthMode.signUp
+                                  ? (isDark ? QuireTokens.surfaceDark : Colors.white)
+                                  : Colors.transparent,
+                              foregroundColor: _mode == AuthMode.signUp
+                                  ? (isDark ? QuireTokens.inkDark : QuireTokens.inkLight)
+                                  : (isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(QuireTokens.rBtn - 2),
+                              ),
+                              elevation: _mode == AuthMode.signUp ? 1 : 0,
+                            ),
+                            onPressed: () {
+                              if (_mode != AuthMode.signUp) {
+                                setState(() {
+                                  _mode = AuthMode.signUp;
+                                  _errorMessage = '';
+                                });
+                              }
+                            },
+                            child: Text(
+                              'Đăng ký',
+                              style: QuireTokens.button(isDark: isDark).copyWith(
+                                fontWeight: _mode == AuthMode.signUp ? FontWeight.w600 : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
 
                   if (_errorMessage.isNotEmpty) ...[
-                    Text(
-                      _errorMessage,
-                      style: TextStyle(
-                        fontFamily: QuireTokens.fontSerif,
-                        color: const Color(0xFFC13832),
-                        fontSize: 13.0,
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFC13832).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(QuireTokens.rField),
+                        border: Border.all(color: const Color(0xFFC13832).withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline, size: 16, color: Color(0xFFC13832)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _errorMessage,
+                              style: const TextStyle(
+                                color: Color(0xFFC13832),
+                                fontSize: 13.0,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                   ],
 
-                  if (!_isOtpSent) ...[
-                    // Email Input
+                  // Display Name (Only in Sign Up Mode)
+                  if (_mode == AuthMode.signUp) ...[
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 4.0),
                       decoration: BoxDecoration(
@@ -119,156 +269,156 @@ class _CalmAuthViewState extends State<CalmAuthView> {
                         border: Border.all(color: ruleColor),
                       ),
                       child: TextField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
+                        controller: _nameController,
                         style: TextStyle(
                           fontFamily: QuireTokens.fontSerif,
                           color: isDark ? QuireTokens.inkDark : QuireTokens.inkLight,
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Nhập email của bạn...',
+                          hintText: 'Họ và tên của bạn...',
                           hintStyle: TextStyle(
                             fontFamily: QuireTokens.fontSerif,
                             color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light,
                           ),
                           border: InputBorder.none,
-                          icon: Icon(Icons.email_outlined, size: 20, color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Primary Button: Send OTP
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark ? QuireTokens.accentDark : QuireTokens.accentLight,
-                          foregroundColor: isDark ? QuireTokens.onAccentDark : QuireTokens.onAccentLight,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(QuireTokens.rBtn),
-                          ),
-                          elevation: 0,
-                        ),
-                        onPressed: _sendOtp,
-                        child: Text(
-                          'Tiếp tục với Email',
-                          style: QuireTokens.button(isDark: isDark).copyWith(
-                            color: isDark ? QuireTokens.onAccentDark : QuireTokens.onAccentLight,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Divider
-                    Row(
-                      children: [
-                        Expanded(child: Divider(color: ruleColor)),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                          child: Text('HOẶC', style: QuireTokens.meta(isDark: isDark).copyWith(fontSize: 9)),
-                        ),
-                        Expanded(child: Divider(color: ruleColor)),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Guest Mode Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: ruleColor),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(QuireTokens.rBtn),
-                          ),
-                        ),
-                        onPressed: widget.onEnterAsGuest,
-                        child: Text(
-                          'Trải nghiệm ngay (Chế độ Khách)',
-                          style: QuireTokens.button(isDark: isDark).copyWith(
-                            color: isDark ? QuireTokens.inkDark : QuireTokens.inkLight,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ] else ...[
-                    // OTP Input
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 4.0),
-                      decoration: BoxDecoration(
-                        color: isDark ? QuireTokens.s2Dark : QuireTokens.s2Light,
-                        borderRadius: BorderRadius.circular(QuireTokens.rField),
-                        border: Border.all(color: ruleColor),
-                      ),
-                      child: TextField(
-                        controller: _otpController,
-                        keyboardType: TextInputType.number,
-                        autofocus: true,
-                        style: TextStyle(
-                          fontFamily: QuireTokens.fontMono,
-                          letterSpacing: 8.0,
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? QuireTokens.inkDark : QuireTokens.inkLight,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: '· · · · · ·',
-                          hintStyle: TextStyle(
-                            fontFamily: QuireTokens.fontMono,
-                            color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light,
-                            letterSpacing: 8.0,
-                          ),
-                          border: InputBorder.none,
-                          icon: Icon(Icons.key_outlined, size: 20, color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Verify Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark ? QuireTokens.accentDark : QuireTokens.accentLight,
-                          foregroundColor: isDark ? QuireTokens.onAccentDark : QuireTokens.onAccentLight,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(QuireTokens.rBtn),
-                          ),
-                          elevation: 0,
-                        ),
-                        onPressed: _verifyAndLogin,
-                        child: Text(
-                          'Xác nhận & Vào ứng dụng',
-                          style: QuireTokens.button(isDark: isDark).copyWith(
-                            color: isDark ? QuireTokens.onAccentDark : QuireTokens.onAccentLight,
-                          ),
+                          icon: Icon(Icons.person_outline, size: 20, color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light),
                         ),
                       ),
                     ),
                     const SizedBox(height: 14),
+                  ],
 
-                    // Back button
-                    Center(
-                      child: TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _isOtpSent = false;
-                            _errorMessage = '';
-                          });
-                        },
-                        child: Text(
-                          'Dùng địa chỉ email khác',
-                          style: QuireTokens.meta(isDark: isDark),
+                  // Email Input
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 4.0),
+                    decoration: BoxDecoration(
+                      color: isDark ? QuireTokens.s2Dark : QuireTokens.s2Light,
+                      borderRadius: BorderRadius.circular(QuireTokens.rField),
+                      border: Border.all(color: ruleColor),
+                    ),
+                    child: TextField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      style: TextStyle(
+                        fontFamily: QuireTokens.fontSerif,
+                        color: isDark ? QuireTokens.inkDark : QuireTokens.inkLight,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Nhập email...',
+                        hintStyle: TextStyle(
+                          fontFamily: QuireTokens.fontSerif,
+                          color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light,
+                        ),
+                        border: InputBorder.none,
+                        icon: Icon(Icons.email_outlined, size: 20, color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Password Input
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 4.0),
+                    decoration: BoxDecoration(
+                      color: isDark ? QuireTokens.s2Dark : QuireTokens.s2Light,
+                      borderRadius: BorderRadius.circular(QuireTokens.rField),
+                      border: Border.all(color: ruleColor),
+                    ),
+                    child: TextField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      style: TextStyle(
+                        color: isDark ? QuireTokens.inkDark : QuireTokens.inkLight,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Mật khẩu (tối thiểu 6 ký tự)...',
+                        hintStyle: TextStyle(
+                          fontFamily: QuireTokens.fontSerif,
+                          color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light,
+                        ),
+                        border: InputBorder.none,
+                        icon: Icon(Icons.lock_outline, size: 20, color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                            size: 18,
+                            color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light,
+                          ),
+                          onPressed: () {
+                            setState(() => _obscurePassword = !_obscurePassword);
+                          },
                         ),
                       ),
                     ),
-                  ],
+                  ),
+                  const SizedBox(height: 22),
+
+                  // Primary Submit Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDark ? QuireTokens.accentDark : QuireTokens.accentLight,
+                        foregroundColor: isDark ? QuireTokens.onAccentDark : QuireTokens.onAccentLight,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(QuireTokens.rBtn),
+                        ),
+                        elevation: 0,
+                      ),
+                      onPressed: _isLoading ? null : _submit,
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.0,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : Text(
+                              _mode == AuthMode.signIn ? 'Đăng nhập' : 'Tạo tài khoản',
+                              style: QuireTokens.button(isDark: isDark).copyWith(
+                                color: isDark ? QuireTokens.onAccentDark : QuireTokens.onAccentLight,
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Divider
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: ruleColor)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        child: Text('HOẶC', style: QuireTokens.meta(isDark: isDark).copyWith(fontSize: 9)),
+                      ),
+                      Expanded(child: Divider(color: ruleColor)),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Guest Mode Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: ruleColor),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(QuireTokens.rBtn),
+                        ),
+                      ),
+                      onPressed: widget.onEnterAsGuest,
+                      child: Text(
+                        'Trải nghiệm ngay (Chế độ Khách)',
+                        style: QuireTokens.button(isDark: isDark).copyWith(
+                          color: isDark ? QuireTokens.inkDark : QuireTokens.inkLight,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -132,3 +132,30 @@ type PaginatedResponse[T any] struct {
 	Data       []T                `json:"data"`
 	Pagination PaginationMetadata `json:"pagination"`
 }
+
+// AuthSignUpRequest represents payload to register a new account.
+type AuthSignUpRequest struct {
+	Email       string `json:"email"`
+	Password    string `json:"password"`
+	DisplayName string `json:"display_name"`
+}
+
+// AuthLoginRequest represents payload to authenticate.
+type AuthLoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+// AuthResponse represents the authentication result with JWT token and basic user info.
+type AuthResponse struct {
+	Token string       `json:"token"`
+	User  AuthUserInfo `json:"user"`
+}
+
+// AuthUserInfo represents user details returned on auth.
+type AuthUserInfo struct {
+	ID          string `json:"id"`
+	Email       string `json:"email"`
+	DisplayName string `json:"display_name"`
+	Username    string `json:"username"`
+}

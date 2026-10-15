@@ -8,20 +8,23 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/crypto/bcrypt"
 
 	"constellation/backend/go_service/internal/domain"
 )
 
 // PostgresRepository executes actual SQL queries against PostgreSQL using connection pooling.
 type PostgresRepository struct {
-	pool *pgxpool.Pool
+	pool      *pgxpool.Pool
+	jwtSecret string
 }
 
 // NewPostgresRepository initializes a Postgres-backed repository.
-func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
-	return &PostgresRepository{pool: pool}
+func NewPostgresRepository(pool *pgxpool.Pool, jwtSecret string) *PostgresRepository {
+	return &PostgresRepository{pool: pool, jwtSecret: jwtSecret}
 }
 
 // ==========================================
@@ -30,9 +33,10 @@ func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
 
 func (r *PostgresRepository) GetProfileByID(ctx context.Context, id string) (*domain.Profile, error) {
 	query := `
-		SELECT id, email, COALESCE(username, ''), display_name, COALESCE(bio, ''), COALESCE(city, ''), COALESCE(avatar_path, ''), created_at, updated_at
-		FROM public.profiles
-		WHERE id = $1;
+		SELECT p.id, COALESCE(u.email, ''), COALESCE(p.username, ''), COALESCE(p.display_name, ''), '', COALESCE(p.city, ''), COALESCE(p.avatar_url, ''), p.created_at, p.updated_at
+		FROM public.profiles p
+		LEFT JOIN auth.users u ON u.id = p.id
+		WHERE p.id = $1;
 	`
 	p := &domain.Profile{}
 	err := r.pool.QueryRow(ctx, query, id).Scan(
@@ -49,9 +53,10 @@ func (r *PostgresRepository) GetProfileByID(ctx context.Context, id string) (*do
 
 func (r *PostgresRepository) GetProfileByUsername(ctx context.Context, username string) (*domain.Profile, error) {
 	query := `
-		SELECT id, email, COALESCE(username, ''), display_name, COALESCE(bio, ''), COALESCE(city, ''), COALESCE(avatar_path, ''), created_at, updated_at
-		FROM public.profiles
-		WHERE LOWER(username) = LOWER($1);
+		SELECT p.id, COALESCE(u.email, ''), COALESCE(p.username, ''), COALESCE(p.display_name, ''), '', COALESCE(p.city, ''), COALESCE(p.avatar_url, ''), p.created_at, p.updated_at
+		FROM public.profiles p
+		LEFT JOIN auth.users u ON u.id = p.id
+		WHERE LOWER(p.username) = LOWER($1);
 	`
 	p := &domain.Profile{}
 	err := r.pool.QueryRow(ctx, query, username).Scan(
@@ -69,10 +74,10 @@ func (r *PostgresRepository) GetProfileByUsername(ctx context.Context, username 
 func (r *PostgresRepository) UpdateProfile(ctx context.Context, p *domain.Profile) error {
 	query := `
 		UPDATE public.profiles
-		SET display_name = $1, username = $2, bio = $3, city = $4, avatar_path = $5, updated_at = now()
-		WHERE id = $6;
+		SET display_name = $1, username = $2, city = $3, avatar_url = $4, updated_at = now()
+		WHERE id = $5;
 	`
-	_, err := r.pool.Exec(ctx, query, p.DisplayName, p.Username, p.Bio, p.City, p.AvatarPath, p.ID)
+	_, err := r.pool.Exec(ctx, query, p.DisplayName, p.Username, p.City, p.AvatarPath, p.ID)
 	if err != nil {
 		return fmt.Errorf("failed to update profile: %w", err)
 	}
@@ -563,4 +568,124 @@ func (r *PostgresRepository) SendMessage(ctx context.Context, msg *domain.ChatMe
 	`
 	return r.pool.QueryRow(ctx, query, msg.SenderID, msg.RecipientID, msg.MessageText, msg.ImagePath, quotedID).
 		Scan(&msg.ID, &msg.SentAt)
+}
+
+// ==========================================
+// 6. Authentication (Email & Password)
+// ==========================================
+
+func (r *PostgresRepository) SignUp(ctx context.Context, email, password, displayName string) (*domain.AuthResponse, error) {
+	email = strings.TrimSpace(strings.ToLower(email))
+	displayName = strings.TrimSpace(displayName)
+	if displayName == "" {
+		displayName = strings.Split(email, "@")[0]
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("không thể mã hóa mật khẩu: %w", err)
+	}
+
+	userMetaJSON := fmt.Sprintf(`{"display_name":%q}`, displayName)
+	insertUserQuery := `
+		INSERT INTO auth.users (
+			instance_id, email, encrypted_password, email_confirmed_at,
+			raw_app_meta_data, raw_user_meta_data, role, aud, created_at, updated_at
+		) VALUES (
+			'00000000-0000-0000-0000-000000000000', $1, $2, now(),
+			'{"provider":"email","providers":["email"]}', $3::jsonb, 'authenticated', 'authenticated', now(), now()
+		)
+		RETURNING id;
+	`
+	var newUserID string
+	err = r.pool.QueryRow(ctx, insertUserQuery, email, string(hash), userMetaJSON).Scan(&newUserID)
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique") {
+			return nil, fmt.Errorf("địa chỉ email đã được đăng ký")
+		}
+		return nil, fmt.Errorf("lỗi tạo tài khoản: %w", err)
+	}
+
+	// Ensure username is updated on profile
+	uname := "@" + strings.ToLower(strings.ReplaceAll(displayName, " ", "."))
+	_, _ = r.pool.Exec(ctx, `UPDATE public.profiles SET username = $1 WHERE id = $2;`, uname, newUserID)
+
+	// Generate Supabase-compatible JWT
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub":           newUserID,
+		"email":         email,
+		"aud":           "authenticated",
+		"role":          "authenticated",
+		"app_metadata":  map[string]interface{}{"provider": "email"},
+		"user_metadata": map[string]interface{}{"display_name": displayName},
+		"exp":           time.Now().Add(30 * 24 * time.Hour).Unix(),
+	})
+
+	signedToken, err := token.SignedString([]byte(r.jwtSecret))
+	if err != nil {
+		return nil, fmt.Errorf("không thể tạo phiên đăng nhập: %w", err)
+	}
+
+	return &domain.AuthResponse{
+		Token: signedToken,
+		User: domain.AuthUserInfo{
+			ID:          newUserID,
+			Email:       email,
+			DisplayName: displayName,
+			Username:    uname,
+		},
+	}, nil
+}
+
+func (r *PostgresRepository) Login(ctx context.Context, email, password string) (*domain.AuthResponse, error) {
+	email = strings.TrimSpace(strings.ToLower(email))
+
+	query := `
+		SELECT u.id, u.encrypted_password, COALESCE(p.display_name, ''), COALESCE(p.username, '')
+		FROM auth.users u
+		LEFT JOIN public.profiles p ON p.id = u.id
+		WHERE LOWER(u.email) = $1 AND u.deleted_at IS NULL;
+	`
+	var uid, hash, dName, uName string
+	err := r.pool.QueryRow(ctx, query, email).Scan(&uid, &hash, &dName, &uName)
+	if err != nil {
+		return nil, fmt.Errorf("email hoặc mật khẩu không chính xác")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
+		return nil, fmt.Errorf("email hoặc mật khẩu không chính xác")
+	}
+
+	if dName == "" {
+		dName = strings.Split(email, "@")[0]
+	}
+	if uName == "" {
+		uName = "@" + strings.ToLower(strings.ReplaceAll(dName, " ", "."))
+	}
+
+	// Generate Supabase-compatible JWT
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub":           uid,
+		"email":         email,
+		"aud":           "authenticated",
+		"role":          "authenticated",
+		"app_metadata":  map[string]interface{}{"provider": "email"},
+		"user_metadata": map[string]interface{}{"display_name": dName},
+		"exp":           time.Now().Add(30 * 24 * time.Hour).Unix(),
+	})
+
+	signedToken, err := token.SignedString([]byte(r.jwtSecret))
+	if err != nil {
+		return nil, fmt.Errorf("không thể tạo phiên đăng nhập: %w", err)
+	}
+
+	return &domain.AuthResponse{
+		Token: signedToken,
+		User: domain.AuthUserInfo{
+			ID:          uid,
+			Email:       email,
+			DisplayName: dName,
+			Username:    uName,
+		},
+	}, nil
 }
