@@ -17,12 +17,17 @@ const (
 	UserIDKey contextKey = "userId"
 	// UserEmailKey is the context key for extracted user email.
 	UserEmailKey contextKey = "userEmail"
+	// TokenJTIKey is the context key for extracted JWT ID (JTI).
+	TokenJTIKey contextKey = "tokenJti"
 )
+
+// TokenRevocationChecker checks whether a token JTI has been revoked.
+type TokenRevocationChecker func(ctx context.Context, jti string) bool
 
 // AuthMiddleware creates an HTTP middleware verifying Supabase GoTrue JWT tokens.
 // It parses the Bearer token, checks HMAC-SHA256 signature using jwtSecret,
-// and injects the 'sub' claim (user UUID) into the request context.
-func AuthMiddleware(jwtSecret string) func(http.Handler) http.Handler {
+// verifies against token revocation list, and injects user identity into context.
+func AuthMiddleware(jwtSecret string, isRevoked TokenRevocationChecker) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
@@ -63,16 +68,31 @@ func AuthMiddleware(jwtSecret string) func(http.Handler) http.Handler {
 				writeJSONError(w, http.StatusUnauthorized, "JWT token missing valid 'sub' subject claim")
 				return
 			}
-
 			email, _ := claims["email"].(string)
+			jti, _ := claims["jti"].(string)
 
-			// Store user identity in context
+			// Verify token is not in revocation blacklist
+			if jti != "" && isRevoked != nil {
+				if isRevoked(r.Context(), jti) {
+					writeJSONError(w, http.StatusUnauthorized, "Phiên đăng nhập đã kết thúc hoặc token đã bị thu hồi")
+					return
+				}
+			}
+
+			// Store user identity and token JTI in context
 			ctx := context.WithValue(r.Context(), UserIDKey, sub)
 			ctx = context.WithValue(ctx, UserEmailKey, email)
+			ctx = context.WithValue(ctx, TokenJTIKey, jti)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+// GetTokenJTI extracts the JWT JTI from context.
+func GetTokenJTI(ctx context.Context) string {
+	val, _ := ctx.Value(TokenJTIKey).(string)
+	return val
 }
 
 // GetUserID extracts the authenticated user ID from context.

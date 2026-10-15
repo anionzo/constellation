@@ -45,9 +45,14 @@ type Repository interface {
 	GetMessages(ctx context.Context, userID, friendID string, cursorTime *time.Time, cursorID *string, limit int) ([]domain.ChatMessage, bool, *string, error)
 	SendMessage(ctx context.Context, msg *domain.ChatMessage) error
 
-	// Auth
+	// Auth & Session Security
 	SignUp(ctx context.Context, email, password, displayName string) (*domain.AuthResponse, error)
 	Login(ctx context.Context, email, password string) (*domain.AuthResponse, error)
+	RefreshToken(ctx context.Context, refreshToken string) (*domain.AuthResponse, error)
+	Logout(ctx context.Context, userID, tokenJTI, refreshToken string) error
+	LogoutAll(ctx context.Context, userID string) error
+	DeactivateAccount(ctx context.Context, userID, password string) error
+	IsTokenRevoked(ctx context.Context, tokenJTI string) (bool, error)
 }
 
 // MemoryRepository is an in-memory thread-safe implementation of Repository for testing and standalone execution.
@@ -60,27 +65,31 @@ type memoryUser struct {
 }
 
 type MemoryRepository struct {
-	mu           sync.RWMutex
-	users        map[string]*memoryUser
-	profiles     map[string]*domain.Profile
-	friends      map[string][]domain.CircleFriend
-	requests     map[string][]domain.CircleRequest
-	invites      map[string]*domain.CircleInvite
-	articles     []*domain.Article
-	moments      []*domain.Moment
-	bookmarks    map[string]map[string]bool // userID -> articleID -> true
-	chatMessages []*domain.ChatMessage
+	mu            sync.RWMutex
+	users         map[string]*memoryUser
+	profiles      map[string]*domain.Profile
+	friends       map[string][]domain.CircleFriend
+	requests      map[string][]domain.CircleRequest
+	invites       map[string]*domain.CircleInvite
+	articles      []*domain.Article
+	moments       []*domain.Moment
+	bookmarks     map[string]map[string]bool // userID -> articleID -> true
+	chatMessages  []*domain.ChatMessage
+	refreshTokens map[string]string // refreshToken -> userID
+	revokedTokens map[string]bool   // tokenJTI -> true
 }
 
 // NewMemoryRepository initializes sample seed data matching Quire's quiet editorial universe.
 func NewMemoryRepository() *MemoryRepository {
 	repo := &MemoryRepository{
-		users:     make(map[string]*memoryUser),
-		profiles:  make(map[string]*domain.Profile),
-		friends:   make(map[string][]domain.CircleFriend),
-		requests:  make(map[string][]domain.CircleRequest),
-		invites:   make(map[string]*domain.CircleInvite),
-		bookmarks: make(map[string]map[string]bool),
+		users:         make(map[string]*memoryUser),
+		profiles:      make(map[string]*domain.Profile),
+		friends:       make(map[string][]domain.CircleFriend),
+		requests:      make(map[string][]domain.CircleRequest),
+		invites:       make(map[string]*domain.CircleInvite),
+		bookmarks:     make(map[string]map[string]bool),
+		refreshTokens: make(map[string]string),
+		revokedTokens: make(map[string]bool),
 	}
 
 	// Default user for test/memory mode
@@ -586,8 +595,13 @@ func (m *MemoryRepository) SignUp(ctx context.Context, email, password, displayN
 		UpdatedAt:   time.Now(),
 	}
 
+	refToken := fmt.Sprintf("mock-refresh-%s-%d", uid, time.Now().UnixNano())
+	m.refreshTokens[refToken] = uid
+
 	return &domain.AuthResponse{
-		Token: fmt.Sprintf("mock-jwt-token-%s", uid),
+		AccessToken:  fmt.Sprintf("mock-access-token-%s", uid),
+		RefreshToken: refToken,
+		ExpiresIn:    86400,
 		User: domain.AuthUserInfo{
 			ID:          uid,
 			Email:       email,
@@ -607,8 +621,13 @@ func (m *MemoryRepository) Login(ctx context.Context, email, password string) (*
 		return nil, fmt.Errorf("email hoặc mật khẩu không chính xác")
 	}
 
+	refToken := fmt.Sprintf("mock-refresh-%s-%d", user.ID, time.Now().UnixNano())
+	m.refreshTokens[refToken] = user.ID
+
 	return &domain.AuthResponse{
-		Token: fmt.Sprintf("mock-jwt-token-%s", user.ID),
+		AccessToken:  fmt.Sprintf("mock-access-token-%s", user.ID),
+		RefreshToken: refToken,
+		ExpiresIn:    86400,
 		User: domain.AuthUserInfo{
 			ID:          user.ID,
 			Email:       user.Email,
@@ -616,4 +635,105 @@ func (m *MemoryRepository) Login(ctx context.Context, email, password string) (*
 			Username:    user.Username,
 		},
 	}, nil
+}
+
+func (m *MemoryRepository) RefreshToken(ctx context.Context, refreshToken string) (*domain.AuthResponse, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	uid, exists := m.refreshTokens[refreshToken]
+	if !exists {
+		return nil, fmt.Errorf("refresh token không hợp lệ hoặc đã bị thu hồi")
+	}
+
+	delete(m.refreshTokens, refreshToken)
+
+	var foundUser *memoryUser
+	for _, u := range m.users {
+		if u.ID == uid {
+			foundUser = u
+			break
+		}
+	}
+	if foundUser == nil {
+		return nil, fmt.Errorf("tài khoản không tồn tại")
+	}
+
+	newRefToken := fmt.Sprintf("mock-refresh-%s-%d", uid, time.Now().UnixNano())
+	m.refreshTokens[newRefToken] = uid
+
+	return &domain.AuthResponse{
+		AccessToken:  fmt.Sprintf("mock-access-token-%s", uid),
+		RefreshToken: newRefToken,
+		ExpiresIn:    86400,
+		User: domain.AuthUserInfo{
+			ID:          foundUser.ID,
+			Email:       foundUser.Email,
+			DisplayName: foundUser.DisplayName,
+			Username:    foundUser.Username,
+		},
+	}, nil
+}
+
+func (m *MemoryRepository) Logout(ctx context.Context, userID, tokenJTI, refreshToken string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if tokenJTI != "" {
+		m.revokedTokens[tokenJTI] = true
+	}
+	if refreshToken != "" {
+		delete(m.refreshTokens, refreshToken)
+	}
+	return nil
+}
+
+func (m *MemoryRepository) LogoutAll(ctx context.Context, userID string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	for ref, uid := range m.refreshTokens {
+		if uid == userID {
+			delete(m.refreshTokens, ref)
+		}
+	}
+	return nil
+}
+
+func (m *MemoryRepository) DeactivateAccount(ctx context.Context, userID, password string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	var foundKey string
+	var foundUser *memoryUser
+	for email, u := range m.users {
+		if u.ID == userID {
+			foundKey = email
+			foundUser = u
+			break
+		}
+	}
+	if foundUser == nil {
+		return fmt.Errorf("tài khoản không tồn tại")
+	}
+	if foundUser.Password != password {
+		return fmt.Errorf("mật khẩu xác nhận không chính xác")
+	}
+
+	// Delete user and revoke all sessions
+	delete(m.users, foundKey)
+	delete(m.profiles, userID)
+	for ref, uid := range m.refreshTokens {
+		if uid == userID {
+			delete(m.refreshTokens, ref)
+		}
+	}
+	return nil
+}
+
+func (m *MemoryRepository) IsTokenRevoked(ctx context.Context, tokenJTI string) (bool, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	return m.revokedTokens[tokenJTI], nil
 }

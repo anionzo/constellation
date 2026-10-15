@@ -9,6 +9,7 @@ import 'tabs/discover_tab_view.dart';
 import 'tabs/you_tab_view.dart';
 import '../../features/photo_upload/models/friend_chip.dart';
 import '../../features/photo_upload/services/quire_moment_uploader.dart';
+import '../../features/api/bff_api_client.dart';
 
 /// Quire Home Screen with 4 fully implemented interactive tabs:
 /// 1. Đọc (Editorial Reading Feed & Detail Sheet)
@@ -16,6 +17,7 @@ import '../../features/photo_upload/services/quire_moment_uploader.dart';
 /// 3. Khám phá (Search & Curated Editorial Shelf)
 /// 4. Bạn (Profile & 4-tier Settings with Theme Switcher)
 class QuireHomeScreen extends StatefulWidget {
+  final BffApiClient? bffClient;
   final QuireMomentUploader momentUploader;
   final ThemeController? themeController;
 
@@ -24,6 +26,7 @@ class QuireHomeScreen extends StatefulWidget {
 
   const QuireHomeScreen({
     Key? key,
+    this.bffClient,
     required this.momentUploader,
     this.themeController,
     this.currentUserEmail = 'Khách trải nghiệm',
@@ -97,13 +100,15 @@ class _QuireHomeScreenState extends State<QuireHomeScreen> {
           child: IndexedStack(
             index: _currentTabIndex,
             children: [
-              const ReadingTabView(),
+              ReadingTabView(bffClient: widget.bffClient),
               MomentsTabView(
+                bffClient: widget.bffClient,
                 friends: _friends,
                 momentUploader: widget.momentUploader,
               ),
               const DiscoverTabView(),
               YouTabView(
+                bffClient: widget.bffClient,
                 themeController: widget.themeController ?? ThemeController(),
                 friends: _friends,
                 currentUserEmail: widget.currentUserEmail,

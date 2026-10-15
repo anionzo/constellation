@@ -3,22 +3,60 @@ import 'package:http/http.dart' as http;
 import 'package:local_sync/local_sync.dart';
 import 'package:media_storage/media_storage.dart';
 import '../photo_upload/services/quire_moment_uploader.dart';
+import 'token_storage_service.dart';
 
 /// HTTP Client connecting Quire Flutter app directly to the Golang BFF Service.
+/// Supports cross-platform persistent tokens, automatic refresh, and session security.
 class BffApiClient {
   final String baseUrl;
   final http.Client _client;
-  String? _authToken;
+  final TokenStorageService? _storage;
+
+  String? _accessToken;
+  String? _refreshToken;
+  String? _userEmail;
 
   BffApiClient({
     String? baseUrl,
     http.Client? client,
+    TokenStorageService? storage,
   })  : baseUrl = baseUrl ?? 'http://127.0.0.1:8088',
-        _client = client ?? http.Client();
+        _client = client ?? http.Client(),
+        _storage = storage;
 
-  /// Set the Supabase JWT token for authenticated requests.
-  void setAuthToken(String token) {
-    _authToken = token;
+  /// Initialize and restore stored session from cross-platform storage (Web/Mobile/Desktop)
+  Future<bool> initSession() async {
+    final storage = _storage ?? await TokenStorageService.getInstance();
+    _accessToken = storage.getAccessToken();
+    _refreshToken = storage.getRefreshToken();
+    _userEmail = storage.getUserEmail();
+    return hasSession;
+  }
+
+  bool get hasSession => _accessToken != null && _accessToken!.isNotEmpty;
+  String? get currentEmail => _userEmail;
+  String? get accessToken => _accessToken;
+
+  void setAuthTokens({
+    required String accessToken,
+    required String refreshToken,
+    String? userEmail,
+  }) {
+    _accessToken = accessToken;
+    _refreshToken = refreshToken;
+    if (userEmail != null) _userEmail = userEmail;
+    _storage?.saveSession(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      userEmail: userEmail ?? _userEmail ?? '',
+    );
+  }
+
+  void clearSession() {
+    _accessToken = null;
+    _refreshToken = null;
+    _userEmail = null;
+    _storage?.clearSession();
   }
 
   Map<String, String> get _headers {
@@ -26,8 +64,8 @@ class BffApiClient {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
-    if (_authToken != null && _authToken!.isNotEmpty) {
-      headers['Authorization'] = 'Bearer $_authToken';
+    if (_accessToken != null && _accessToken!.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $_accessToken';
     }
     return headers;
   }
@@ -46,7 +84,7 @@ class BffApiClient {
   }
 
   // ==========================================
-  // Auth APIs (Email & Password)
+  // Authentication & Session Security
   // ==========================================
 
   Future<Map<String, dynamic>> signUp({
@@ -66,9 +104,14 @@ class BffApiClient {
       );
       final data = jsonDecode(res.body) as Map<String, dynamic>;
       if (res.statusCode == 201) {
-        final token = data['token'] as String?;
-        if (token != null) {
-          setAuthToken(token);
+        final aToken = (data['access_token'] ?? data['token']) as String?;
+        final rToken = (data['refresh_token'] ?? '') as String;
+        if (aToken != null) {
+          setAuthTokens(
+            accessToken: aToken,
+            refreshToken: rToken,
+            userEmail: email,
+          );
         }
         return {'success': true, 'data': data};
       }
@@ -93,15 +136,90 @@ class BffApiClient {
       );
       final data = jsonDecode(res.body) as Map<String, dynamic>;
       if (res.statusCode == 200) {
-        final token = data['token'] as String?;
-        if (token != null) {
-          setAuthToken(token);
+        final aToken = (data['access_token'] ?? data['token']) as String?;
+        final rToken = (data['refresh_token'] ?? '') as String;
+        if (aToken != null) {
+          setAuthTokens(
+            accessToken: aToken,
+            refreshToken: rToken,
+            userEmail: email,
+          );
         }
         return {'success': true, 'data': data};
       }
       return {'success': false, 'error': data['error'] ?? 'Lỗi đăng nhập'};
     } catch (e) {
       return {'success': false, 'error': 'Không thể kết nối máy chủ ($e)'};
+    }
+  }
+
+  Future<bool> refreshSession() async {
+    final rToken = _refreshToken ?? _storage?.getRefreshToken();
+    if (rToken == null || rToken.isEmpty) return false;
+
+    try {
+      final res = await _client.post(
+        Uri.parse('$baseUrl/api/v1/auth/refresh'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'refresh_token': rToken}),
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        final aToken = data['access_token'] as String?;
+        final newRToken = data['refresh_token'] as String?;
+        if (aToken != null && newRToken != null) {
+          setAuthTokens(
+            accessToken: aToken,
+            refreshToken: newRToken,
+            userEmail: _userEmail,
+          );
+          return true;
+        }
+      }
+      clearSession();
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> logout() async {
+    final rToken = _refreshToken ?? _storage?.getRefreshToken();
+    try {
+      await _client.post(
+        Uri.parse('$baseUrl/api/v1/auth/logout'),
+        headers: _headers,
+        body: jsonEncode({'refresh_token': rToken ?? ''}),
+      );
+    } catch (_) {}
+    clearSession();
+  }
+
+  Future<void> logoutAll() async {
+    try {
+      await _client.post(
+        Uri.parse('$baseUrl/api/v1/auth/logout-all'),
+        headers: _headers,
+      );
+    } catch (_) {}
+    clearSession();
+  }
+
+  Future<Map<String, dynamic>> deactivateAccount({required String password}) async {
+    try {
+      final res = await _client.post(
+        Uri.parse('$baseUrl/api/v1/auth/deactivate'),
+        headers: _headers,
+        body: jsonEncode({'password': password}),
+      );
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      if (res.statusCode == 200) {
+        clearSession();
+        return {'success': true, 'message': data['message']};
+      }
+      return {'success': false, 'error': data['error'] ?? 'Lỗi khi vô hiệu hóa tài khoản'};
+    } catch (e) {
+      return {'success': false, 'error': 'Không thể kết nối máy chủ: $e'};
     }
   }
 
@@ -113,6 +231,13 @@ class BffApiClient {
     final res = await _client.get(Uri.parse('$baseUrl/api/v1/profile/me'), headers: _headers);
     if (res.statusCode == 200) {
       return jsonDecode(res.body) as Map<String, dynamic>;
+    } else if (res.statusCode == 401) {
+      if (await refreshSession()) {
+        final retry = await _client.get(Uri.parse('$baseUrl/api/v1/profile/me'), headers: _headers);
+        if (retry.statusCode == 200) {
+          return jsonDecode(retry.body) as Map<String, dynamic>;
+        }
+      }
     }
     return null;
   }

@@ -696,6 +696,79 @@ func (h *Handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, res)
 }
 
+func (h *Handler) HandleRefreshToken(w http.ResponseWriter, r *http.Request) {
+	var req domain.AuthRefreshTokenRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.RefreshToken == "" {
+		writeError(w, http.StatusBadRequest, "Vui lòng cung cấp refresh token")
+		return
+	}
+
+	res, err := h.repo.RefreshToken(r.Context(), req.RefreshToken)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, res)
+}
+
+func (h *Handler) HandleLogout(w http.ResponseWriter, r *http.Request) {
+	userID, _ := middleware.GetUserID(r.Context())
+	tokenJTI := middleware.GetTokenJTI(r.Context())
+
+	var req domain.AuthLogoutRequest
+	_ = json.NewDecoder(r.Body).Decode(&req)
+
+	if err := h.repo.Logout(r.Context(), userID, tokenJTI, req.RefreshToken); err != nil {
+		writeError(w, http.StatusInternalServerError, "Lỗi khi đăng xuất")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{
+		"message": "Đăng xuất thành công, phiên đăng nhập đã được hủy",
+	})
+}
+
+func (h *Handler) HandleLogoutAll(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "Chưa xác thực")
+		return
+	}
+
+	if err := h.repo.LogoutAll(r.Context(), userID); err != nil {
+		writeError(w, http.StatusInternalServerError, "Lỗi khi đăng xuất tất cả thiết bị")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{
+		"message": "Đã thu hồi tất cả phiên đăng nhập trên toàn bộ thiết bị",
+	})
+}
+
+func (h *Handler) HandleDeactivateAccount(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "Chưa xác thực")
+		return
+	}
+
+	var req domain.AuthDeactivateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Password == "" {
+		writeError(w, http.StatusBadRequest, "Vui lòng nhập mật khẩu để xác nhận vô hiệu hóa tài khoản")
+		return
+	}
+
+	if err := h.repo.DeactivateAccount(r.Context(), userID, req.Password); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{
+		"message": "Tài khoản đã được vô hiệu hóa an toàn, toàn bộ phiên đăng nhập đã bị xóa",
+	})
+}
+
 // ==========================================
 // JSON Response Helpers
 // ==========================================

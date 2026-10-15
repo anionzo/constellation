@@ -109,6 +109,16 @@ class _QuireAppState extends State<QuireApp> with WidgetsBindingObserver {
     _versionGateManager.onAppBoot().then((_) {
       _syncDispatcher.dispatchPendingBatch();
     });
+
+    // Restore persistent session from localStorage / SharedPreferences
+    _bffClient.initSession().then((hasSession) {
+      if (hasSession && mounted) {
+        setState(() {
+          _isAuthenticated = true;
+          _currentUserEmail = _bffClient.currentEmail ?? 'Thành viên Quire';
+        });
+      }
+    });
   }
 
   @override
@@ -164,12 +174,15 @@ class _QuireAppState extends State<QuireApp> with WidgetsBindingObserver {
                   },
                 )
               : QuireHomeScreen(
+                  bffClient: _bffClient,
                   momentUploader: _momentUploader,
                   themeController: _themeController,
                   currentUserEmail: _currentUserEmail,
                   onSignOut: () {
+                    _bffClient.logout();
                     setState(() {
                       _isAuthenticated = false;
+                      _currentUserEmail = 'Khách trải nghiệm';
                     });
                   },
                 )),

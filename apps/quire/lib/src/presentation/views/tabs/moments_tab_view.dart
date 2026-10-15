@@ -11,23 +11,60 @@ import '../../../features/photo_upload/services/camera_gallery_service.dart';
 import '../../../features/photo_upload/services/native_camera_gallery_service.dart';
 import '../chat/circle_chat_sheet.dart';
 import '../chat/circle_inbox_sheet.dart';
+import '../../../features/api/bff_api_client.dart';
 
 class MomentsTabView extends StatefulWidget {
+  final BffApiClient? bffClient;
   final List<FriendChip> friends;
   final QuireMomentUploader momentUploader;
 
   const MomentsTabView({
     Key? key,
+    this.bffClient,
     required this.friends,
     required this.momentUploader,
   }) : super(key: key);
-
   @override
   State<MomentsTabView> createState() => _MomentsTabViewState();
 }
 
 class _MomentsTabViewState extends State<MomentsTabView> {
   final CameraGalleryService _cameraService = NativeCameraGalleryService();
+  @override
+  void initState() {
+    super.initState();
+    _loadMomentsFromBackend();
+  }
+
+  Future<void> _loadMomentsFromBackend() async {
+    if (widget.bffClient == null) return;
+    try {
+      final res = await widget.bffClient!.getMomentsFeed();
+      if (res != null && res['data'] is List) {
+        final List<dynamic> list = res['data'] as List<dynamic>;
+        if (list.isNotEmpty && mounted) {
+          setState(() {
+            _moments.clear();
+            for (final item in list) {
+              final m = item as Map<String, dynamic>;
+              _moments.add({
+                'id': m['id']?.toString() ?? '',
+                'author': m['sender_name']?.toString() ?? 'Bạn',
+                'authorInitials': m['sender_initials']?.toString() ?? 'B',
+                'timeAgo': 'Vừa xong',
+                'imageUrl': (m['image_url'] != null && m['image_url'].toString().isNotEmpty)
+                    ? m['image_url'].toString()
+                    : 'https://picsum.photos/seed/moment/800/800',
+                'caption': m['caption']?.toString() ?? '',
+                'liked': false,
+                'likesCount': (m['likes_count'] as num?)?.toInt() ?? 0,
+              });
+            }
+          });
+        }
+      }
+    } catch (_) {}
+  }
 
   final List<Map<String, dynamic>> _moments = [
     {

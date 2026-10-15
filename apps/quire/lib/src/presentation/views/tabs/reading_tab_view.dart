@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../../theme/quire_tokens.dart';
 import '../reading/publish_article_sheet.dart';
+import '../../../features/api/bff_api_client.dart';
 
 class ArticleItem {
   final String id;
@@ -36,7 +37,8 @@ class ArticleItem {
 }
 
 class ReadingTabView extends StatefulWidget {
-  const ReadingTabView({Key? key}) : super(key: key);
+  final BffApiClient? bffClient;
+  const ReadingTabView({Key? key, this.bffClient}) : super(key: key);
 
   @override
   State<ReadingTabView> createState() => _ReadingTabViewState();
@@ -44,6 +46,48 @@ class ReadingTabView extends StatefulWidget {
 
 class _ReadingTabViewState extends State<ReadingTabView> {
   int _filterIndex = 0; // 0: Tất cả, 1: Công khai, 2: Vòng bạn bè, 3: Đã lưu
+  @override
+  void initState() {
+    super.initState();
+    _loadArticlesFromBackend();
+  }
+
+  Future<void> _loadArticlesFromBackend() async {
+    if (widget.bffClient == null) return;
+    String? scope;
+    if (_filterIndex == 1) scope = 'public';
+    if (_filterIndex == 2) scope = 'circle';
+    if (_filterIndex == 3) scope = 'saved';
+
+    try {
+      final res = await widget.bffClient!.getArticles(scope: scope);
+      if (res != null && res['data'] is List) {
+        final List<dynamic> list = res['data'] as List<dynamic>;
+        if (list.isNotEmpty && mounted) {
+          setState(() {
+            _articles.clear();
+            for (final item in list) {
+              final m = item as Map<String, dynamic>;
+              _articles.add(ArticleItem(
+                id: m['id']?.toString() ?? '',
+                title: m['title']?.toString() ?? '',
+                excerpt: m['excerpt']?.toString() ?? '',
+                fullContent: m['full_content']?.toString() ?? '',
+                author: m['author_name']?.toString() ?? 'Inês Castro',
+                readTime: '${m['read_time_minutes'] ?? 5} phút đọc',
+                date: 'Hôm nay',
+                imageUrl: (m['cover_image_path'] != null && m['cover_image_path'].toString().isNotEmpty)
+                    ? m['cover_image_path'].toString()
+                    : 'https://picsum.photos/seed/${m['id']}/800/500',
+                likes: (m['likes_count'] as num?)?.toInt() ?? 0,
+                isPublic: m['is_public'] == true,
+              ));
+            }
+          });
+        }
+      }
+    } catch (_) {}
+  }
   final List<ArticleItem> _articles = [
     ArticleItem(
       id: 'art_1',
@@ -102,6 +146,14 @@ Vilhelm Hammershøi vẽ những căn phòng vắng ở Copenhagen với gam mà
           setState(() {
             _articles.insert(0, newArticle);
           });
+          widget.bffClient?.publishArticle(
+            title: newArticle.title,
+            category: 'Ghi chép',
+            excerpt: newArticle.excerpt,
+            fullContent: newArticle.fullContent,
+            isPublic: newArticle.isPublic,
+            coverImagePath: newArticle.imageUrl,
+          );
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Bài viết đã được xuất bản lên Quire!', style: TextStyle(fontFamily: QuireTokens.fontSerif)),

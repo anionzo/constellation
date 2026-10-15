@@ -6,8 +6,10 @@ import '../profile/friend_profile_sheet.dart';
 import '../chat/circle_chat_sheet.dart';
 import '../../../features/photo_upload/models/friend_chip.dart';
 import '../../../features/photo_upload/services/native_camera_gallery_service.dart';
+import '../../../features/api/bff_api_client.dart';
 
 class YouTabView extends StatefulWidget {
+  final BffApiClient? bffClient;
   final ThemeController themeController;
   final List<FriendChip> friends;
   final String currentUserEmail;
@@ -22,6 +24,7 @@ class YouTabView extends StatefulWidget {
 
   const YouTabView({
     Key? key,
+    this.bffClient,
     required this.themeController,
     required this.friends,
     this.currentUserEmail = 'Khách trải nghiệm',
@@ -35,7 +38,6 @@ class YouTabView extends StatefulWidget {
     this.onSignOut,
   }) : super(key: key);
 
-
   @override
   State<YouTabView> createState() => _YouTabViewState();
 }
@@ -44,6 +46,74 @@ class _YouTabViewState extends State<YouTabView> {
   bool _readReceiptsEnabled = false; // Quiet invariant: Off by default
   bool _autoPurgeEnabled = true;
   String _autoPurgeDuration = '30 ngày'; // '24 giờ', '7 ngày', '30 ngày'
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileFromBackend();
+  }
+
+  Future<void> _loadProfileFromBackend() async {
+    if (widget.bffClient == null) return;
+    try {
+      final p = await widget.bffClient!.getMyProfile();
+      if (p != null && mounted) {
+        final name = p['display_name']?.toString() ?? '';
+        final username = p['username']?.toString() ?? '';
+        final bio = p['bio']?.toString() ?? '';
+        if (name.isNotEmpty || username.isNotEmpty) {
+          widget.onProfileUpdated?.call(name, username, bio, widget.currentUserAvatarBytes);
+        }
+      }
+    } catch (_) {}
+  }
+
+  void _showLogoutSecurityDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: isDark ? QuireTokens.surfaceDark : QuireTokens.surfaceLight,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(QuireTokens.rCard)),
+          title: Text(
+            'Bảo mật phiên đăng nhập',
+            style: QuireTokens.title(isDark: isDark).copyWith(fontSize: 18),
+          ),
+          content: Text(
+            'Bạn muốn đăng xuất khỏi thiết bị này hay thu hồi toàn bộ token trên tất cả các thiết bị để đảm bảo an toàn?',
+            style: QuireTokens.body(isDark: isDark),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text('Hủy', style: QuireTokens.meta(isDark: isDark)),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                await widget.bffClient?.logout();
+                widget.onSignOut?.call();
+              },
+              child: const Text('Đăng xuất thiết bị này', style: TextStyle(color: Color(0xFFC13832))),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFC13832),
+                foregroundColor: Colors.white,
+                elevation: 0,
+              ),
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                await widget.bffClient?.logoutAll();
+                widget.onSignOut?.call();
+              },
+              child: const Text('Đăng xuất TẤT CẢ thiết bị'),
+            ),
+          ],
+        );
+      },
+    );
+  }
   final TextEditingController _addFriendController = TextEditingController();
 
   @override
@@ -740,7 +810,7 @@ class _YouTabViewState extends State<YouTabView> {
                   borderRadius: BorderRadius.circular(QuireTokens.rBtn),
                 ),
               ),
-              onPressed: widget.onSignOut,
+              onPressed: _showLogoutSecurityDialog,
               icon: Icon(Icons.logout_outlined, size: 18, color: isDark ? const Color(0xFFF07F77) : const Color(0xFFC13832)),
               label: Text(
                 'Đăng xuất / Đổi tài khoản',

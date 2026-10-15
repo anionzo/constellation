@@ -2,12 +2,14 @@ package repository
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
-
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -574,6 +576,61 @@ func (r *PostgresRepository) SendMessage(ctx context.Context, msg *domain.ChatMe
 // 6. Authentication (Email & Password)
 // ==========================================
 
+func (r *PostgresRepository) issueTokenPair(ctx context.Context, userID, email, displayName, username string) (*domain.AuthResponse, error) {
+	subPrefix := userID
+	if len(subPrefix) > 8 {
+		subPrefix = subPrefix[:8]
+	}
+	jti := fmt.Sprintf("jti_%d_%s", time.Now().UnixNano(), subPrefix)
+
+	// Access token: 24h lifespan
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"jti":           jti,
+		"sub":           userID,
+		"email":         email,
+		"aud":           "authenticated",
+		"role":          "authenticated",
+		"app_metadata":  map[string]interface{}{"provider": "email"},
+		"user_metadata": map[string]interface{}{"display_name": displayName},
+		"exp":           time.Now().Add(24 * time.Hour).Unix(),
+	})
+
+	signedAccessToken, err := token.SignedString([]byte(r.jwtSecret))
+	if err != nil {
+		return nil, fmt.Errorf("không thể ký access token: %w", err)
+	}
+
+	// Refresh token: 32 bytes cryptographically secure random string
+	rawBytes := make([]byte, 32)
+	if _, err := rand.Read(rawBytes); err != nil {
+		return nil, fmt.Errorf("không thể tạo refresh token: %w", err)
+	}
+	rawRefreshToken := hex.EncodeToString(rawBytes)
+	h := sha256.Sum256([]byte(rawRefreshToken))
+	tokenHash := hex.EncodeToString(h[:])
+
+	// Store in public.user_refresh_tokens (valid for 30 days)
+	insertRefQuery := `
+		INSERT INTO public.user_refresh_tokens (user_id, token_hash, expires_at)
+		VALUES ($1, $2, now() + interval '30 days');
+	`
+	if _, err := r.pool.Exec(ctx, insertRefQuery, userID, tokenHash); err != nil {
+		return nil, fmt.Errorf("không thể lưu refresh token: %w", err)
+	}
+
+	return &domain.AuthResponse{
+		AccessToken:  signedAccessToken,
+		RefreshToken: rawRefreshToken,
+		ExpiresIn:    86400,
+		User: domain.AuthUserInfo{
+			ID:          userID,
+			Email:       email,
+			DisplayName: displayName,
+			Username:    username,
+		},
+	}, nil
+}
+
 func (r *PostgresRepository) SignUp(ctx context.Context, email, password, displayName string) (*domain.AuthResponse, error) {
 	email = strings.TrimSpace(strings.ToLower(email))
 	displayName = strings.TrimSpace(displayName)
@@ -610,31 +667,7 @@ func (r *PostgresRepository) SignUp(ctx context.Context, email, password, displa
 	uname := "@" + strings.ToLower(strings.ReplaceAll(displayName, " ", "."))
 	_, _ = r.pool.Exec(ctx, `UPDATE public.profiles SET username = $1 WHERE id = $2;`, uname, newUserID)
 
-	// Generate Supabase-compatible JWT
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":           newUserID,
-		"email":         email,
-		"aud":           "authenticated",
-		"role":          "authenticated",
-		"app_metadata":  map[string]interface{}{"provider": "email"},
-		"user_metadata": map[string]interface{}{"display_name": displayName},
-		"exp":           time.Now().Add(30 * 24 * time.Hour).Unix(),
-	})
-
-	signedToken, err := token.SignedString([]byte(r.jwtSecret))
-	if err != nil {
-		return nil, fmt.Errorf("không thể tạo phiên đăng nhập: %w", err)
-	}
-
-	return &domain.AuthResponse{
-		Token: signedToken,
-		User: domain.AuthUserInfo{
-			ID:          newUserID,
-			Email:       email,
-			DisplayName: displayName,
-			Username:    uname,
-		},
-	}, nil
+	return r.issueTokenPair(ctx, newUserID, email, displayName, uname)
 }
 
 func (r *PostgresRepository) Login(ctx context.Context, email, password string) (*domain.AuthResponse, error) {
@@ -644,12 +677,12 @@ func (r *PostgresRepository) Login(ctx context.Context, email, password string) 
 		SELECT u.id, u.encrypted_password, COALESCE(p.display_name, ''), COALESCE(p.username, '')
 		FROM auth.users u
 		LEFT JOIN public.profiles p ON p.id = u.id
-		WHERE LOWER(u.email) = $1 AND u.deleted_at IS NULL;
+		WHERE LOWER(u.email) = $1 AND u.deleted_at IS NULL AND (u.banned_until IS NULL OR u.banned_until < now());
 	`
 	var uid, hash, dName, uName string
 	err := r.pool.QueryRow(ctx, query, email).Scan(&uid, &hash, &dName, &uName)
 	if err != nil {
-		return nil, fmt.Errorf("email hoặc mật khẩu không chính xác")
+		return nil, fmt.Errorf("email hoặc mật khẩu không chính xác hoặc tài khoản đã bị vô hiệu hóa")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
@@ -663,29 +696,103 @@ func (r *PostgresRepository) Login(ctx context.Context, email, password string) 
 		uName = "@" + strings.ToLower(strings.ReplaceAll(dName, " ", "."))
 	}
 
-	// Generate Supabase-compatible JWT
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":           uid,
-		"email":         email,
-		"aud":           "authenticated",
-		"role":          "authenticated",
-		"app_metadata":  map[string]interface{}{"provider": "email"},
-		"user_metadata": map[string]interface{}{"display_name": dName},
-		"exp":           time.Now().Add(30 * 24 * time.Hour).Unix(),
-	})
+	return r.issueTokenPair(ctx, uid, email, dName, uName)
+}
 
-	signedToken, err := token.SignedString([]byte(r.jwtSecret))
+func (r *PostgresRepository) RefreshToken(ctx context.Context, refreshToken string) (*domain.AuthResponse, error) {
+	h := sha256.Sum256([]byte(refreshToken))
+	tokenHash := hex.EncodeToString(h[:])
+
+	query := `
+		SELECT t.id, t.user_id, t.is_revoked, t.expires_at, u.email, COALESCE(p.display_name, ''), COALESCE(p.username, '')
+		FROM public.user_refresh_tokens t
+		JOIN auth.users u ON u.id = t.user_id
+		LEFT JOIN public.profiles p ON p.id = t.user_id
+		WHERE t.token_hash = $1;
+	`
+	var id, userID, email, dName, uName string
+	var isRevoked bool
+	var expiresAt time.Time
+
+	err := r.pool.QueryRow(ctx, query, tokenHash).Scan(&id, &userID, &isRevoked, &expiresAt, &email, &dName, &uName)
 	if err != nil {
-		return nil, fmt.Errorf("không thể tạo phiên đăng nhập: %w", err)
+		return nil, fmt.Errorf("refresh token không hợp lệ")
 	}
 
-	return &domain.AuthResponse{
-		Token: signedToken,
-		User: domain.AuthUserInfo{
-			ID:          uid,
-			Email:       email,
-			DisplayName: dName,
-			Username:    uName,
-		},
-	}, nil
+	if isRevoked || time.Now().After(expiresAt) {
+		return nil, fmt.Errorf("refresh token đã bị thu hồi hoặc đã hết hạn")
+	}
+
+	// Invalidate used refresh token (Token Rotation for maximum security)
+	_, _ = r.pool.Exec(ctx, `UPDATE public.user_refresh_tokens SET is_revoked = true, revoked_at = now() WHERE id = $1;`, id)
+
+	if dName == "" {
+		dName = strings.Split(email, "@")[0]
+	}
+	if uName == "" {
+		uName = "@" + strings.ToLower(strings.ReplaceAll(dName, " ", "."))
+	}
+
+	return r.issueTokenPair(ctx, userID, email, dName, uName)
+}
+
+func (r *PostgresRepository) Logout(ctx context.Context, userID, tokenJTI, refreshToken string) error {
+	if refreshToken != "" {
+		h := sha256.Sum256([]byte(refreshToken))
+		tokenHash := hex.EncodeToString(h[:])
+		_, _ = r.pool.Exec(ctx, `
+			UPDATE public.user_refresh_tokens
+			SET is_revoked = true, revoked_at = now()
+			WHERE token_hash = $1;
+		`, tokenHash)
+	}
+
+	if tokenJTI != "" && userID != "" {
+		_, _ = r.pool.Exec(ctx, `
+			INSERT INTO public.revoked_access_tokens (jti, user_id, expires_at)
+			VALUES ($1, $2, now() + interval '24 hours')
+			ON CONFLICT (jti) DO NOTHING;
+		`, tokenJTI, userID)
+	}
+
+	return nil
+}
+
+func (r *PostgresRepository) LogoutAll(ctx context.Context, userID string) error {
+	_, err := r.pool.Exec(ctx, `
+		UPDATE public.user_refresh_tokens
+		SET is_revoked = true, revoked_at = now()
+		WHERE user_id = $1 AND is_revoked = false;
+	`, userID)
+	return err
+}
+
+func (r *PostgresRepository) DeactivateAccount(ctx context.Context, userID, password string) error {
+	var hash string
+	err := r.pool.QueryRow(ctx, `SELECT encrypted_password FROM auth.users WHERE id = $1;`, userID).Scan(&hash)
+	if err != nil {
+		return fmt.Errorf("tài khoản không tồn tại")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
+		return fmt.Errorf("mật khẩu xác nhận không chính xác")
+	}
+
+	// Set banned_until = infinity to instantly disable the account
+	_, err = r.pool.Exec(ctx, `UPDATE auth.users SET banned_until = 'infinity', updated_at = now() WHERE id = $1;`, userID)
+	if err != nil {
+		return fmt.Errorf("không thể vô hiệu hóa tài khoản: %w", err)
+	}
+
+	// Revoke all refresh tokens
+	_ = r.LogoutAll(ctx, userID)
+	return nil
+}
+
+func (r *PostgresRepository) IsTokenRevoked(ctx context.Context, tokenJTI string) (bool, error) {
+	var exists bool
+	err := r.pool.QueryRow(ctx, `
+		SELECT EXISTS(SELECT 1 FROM public.revoked_access_tokens WHERE jti = $1 AND expires_at > now());
+	`, tokenJTI).Scan(&exists)
+	return exists, err
 }

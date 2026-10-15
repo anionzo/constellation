@@ -146,10 +146,28 @@ type AuthLoginRequest struct {
 	Password string `json:"password"`
 }
 
-// AuthResponse represents the authentication result with JWT token and basic user info.
+// AuthResponse represents the authentication result with access/refresh tokens and user details.
 type AuthResponse struct {
-	Token string       `json:"token"`
-	User  AuthUserInfo `json:"user"`
+	AccessToken  string       `json:"access_token"`
+	RefreshToken string       `json:"refresh_token"`
+	ExpiresIn    int64        `json:"expires_in"` // in seconds
+	User         AuthUserInfo `json:"user"`
+}
+
+// AuthRefreshTokenRequest payload to exchange a refresh token for new access token.
+type AuthRefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
+// AuthLogoutRequest payload to revoke a specific refresh token.
+type AuthLogoutRequest struct {
+	RefreshToken string `json:"refresh_token,omitempty"`
+}
+
+// AuthDeactivateRequest payload to deactivate user account.
+type AuthDeactivateRequest struct {
+	Password string `json:"password"`
+	Reason   string `json:"reason,omitempty"`
 }
 
 // AuthUserInfo represents user details returned on auth.
