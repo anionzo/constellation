@@ -233,7 +233,7 @@ class BffApiClient {
     if (res.statusCode == 200) {
       return jsonDecode(res.body) as Map<String, dynamic>;
     } else if (res.statusCode == 401) {
-      if (await refreshSession()) {
+      if (await refreshSession() != null) {
         final retry = await _client.get(Uri.parse('$baseUrl/api/v1/profile/me'), headers: _headers);
         if (retry.statusCode == 200) {
           return jsonDecode(retry.body) as Map<String, dynamic>;

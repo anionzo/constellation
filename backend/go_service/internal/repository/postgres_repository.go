@@ -353,10 +353,10 @@ func (r *PostgresRepository) UnbookmarkArticle(ctx context.Context, userID, arti
 
 func (r *PostgresRepository) GetFeed(ctx context.Context, userID, circleID string, cursorTime *time.Time, cursorID *string, limit int) ([]domain.Moment, bool, *string, error) {
 	baseQuery := `
-		SELECT m.id, m.sender_id, p.display_name, m.circle_id, m.image_path, COALESCE(m.caption, ''),
+		SELECT m.id, m.sender_id, COALESCE(p.display_name, 'Thành viên'), m.circle_id, m.image_path, COALESCE(m.caption, ''),
 		       m.auto_purge_duration_seconds, m.purged_at, m.is_archived, m.likes_count, m.created_at
 		FROM public.moments m
-		JOIN public.profiles p ON p.id = m.sender_id
+		LEFT JOIN public.profiles p ON p.id = m.sender_id
 		WHERE m.is_archived = false AND m.purged_at IS NULL
 	`
 	args := []interface{}{}

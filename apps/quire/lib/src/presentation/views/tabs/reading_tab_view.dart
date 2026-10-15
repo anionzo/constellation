@@ -52,8 +52,15 @@ class _ReadingTabViewState extends State<ReadingTabView> {
     _loadArticlesFromBackend();
   }
 
+  bool _isLoading = true;
+  final List<ArticleItem> _articles = [];
+
   Future<void> _loadArticlesFromBackend() async {
-    if (widget.bffClient == null) return;
+    setState(() => _isLoading = true);
+    if (widget.bffClient == null) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
     String? scope;
     if (_filterIndex == 1) scope = 'public';
     if (_filterIndex == 2) scope = 'circle';
@@ -63,7 +70,7 @@ class _ReadingTabViewState extends State<ReadingTabView> {
       final res = await widget.bffClient!.getArticles(scope: scope);
       if (res != null && res['data'] is List) {
         final List<dynamic> list = res['data'] as List<dynamic>;
-        if (list.isNotEmpty && mounted) {
+        if (mounted) {
           setState(() {
             _articles.clear();
             for (final item in list) {
@@ -73,7 +80,7 @@ class _ReadingTabViewState extends State<ReadingTabView> {
                 title: m['title']?.toString() ?? '',
                 excerpt: m['excerpt']?.toString() ?? '',
                 fullContent: m['full_content']?.toString() ?? '',
-                author: m['author_name']?.toString() ?? 'Inês Castro',
+                author: m['author_name']?.toString() ?? 'Tác giả',
                 readTime: '${m['read_time_minutes'] ?? 5} phút đọc',
                 date: 'Hôm nay',
                 imageUrl: (m['cover_image_path'] != null && m['cover_image_path'].toString().isNotEmpty)
@@ -81,60 +88,17 @@ class _ReadingTabViewState extends State<ReadingTabView> {
                     : 'https://picsum.photos/seed/${m['id']}/800/500',
                 likes: (m['likes_count'] as num?)?.toInt() ?? 0,
                 isPublic: m['is_public'] == true,
+                isBookmarked: m['is_bookmarked'] == true,
               ));
             }
           });
         }
       }
-    } catch (_) {}
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
-  final List<ArticleItem> _articles = [
-    ArticleItem(
-      id: 'art_1',
-      title: 'Nghệ thuật của gạch men azulejo ở Lisbon',
-      excerpt: 'Mặt tiền azulejo không đơn thuần là trang trí. Đó là tấm lưới giải quyết vi khí hậu và kể lại ký ức đô thị qua hàng thế kỷ.',
-      fullContent: '''Mặt tiền azulejo không đơn thuần là trang trí. Đó là tấm lưới giải quyết vi khí hậu và kể lại ký ức đô thị qua hàng thế kỷ.
-
-Khi tản bộ qua những con dốc lát đá hoa cương ở Alfama hay Chiado, bạn sẽ nhận ra ánh nắng phản chiếu dịu nhẹ trên lớp men gốm xanh lam và vàng đất. Lớp gốm này đóng vai trò như một màng ngăn nhiệt tự nhiên: giữ cho các bức tường đá mát rượi vào buổi trưa hè oi ả và phản xạ bớt gió ẩm từ cửa sông Tagus thổi vào mùa đông.
-
-Nhưng điều kỳ diệu hơn cả là sự yên tĩnh mà chúng mang lại cho cảnh quan thị giác. Thay vì những tấm biển quảng cáo rực rỡ hay màu sơn công nghiệp chói gắt, từng phiến gạch men thủ công mang vết rạn tinh tế của thời gian. Mỗi viên gạch vẽ bằng tay là một nhịp thở chậm, nhắc nhở chúng ta về vẻ đẹp của những điều được tạo tác để tồn tại lâu hơn một đời người.''',
-      author: 'Inês Castro',
-      readTime: '7 phút đọc',
-      date: 'Thứ Ba 14/09',
-      imageUrl: 'https://picsum.photos/seed/lisbon/800/500',
-      likes: 24,
-    ),
-    ArticleItem(
-      id: 'art_2',
-      title: 'Những thư viện im lặng ở cố đô Kyoto',
-      excerpt: 'Giữa lòng cố đô náo nhiệt, có những căn phòng gỗ tối nơi người ta đến chỉ để nghe tiếng lật giấy và tiếng gió lùa qua rèm trúc.',
-      fullContent: '''Giữa lòng cố đô náo nhiệt, có những căn phòng gỗ tối nơi người ta đến chỉ để nghe tiếng lật giấy và tiếng gió lùa qua rèm trúc.
-
-Không có tiếng chuông điện thoại, không có tiếng gõ bàn phím gấp gáp. Ánh sáng tự nhiên lọc qua những nan trượt shoji bằng giấy washi mỏng manh, làm dịu đi mọi góc cạnh sắc nhọn của thế giới hiện đại.
-
-Đọc sách ở đây không phải là một cuộc đua về số trang, mà là một cuộc hội ngộ với chính khoảng lặng bên trong mình.''',
-      author: 'Kenji Sato',
-      readTime: '5 phút đọc',
-      date: 'Hôm qua',
-      imageUrl: 'https://picsum.photos/seed/kyoto/800/500',
-      likes: 18,
-    ),
-    ArticleItem(
-      id: 'art_3',
-      title: 'Ánh sáng buổi sớm trong hội hoạ Bắc Âu',
-      excerpt: 'Tại sao những bức tranh của Hammershøi luôn khiến ta cảm thấy sự tĩnh mịch bao trùm như một chiếc áo ấm mùa đông?',
-      fullContent: '''Tại sao những bức tranh của Hammershøi luôn khiến ta cảm thấy sự tĩnh mịch bao trùm như một chiếc áo ấm mùa đông?
-
-Vilhelm Hammershøi vẽ những căn phòng vắng ở Copenhagen với gam màu xám tro, nâu đất và ánh sáng mờ ảo len qua khung cửa sổ cao. Không có kịch tính, không có chuyển động dữ dội. Chỉ có một người phụ nữ quay lưng, hoặc một cánh cửa khép hờ.
-
-Đó là thứ nghệ thuật không tìm cách chiếm đoạt sự chú ý của bạn, mà kiên nhẫn chờ đợi bạn bước vào không gian của nó.''',
-      author: 'Astrid Lind',
-      readTime: '8 phút đọc',
-      date: '10 tháng 9',
-      imageUrl: 'https://picsum.photos/seed/nordic/800/500',
-      likes: 31,
-    ),
-  ];
 
   void _openPublishSheet() {
     showModalBottomSheet(
@@ -143,9 +107,6 @@ Vilhelm Hammershøi vẽ những căn phòng vắng ở Copenhagen với gam mà
       backgroundColor: Colors.transparent,
       builder: (ctx) => PublishArticleSheet(
         onArticlePublished: (newArticle) {
-          setState(() {
-            _articles.insert(0, newArticle);
-          });
           widget.bffClient?.publishArticle(
             title: newArticle.title,
             category: 'Ghi chép',
@@ -153,7 +114,7 @@ Vilhelm Hammershøi vẽ những căn phòng vắng ở Copenhagen với gam mà
             fullContent: newArticle.fullContent,
             isPublic: newArticle.isPublic,
             coverImagePath: newArticle.imageUrl,
-          );
+          ).then((_) => _loadArticlesFromBackend());
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Bài viết đã được xuất bản lên Quire!', style: TextStyle(fontFamily: QuireTokens.fontSerif)),
@@ -426,7 +387,7 @@ Vilhelm Hammershøi vẽ những căn phòng vắng ở Copenhagen với gam mà
               ChoiceChip(
                 label: const Text('Tất cả'),
                 selected: _filterIndex == 0,
-                onSelected: (_) => setState(() => _filterIndex = 0),
+                onSelected: (_) { setState(() => _filterIndex = 0); _loadArticlesFromBackend(); },
                 selectedColor: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
                 labelStyle: TextStyle(
                   fontFamily: QuireTokens.fontMono,
@@ -441,7 +402,7 @@ Vilhelm Hammershøi vẽ những căn phòng vắng ở Copenhagen với gam mà
                 avatar: Icon(_filterIndex == 1 ? Icons.public : Icons.public_outlined, size: 14),
                 label: const Text('Công khai'),
                 selected: _filterIndex == 1,
-                onSelected: (_) => setState(() => _filterIndex = 1),
+                onSelected: (_) { setState(() => _filterIndex = 1); _loadArticlesFromBackend(); },
                 selectedColor: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
                 labelStyle: TextStyle(
                   fontFamily: QuireTokens.fontMono,
@@ -456,7 +417,7 @@ Vilhelm Hammershøi vẽ những căn phòng vắng ở Copenhagen với gam mà
                 avatar: Icon(_filterIndex == 2 ? Icons.people : Icons.people_outline, size: 14),
                 label: const Text('Vòng bạn bè'),
                 selected: _filterIndex == 2,
-                onSelected: (_) => setState(() => _filterIndex = 2),
+                onSelected: (_) { setState(() => _filterIndex = 2); _loadArticlesFromBackend(); },
                 selectedColor: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
                 labelStyle: TextStyle(
                   fontFamily: QuireTokens.fontMono,
@@ -470,7 +431,7 @@ Vilhelm Hammershøi vẽ những căn phòng vắng ở Copenhagen với gam mà
               ChoiceChip(
                 label: Text('Đã lưu (${_articles.where((a) => a.isBookmarked).length})'),
                 selected: _filterIndex == 3,
-                onSelected: (_) => setState(() => _filterIndex = 3),
+                onSelected: (_) { setState(() => _filterIndex = 3); _loadArticlesFromBackend(); },
                 selectedColor: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
                 labelStyle: TextStyle(
                   fontFamily: QuireTokens.fontMono,
@@ -485,14 +446,43 @@ Vilhelm Hammershøi vẽ những căn phòng vắng ở Copenhagen với gam mà
         ),
         const SizedBox(height: 16),
 
-        // Articles Feed
-        ..._articles.where((a) {
-          if (_filterIndex == 1) return a.isPublic;
-          if (_filterIndex == 2) return !a.isPublic;
-          if (_filterIndex == 3) return a.isBookmarked;
-          return true;
-        }).map((article) {
-          return Container(
+        // Live Database Articles Feed
+        if (_isLoading) ...[
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 40.0),
+            child: Center(
+              child: SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ),
+        ] else if (_articles.isEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 48.0, horizontal: 24.0),
+            child: Center(
+              child: Column(
+                children: [
+                  Icon(Icons.menu_book_outlined, size: 36, color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Chưa có bài viết nào trong mục này.',
+                    style: QuireTokens.title(isDark: isDark).copyWith(fontSize: 16),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Hãy bấm "Viết bài" ở trên để chia sẻ câu chuyện đầu tiên lên CSDL!',
+                    textAlign: TextAlign.center,
+                    style: QuireTokens.body(isDark: isDark),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ] else ...[
+          for (final article in _articles)
+            Container(
             margin: const EdgeInsets.only(bottom: 20.0),
             decoration: BoxDecoration(
               color: surfaceColor,
@@ -576,8 +566,8 @@ Vilhelm Hammershøi vẽ những căn phòng vắng ở Copenhagen với gam mà
                 ],
               ),
             ),
-          );
-        }).toList(),
+          ),
+        ],
       ],
     );
   }

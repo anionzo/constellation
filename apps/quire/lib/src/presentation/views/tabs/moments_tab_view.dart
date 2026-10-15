@@ -36,13 +36,20 @@ class _MomentsTabViewState extends State<MomentsTabView> {
     _loadMomentsFromBackend();
   }
 
+  bool _isLoading = true;
+  final List<Map<String, dynamic>> _moments = [];
+
   Future<void> _loadMomentsFromBackend() async {
-    if (widget.bffClient == null) return;
+    setState(() => _isLoading = true);
+    if (widget.bffClient == null) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
     try {
       final res = await widget.bffClient!.getMomentsFeed();
       if (res != null && res['data'] is List) {
         final List<dynamic> list = res['data'] as List<dynamic>;
-        if (list.isNotEmpty && mounted) {
+        if (mounted) {
           setState(() {
             _moments.clear();
             for (final item in list) {
@@ -54,50 +61,20 @@ class _MomentsTabViewState extends State<MomentsTabView> {
                 'timeAgo': 'Vừa xong',
                 'imageUrl': (m['image_url'] != null && m['image_url'].toString().isNotEmpty)
                     ? m['image_url'].toString()
-                    : 'https://picsum.photos/seed/moment/800/800',
+                    : 'https://picsum.photos/seed/${m['id']}/800/800',
                 'caption': m['caption']?.toString() ?? '',
-                'liked': false,
+                'liked': m['is_liked'] == true,
                 'likesCount': (m['likes_count'] as num?)?.toInt() ?? 0,
               });
             }
           });
         }
       }
-    } catch (_) {}
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
-
-  final List<Map<String, dynamic>> _moments = [
-    {
-      'id': 'moment_1',
-      'author': 'Mai',
-      'authorInitials': 'M',
-      'timeAgo': '2 giờ trước',
-      'imageUrl': 'https://picsum.photos/seed/grass/800/800',
-      'caption': 'Buổi chiều nắng nhẹ trên hiên nhà cũ.',
-      'liked': false,
-      'likesCount': 3,
-    },
-    {
-      'id': 'moment_2',
-      'author': 'Tuấn',
-      'authorInitials': 'T',
-      'timeAgo': '5 giờ trước',
-      'imageUrl': 'https://picsum.photos/seed/coffee/800/800',
-      'caption': 'Ghé quán cà phê quen, đọc xong chương cuối cuốn tiểu thuyết.',
-      'liked': false,
-      'likesCount': 2,
-    },
-    {
-      'id': 'moment_3',
-      'author': 'Linh',
-      'authorInitials': 'L',
-      'timeAgo': 'Hôm qua',
-      'imageUrl': 'https://picsum.photos/seed/window/800/800',
-      'caption': 'Cơn mưa rào đầu mùa nhìn qua khung cửa sổ tầng áp mái.',
-      'liked': true,
-      'likesCount': 5,
-    },
-  ];
 
   Future<void> _openPhotoSourceSelector() async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -564,13 +541,49 @@ class _MomentsTabViewState extends State<MomentsTabView> {
         ),
         const SizedBox(height: 16),
 
-        // Moments Feed Cards
-        ..._moments.map((moment) {
-          final isLiked = moment['liked'] as bool;
-          final count = moment['likesCount'] as int;
-          final imageBytes = moment['imageBytes'] as Uint8List?;
+        // Live Moments Feed Cards
+        if (_isLoading) ...[
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 40.0),
+            child: Center(
+              child: SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ),
+        ] else if (_moments.isEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 48.0, horizontal: 24.0),
+            child: Center(
+              child: Column(
+                children: [
+                  Icon(Icons.panorama_fish_eye, size: 36, color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Chưa có khoảnh khắc nào từ bạn bè.',
+                    style: QuireTokens.title(isDark: isDark).copyWith(fontSize: 16),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Hãy bấm nút chụp ảnh ở giữa để chia sẻ khoảnh khắc đầu tiên lên CSDL!',
+                    textAlign: TextAlign.center,
+                    style: QuireTokens.body(isDark: isDark),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ] else ...[
+          for (final moment in _moments)
+            Builder(
+              builder: (context) {
+                final isLiked = moment['liked'] as bool? ?? false;
+                final count = (moment['likesCount'] as num?)?.toInt() ?? 0;
+                final imageBytes = moment['imageBytes'] as Uint8List?;
 
-          return Container(
+                return Container(
             margin: const EdgeInsets.only(bottom: 20.0),
             decoration: BoxDecoration(
               color: surfaceColor,
@@ -692,10 +705,12 @@ class _MomentsTabViewState extends State<MomentsTabView> {
                   ),
                 ),
               ],
-            ),
-          );
-        }).toList(),
+              ),
+            );
+          },
+        ),
       ],
-    );
+    ],
+  );
   }
 }

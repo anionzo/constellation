@@ -153,8 +153,8 @@ class AuthSessionManager extends ChangeNotifier {
 
   /// 5. Token Rotation & Refresh
   Future<bool> refresh() async {
-    final success = await apiClient.refreshSession();
-    if (success) {
+    final res = await apiClient.refreshSession();
+    if (res != null) {
       _accessToken = apiClient.accessToken;
       final prefs = await SharedPreferences.getInstance();
       if (_accessToken != null) {
