@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS public.articles (
     full_content TEXT,
     cover_image_path TEXT,
     likes_count INT NOT NULL DEFAULT 0,
+    read_time_minutes INT DEFAULT 5,
     is_public BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()

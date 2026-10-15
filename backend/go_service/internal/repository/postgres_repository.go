@@ -237,12 +237,12 @@ func (r *PostgresRepository) GetArticles(ctx context.Context, userID, scope, top
 	argIdx := 1
 
 	baseQuery := `
-		SELECT a.id, a.author_id, p.display_name, COALESCE(p.username, ''), a.title, a.excerpt,
-		       a.full_content, a.category, COALESCE(a.cover_image_path, ''), a.read_time_minutes,
+		SELECT a.id, a.author_id, COALESCE(p.display_name, 'Tác giả'), COALESCE(p.username, '@author'), a.title, COALESCE(a.excerpt, ''),
+		       COALESCE(a.full_content, ''), a.category, COALESCE(a.cover_image_path, ''), COALESCE(a.read_time_minutes, 5),
 		       a.is_public, a.likes_count, a.created_at,
-		       EXISTS(SELECT 1 FROM public.saved_items s WHERE s.user_id = $1 AND s.target_id = a.id AND s.target_type = 'article') as is_bookmarked
+		       CASE WHEN $1 = '' THEN false ELSE EXISTS(SELECT 1 FROM public.saved_items s WHERE s.user_id::text = $1 AND s.target_id = a.id AND s.target_type = 'article') END as is_bookmarked
 		FROM public.articles a
-		JOIN public.profiles p ON p.id = a.author_id
+		LEFT JOIN public.profiles p ON p.id = a.author_id
 		WHERE 1=1
 	`
 	args = append(args, userID)

@@ -4,6 +4,7 @@ import 'package:local_sync/local_sync.dart';
 import 'package:media_storage/media_storage.dart';
 import '../photo_upload/services/quire_moment_uploader.dart';
 import 'token_storage_service.dart';
+import 'http_client_factory.dart';
 
 /// HTTP Client connecting Quire Flutter app directly to the Golang BFF Service.
 /// Supports cross-platform persistent tokens, automatic refresh, and session security.
@@ -21,7 +22,7 @@ class BffApiClient {
     http.Client? client,
     TokenStorageService? storage,
   })  : baseUrl = baseUrl ?? 'http://127.0.0.1:8088',
-        _client = client ?? http.Client(),
+        _client = client ?? createPlatformHttpClient(),
         _storage = storage;
 
   /// Initialize and restore stored session from cross-platform storage (Web/Mobile/Desktop)
@@ -153,33 +154,33 @@ class BffApiClient {
     }
   }
 
-  Future<bool> refreshSession() async {
-    final rToken = _refreshToken ?? _storage?.getRefreshToken();
-    if (rToken == null || rToken.isEmpty) return false;
+  Future<Map<String, dynamic>?> refreshSession({String? explicitRefreshToken}) async {
+    final rToken = explicitRefreshToken ?? _refreshToken ?? _storage?.getRefreshToken();
 
     try {
       final res = await _client.post(
         Uri.parse('$baseUrl/api/v1/auth/refresh'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'refresh_token': rToken}),
+        body: jsonEncode({
+          if (rToken != null && rToken.isNotEmpty) 'refresh_token': rToken,
+        }),
       );
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as Map<String, dynamic>;
-        final aToken = data['access_token'] as String?;
-        final newRToken = data['refresh_token'] as String?;
-        if (aToken != null && newRToken != null) {
+        final aToken = (data['access_token'] ?? data['token']) as String?;
+        final newRToken = (data['refresh_token'] ?? '') as String;
+        if (aToken != null) {
           setAuthTokens(
             accessToken: aToken,
             refreshToken: newRToken,
             userEmail: _userEmail,
           );
-          return true;
+          return data;
         }
       }
-      clearSession();
-      return false;
+      return null;
     } catch (_) {
-      return false;
+      return null;
     }
   }
 

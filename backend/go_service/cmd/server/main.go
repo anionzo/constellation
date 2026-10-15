@@ -64,6 +64,10 @@ func main() {
 	r.Post("/api/v1/auth/refresh", h.HandleRefreshToken)
 	r.Post("/api/v1/auth/logout", h.HandleLogout)
 
+	// Public Feed Endpoints (Accessible by guests & authenticated users)
+	r.Get("/api/v1/articles", h.GetArticles)
+	r.Get("/api/v1/moments/feed", h.GetFeed)
+
 	// Protected Endpoints (Supabase JWT Verification with Revocation Check)
 	r.Group(func(protected chi.Router) {
 		protected.Use(middleware.AuthMiddleware(cfg.JWTSecret, func(ctx context.Context, jti string) bool {
@@ -89,14 +93,12 @@ func main() {
 		protected.Post("/api/v1/circle/requests/{id}/decline", h.DeclineRequest)
 
 		// Articles
-		protected.Get("/api/v1/articles", h.GetArticles)
 		protected.Post("/api/v1/articles", h.PublishArticle)
 		protected.Post("/api/v1/articles/{id}/like", h.ToggleLikeArticle)
 		protected.Post("/api/v1/articles/{id}/bookmark", h.BookmarkArticle)
 		protected.Delete("/api/v1/articles/{id}/bookmark", h.UnbookmarkArticle)
 
 		// Moments
-		protected.Get("/api/v1/moments/feed", h.GetFeed)
 		protected.Post("/api/v1/moments", h.PostMoment)
 		protected.Post("/api/v1/moments/{id}/like", h.ToggleLikeMoment)
 		protected.Get("/api/v1/moments/archive", h.GetArchive)

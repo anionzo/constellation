@@ -240,10 +240,24 @@ func (h *Handler) DeclineRequest(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetArticles(w http.ResponseWriter, r *http.Request) {
 	userID, _ := middleware.GetUserID(r.Context())
+	if userID == "" {
+		authHeader := r.Header.Get("Authorization")
+		if parts := strings.SplitN(authHeader, " ", 2); len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
+			if token, err := jwt.Parse(parts[1], func(t *jwt.Token) (interface{}, error) {
+				return []byte(h.cfg.JWTSecret), nil
+			}); err == nil && token != nil {
+				if claims, ok := token.Claims.(jwt.MapClaims); ok {
+					if sub, ok := claims["sub"].(string); ok {
+						userID = sub
+					}
+				}
+			}
+		}
+	}
+
 	scope := r.URL.Query().Get("scope")
 	topic := r.URL.Query().Get("topic")
 	cursorStr := r.URL.Query().Get("cursor")
-
 	limit := 20
 	if l := r.URL.Query().Get("limit"); l != "" {
 		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 50 {
