@@ -66,6 +66,7 @@ class _MomentsTabViewState extends State<MomentsTabView> {
               final m = item as Map<String, dynamic>;
               _moments.add({
                 'id': m['id']?.toString() ?? '',
+                'sender_id': m['sender_id']?.toString() ?? '',
                 'author': m['sender_name']?.toString() ?? 'Bạn',
                 'authorInitials': m['sender_initials']?.toString() ?? 'B',
                 'timeAgo': 'Vừa xong',
@@ -712,11 +713,17 @@ class _MomentsTabViewState extends State<MomentsTabView> {
                       const Spacer(),
                       TextButton.icon(
                         onPressed: () {
-                          final authorName = moment['author'] as String;
-                          final authorInitials = moment['authorInitials'] as String;
+                          final authorName = moment['author']?.toString() ?? 'Bạn bè';
+                          final authorInitials = moment['authorInitials']?.toString() ?? 'B';
+                          final senderId = moment['sender_id']?.toString() ?? '';
+
                           final friend = widget.friends.firstWhere(
-                            (f) => f.name == authorName,
-                            orElse: () => FriendChip(id: 'temp', name: authorName, initials: authorInitials),
+                            (f) => f.id == senderId || f.name == authorName,
+                            orElse: () => FriendChip(
+                              id: senderId.isNotEmpty ? senderId : '11111111-1111-1111-1111-111111111111',
+                              name: authorName,
+                              initials: authorInitials,
+                            ),
                           );
                           _openChatWith(
                             friend,

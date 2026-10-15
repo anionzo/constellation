@@ -295,11 +295,17 @@ func (r *PostgresRepository) GetArticles(ctx context.Context, userID, scope, top
 	argIdx++
 
 	if scope == "circle" {
-		baseQuery += fmt.Sprintf(" AND a.is_public = false")
+		if userID == "" {
+			return []domain.Article{}, false, nil, nil
+		}
+		baseQuery += fmt.Sprintf(" AND a.is_public = false AND (a.author_id::text = $1 OR EXISTS(SELECT 1 FROM public.circle_members cm WHERE cm.user_id::text = $1 AND cm.friend_id = a.author_id AND cm.status = 'active'))")
+	} else if scope == "saved" {
+		if userID == "" {
+			return []domain.Article{}, false, nil, nil
+		}
+		baseQuery += fmt.Sprintf(" AND EXISTS(SELECT 1 FROM public.saved_items s WHERE s.user_id::text = $1 AND s.target_id = a.id AND s.target_type = 'article')")
 	} else if scope == "public" {
 		baseQuery += fmt.Sprintf(" AND a.is_public = true")
-	} else if scope == "saved" {
-		baseQuery += fmt.Sprintf(" AND ($1 != '' AND EXISTS(SELECT 1 FROM public.saved_items s WHERE s.user_id::text = $1 AND s.target_id = a.id AND s.target_type = 'article'))")
 	}
 	if topic != "" && topic != "Tất cả" {
 		baseQuery += fmt.Sprintf(" AND a.category = $%d", argIdx)
@@ -450,16 +456,25 @@ func (r *PostgresRepository) RecordTopicUsage(ctx context.Context, rawTag string
 // ==========================================
 
 func (r *PostgresRepository) GetFeed(ctx context.Context, userID, circleID string, cursorTime *time.Time, cursorID *string, limit int) ([]domain.Moment, bool, *string, error) {
+	if userID == "" {
+		// Khách / Chưa đăng nhập: không có vòng bạn bè thân thiết -> Trả về mảng rỗng đúng nghiệp vụ
+		return []domain.Moment{}, false, nil, nil
+	}
+
 	baseQuery := `
 		SELECT m.id, m.sender_id, COALESCE(p.display_name, 'Thành viên'), m.circle_id, m.image_path, COALESCE(m.caption, ''),
 		       m.auto_purge_duration_seconds, m.purged_at, m.is_archived, m.likes_count, m.created_at
 		FROM public.moments m
 		LEFT JOIN public.profiles p ON p.id = m.sender_id
-		WHERE m.is_archived = false AND m.purged_at IS NULL
+		WHERE m.is_archived = false 
+		  AND m.purged_at IS NULL
+		  AND (
+		      m.sender_id::text = $1 
+		      OR EXISTS(SELECT 1 FROM public.circle_members cm WHERE cm.user_id::text = $1 AND cm.friend_id = m.sender_id AND cm.status = 'active')
+		  )
 	`
-	args := []interface{}{}
-	argIdx := 1
-
+	args := []interface{}{userID}
+	argIdx := 2
 	if cursorTime != nil && cursorID != nil {
 		baseQuery += fmt.Sprintf(" AND (m.created_at, m.id) < ($%d, $%d)", argIdx, argIdx+1)
 		args = append(args, *cursorTime, *cursorID)
