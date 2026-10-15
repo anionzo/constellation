@@ -12,6 +12,7 @@ import 'src/presentation/views/quire_home_screen.dart';
 import 'src/features/photo_upload/services/quire_moment_uploader.dart';
 import 'src/features/version_gate/dispatcher_sync_lock_bridge.dart';
 import 'src/features/api/bff_api_client.dart';
+import 'src/features/auth/auth_session_manager.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,13 +57,15 @@ class _QuireAppState extends State<QuireApp> with WidgetsBindingObserver {
   late final ThemeController _themeController;
   VersionGateStatus? _currentGateStatus;
   final BffApiClient _bffClient = BffApiClient();
-  bool _isAuthenticated = false;
-  String _currentUserEmail = 'Khách trải nghiệm';
+  late final AuthSessionManager _sessionManager;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _sessionManager = AuthSessionManager(apiClient: _bffClient);
+    _sessionManager.addListener(_onSessionChanged);
+    _sessionManager.init();
 
     _momentUploader = widget.momentUploader ?? MockQuireMomentUploader();
     _themeController = widget.themeController ?? ThemeController();
@@ -110,22 +113,19 @@ class _QuireAppState extends State<QuireApp> with WidgetsBindingObserver {
       _syncDispatcher.dispatchPendingBatch();
     });
 
-    // Restore persistent session from localStorage / SharedPreferences
-    _bffClient.initSession().then((hasSession) {
-      if (hasSession && mounted) {
-        setState(() {
-          _isAuthenticated = true;
-          _currentUserEmail = _bffClient.currentEmail ?? 'Thành viên Quire';
-        });
-      }
-    });
+    // Persistent session restoration is handled reactively by _sessionManager.init()
   }
 
   @override
   void dispose() {
+    _sessionManager.removeListener(_onSessionChanged);
     _themeController.removeListener(_onThemeChanged);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _onSessionChanged() {
+    if (mounted) setState(() {});
   }
 
   void _onThemeChanged() {
@@ -157,34 +157,14 @@ class _QuireAppState extends State<QuireApp> with WidgetsBindingObserver {
       themeMode: _themeController.value,
       home: isBlocked
           ? _buildBlockedView()
-          : (!_isAuthenticated
-              ? CalmAuthView(
-                  bffClient: _bffClient,
-                  onEnterAsGuest: () {
-                    setState(() {
-                      _isAuthenticated = true;
-                      _currentUserEmail = 'Khách trải nghiệm';
-                    });
-                  },
-                  onAuthenticated: (email) {
-                    setState(() {
-                      _isAuthenticated = true;
-                      _currentUserEmail = email;
-                    });
-                  },
-                )
+          : (!_sessionManager.isAuthenticated
+              ? CalmAuthView(sessionManager: _sessionManager)
               : QuireHomeScreen(
                   bffClient: _bffClient,
                   momentUploader: _momentUploader,
                   themeController: _themeController,
-                  currentUserEmail: _currentUserEmail,
-                  onSignOut: () {
-                    _bffClient.logout();
-                    setState(() {
-                      _isAuthenticated = false;
-                      _currentUserEmail = 'Khách trải nghiệm';
-                    });
-                  },
+                  currentUserEmail: _sessionManager.userEmail,
+                  onSignOut: () => _sessionManager.logout(),
                 )),
     );
   }

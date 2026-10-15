@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../features/api/bff_api_client.dart';
+import '../../features/auth/auth_session_manager.dart';
 import '../theme/quire_tokens.dart';
 
 enum AuthMode { signIn, signUp }
@@ -7,15 +7,17 @@ enum AuthMode { signIn, signUp }
 /// Calm Authentication screen embodying Quiet Editorial principles.
 /// Supports Email & Password Login, Registration, and a single-tap "Guest Mode" bypass.
 class CalmAuthView extends StatefulWidget {
-  final void Function(String email) onAuthenticated;
-  final VoidCallback onEnterAsGuest;
-  final BffApiClient? bffClient;
+  final AuthSessionManager sessionManager;
+  final VoidCallback? onLoggedIn;
+  final void Function(String email)? onAuthenticated;
+  final VoidCallback? onEnterAsGuest;
 
   const CalmAuthView({
     Key? key,
-    required this.onAuthenticated,
-    required this.onEnterAsGuest,
-    this.bffClient,
+    required this.sessionManager,
+    this.onLoggedIn,
+    this.onAuthenticated,
+    this.onEnterAsGuest,
   }) : super(key: key);
 
   @override
@@ -32,13 +34,7 @@ class _CalmAuthViewState extends State<CalmAuthView> {
   bool _isLoading = false;
   String _errorMessage = '';
 
-  late final BffApiClient _client;
-
-  @override
-  void initState() {
-    super.initState();
-    _client = widget.bffClient ?? BffApiClient();
-  }
+// Session state is coordinated cleanly via widget.sessionManager
 
   @override
   void dispose() {
@@ -73,24 +69,26 @@ class _CalmAuthViewState extends State<CalmAuthView> {
 
     try {
       if (_mode == AuthMode.signIn) {
-        final res = await _client.login(email: email, password: password);
+        final res = await widget.sessionManager.login(email: email, password: password);
         if (!mounted) return;
         if (res['success'] == true) {
-          widget.onAuthenticated(email);
+          widget.onLoggedIn?.call();
+          widget.onAuthenticated?.call(email);
         } else {
           setState(() {
             _errorMessage = res['error']?.toString() ?? 'Email hoặc mật khẩu không chính xác.';
           });
         }
       } else {
-        final res = await _client.signUp(
+        final res = await widget.sessionManager.signUp(
           email: email,
           password: password,
           displayName: name,
         );
         if (!mounted) return;
         if (res['success'] == true) {
-          widget.onAuthenticated(email);
+          widget.onLoggedIn?.call();
+          widget.onAuthenticated?.call(email);
         } else {
           setState(() {
             _errorMessage = res['error']?.toString() ?? 'Lỗi khi đăng ký tài khoản.';
@@ -410,7 +408,11 @@ class _CalmAuthViewState extends State<CalmAuthView> {
                           borderRadius: BorderRadius.circular(QuireTokens.rBtn),
                         ),
                       ),
-                      onPressed: widget.onEnterAsGuest,
+                      onPressed: () {
+                        widget.sessionManager.enterAsGuest();
+                        widget.onLoggedIn?.call();
+                        widget.onEnterAsGuest?.call();
+                      },
                       child: Text(
                         'Trải nghiệm ngay (Chế độ Khách)',
                         style: QuireTokens.button(isDark: isDark).copyWith(
