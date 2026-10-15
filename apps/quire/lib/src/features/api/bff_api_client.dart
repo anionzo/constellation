@@ -265,6 +265,21 @@ class BffApiClient {
     return res.statusCode == 200;
   }
 
+  Future<Map<String, int>?> getProfileStats() async {
+    try {
+      final res = await _client.get(Uri.parse('$baseUrl/api/v1/profile/stats'), headers: _headers);
+      if (res.statusCode == 200) {
+        final json = jsonDecode(res.body) as Map<String, dynamic>;
+        return {
+          'saved_articles_count': (json['saved_articles_count'] as num?)?.toInt() ?? 0,
+          'shared_moments_count': (json['shared_moments_count'] as num?)?.toInt() ?? 0,
+          'friends_count': (json['friends_count'] as num?)?.toInt() ?? 0,
+        };
+      }
+    } catch (_) {}
+    return null;
+  }
+
   // ==========================================
   // Articles APIs (with Cursor Pagination)
   // ==========================================

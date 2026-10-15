@@ -141,6 +141,13 @@ type ArticleTopic struct {
 	UsageCount int    `json:"usage_count"`
 }
 
+// ProfileStats represents real counts for personal dashboard.
+type ProfileStats struct {
+	SavedArticlesCount int `json:"saved_articles_count"`
+	SharedMomentsCount int `json:"shared_moments_count"`
+	FriendsCount       int `json:"friends_count"`
+}
+
 // AuthSignUpRequest represents payload to register a new account.
 type AuthSignUpRequest struct {
 	Email       string `json:"email"`

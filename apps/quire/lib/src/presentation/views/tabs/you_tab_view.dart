@@ -46,6 +46,9 @@ class _YouTabViewState extends State<YouTabView> {
   bool _readReceiptsEnabled = false; // Quiet invariant: Off by default
   bool _autoPurgeEnabled = true;
   String _autoPurgeDuration = '30 ngày'; // '24 giờ', '7 ngày', '30 ngày'
+  int _savedCount = 0;
+  int _sharedMomentsCount = 0;
+
   @override
   void initState() {
     super.initState();
@@ -55,14 +58,28 @@ class _YouTabViewState extends State<YouTabView> {
   Future<void> _loadProfileFromBackend() async {
     if (widget.bffClient == null) return;
     try {
-      final p = await widget.bffClient!.getMyProfile();
-      if (p != null && mounted) {
-        final name = p['display_name']?.toString() ?? '';
-        final username = p['username']?.toString() ?? '';
-        final bio = p['bio']?.toString() ?? '';
-        if (name.isNotEmpty || username.isNotEmpty) {
-          widget.onProfileUpdated?.call(name, username, bio, widget.currentUserAvatarBytes);
-        }
+      final pFuture = widget.bffClient!.getMyProfile();
+      final statsFuture = widget.bffClient!.getProfileStats();
+
+      final results = await Future.wait([pFuture, statsFuture]);
+      final p = results[0];
+      final stats = results[1] as Map<String, int>?;
+
+      if (mounted) {
+        setState(() {
+          if (p != null) {
+            final name = p['display_name']?.toString() ?? '';
+            final username = p['username']?.toString() ?? '';
+            final bio = p['bio']?.toString() ?? '';
+            if (name.isNotEmpty || username.isNotEmpty) {
+              widget.onProfileUpdated?.call(name, username, bio, widget.currentUserAvatarBytes);
+            }
+          }
+          if (stats != null) {
+            _savedCount = stats['saved_articles_count'] ?? 0;
+            _sharedMomentsCount = stats['shared_moments_count'] ?? 0;
+          }
+        });
       }
     } catch (_) {}
   }
@@ -599,11 +616,18 @@ class _YouTabViewState extends State<YouTabView> {
           ),
           child: Column(
             children: [
-              _buildQuickRow('Đã lưu (Saved)', '9 bài viết & bộ sưu tập', 'https://picsum.photos/seed/saved_thumb/120/120', ruleColor, isDark, onTap: _openSavedSheet),
+              _buildQuickRow('Đã lưu (Saved)', '$_savedCount bài viết trong Thư viện', 'https://picsum.photos/seed/saved_thumb/120/120', ruleColor, isDark, onTap: _openSavedSheet),
               Divider(height: 1, indent: 68, color: ruleColor),
-              _buildQuickRow('Khoảnh khắc của bạn', '12 đã chia sẻ · 4 tuần này', 'https://picsum.photos/seed/shared_thumb/120/120', ruleColor, isDark, onTap: _openMyArchiveSheet),
+              _buildQuickRow(
+                'Khoảnh khắc của bạn',
+                _sharedMomentsCount > 0 ? '$_sharedMomentsCount đã chia sẻ · 4 tuần này' : 'Chưa chia sẻ ảnh nào · 4 tuần này',
+                'https://picsum.photos/seed/shared_thumb/120/120',
+                ruleColor,
+                isDark,
+                onTap: _openMyArchiveSheet,
+              ),
               Divider(height: 1, indent: 68, color: ruleColor),
-              _buildQuickRow('Lịch sử đọc', 'Bốn bài tháng này', 'https://picsum.photos/seed/history_thumb/120/120', ruleColor, isDark, onTap: _openHistorySheet),
+              _buildQuickRow('Lịch sử đọc', 'Bài viết đã đọc gần đây', 'https://picsum.photos/seed/history_thumb/120/120', ruleColor, isDark, onTap: _openHistorySheet),
               Divider(height: 1, indent: 68, color: ruleColor),
               _buildQuickRow('Mời bạn thân', 'Tạo link & Lời mời kết bạn', 'https://picsum.photos/seed/invite_thumb/120/120', ruleColor, isDark, onTap: _openInviteSheet),
             ],

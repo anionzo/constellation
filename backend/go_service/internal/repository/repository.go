@@ -16,6 +16,7 @@ type Repository interface {
 	GetProfileByID(ctx context.Context, id string) (*domain.Profile, error)
 	GetProfileByUsername(ctx context.Context, username string) (*domain.Profile, error)
 	UpdateProfile(ctx context.Context, p *domain.Profile) error
+	GetProfileStats(ctx context.Context, userID string) (*domain.ProfileStats, error)
 
 	// Circle & Invites
 	GetFriends(ctx context.Context, userID string) ([]domain.CircleFriend, error)
@@ -248,6 +249,26 @@ func (m *MemoryRepository) UpdateProfile(ctx context.Context, p *domain.Profile)
 	p.UpdatedAt = time.Now()
 	m.profiles[p.ID] = p
 	return nil
+}
+
+func (m *MemoryRepository) GetProfileStats(ctx context.Context, userID string) (*domain.ProfileStats, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	savedCount := len(m.bookmarks[userID])
+	friendsCount := len(m.friends[userID])
+	sharedCount := 0
+	for _, mmt := range m.moments {
+		if mmt.SenderID == userID {
+			sharedCount++
+		}
+	}
+
+	return &domain.ProfileStats{
+		SavedArticlesCount: savedCount,
+		SharedMomentsCount: sharedCount,
+		FriendsCount:       friendsCount,
+	}, nil
 }
 
 func (m *MemoryRepository) GetFriends(ctx context.Context, userID string) ([]domain.CircleFriend, error) {

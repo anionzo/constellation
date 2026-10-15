@@ -52,6 +52,21 @@ func (h *Handler) GetMyProfile(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, p)
 }
 
+func (h *Handler) GetProfileStats(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "Chưa xác thực")
+		return
+	}
+
+	stats, err := h.repo.GetProfileStats(r.Context(), userID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Lỗi truy vấn thống kê hồ sơ")
+		return
+	}
+	writeJSON(w, http.StatusOK, stats)
+}
+
 func (h *Handler) UpdateMyProfile(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserID(r.Context())
 	if !ok {

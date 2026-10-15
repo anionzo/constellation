@@ -85,6 +85,7 @@ func main() {
 		protected.Get("/api/v1/profile/me", h.GetMyProfile)
 		protected.Put("/api/v1/profile/me", h.UpdateMyProfile)
 		protected.Get("/api/v1/profile/{username}", h.GetFriendProfile)
+		protected.Get("/api/v1/profile/stats", h.GetProfileStats)
 
 		// Circle & Friends
 		protected.Get("/api/v1/circle/friends", h.GetFriends)

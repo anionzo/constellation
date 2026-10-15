@@ -86,6 +86,41 @@ func (r *PostgresRepository) UpdateProfile(ctx context.Context, p *domain.Profil
 	return nil
 }
 
+func (r *PostgresRepository) GetProfileStats(ctx context.Context, userID string) (*domain.ProfileStats, error) {
+	if userID == "" {
+		return &domain.ProfileStats{
+			SavedArticlesCount: 0,
+			SharedMomentsCount: 0,
+			FriendsCount:       0,
+		}, nil
+	}
+
+	stats := &domain.ProfileStats{}
+
+	// 1. Saved articles count
+	_ = r.pool.QueryRow(ctx, `
+		SELECT COUNT(*)
+		FROM public.saved_items
+		WHERE user_id::text = $1 AND target_type = 'article';
+	`, userID).Scan(&stats.SavedArticlesCount)
+
+	// 2. Shared moments in the last 4 weeks (28 days)
+	_ = r.pool.QueryRow(ctx, `
+		SELECT COUNT(*)
+		FROM public.moments
+		WHERE sender_id::text = $1 AND created_at >= now() - interval '28 days';
+	`, userID).Scan(&stats.SharedMomentsCount)
+
+	// 3. Active circle friends count
+	_ = r.pool.QueryRow(ctx, `
+		SELECT COUNT(*)
+		FROM public.circle_members
+		WHERE user_id::text = $1 AND status = 'active';
+	`, userID).Scan(&stats.FriendsCount)
+
+	return stats, nil
+}
+
 // ==========================================
 // 2. Circle & Invites (Unconstrained)
 // ==========================================
