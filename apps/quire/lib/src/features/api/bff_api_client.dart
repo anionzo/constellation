@@ -239,6 +239,9 @@ class BffApiClient {
           return jsonDecode(retry.body) as Map<String, dynamic>;
         }
       }
+    } else if (res.statusCode == 404) {
+      // Stale account deleted from database: clear dead token immediately
+      clearSession();
     }
     return null;
   }

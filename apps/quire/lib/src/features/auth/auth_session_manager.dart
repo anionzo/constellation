@@ -85,6 +85,13 @@ class AuthSessionManager extends ChangeNotifier {
             refreshToken: _refreshToken ?? '',
             userEmail: _currentUser?.email,
           );
+
+          // Verify if user account still exists in database (handles database resets)
+          final profile = await apiClient.getMyProfile();
+          if (profile == null && !apiClient.hasSession) {
+            // Stale account deleted from database: clear dead token
+            await _clearStorage();
+          }
         }
       }
     } catch (e) {
