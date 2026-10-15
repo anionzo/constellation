@@ -63,27 +63,32 @@ class AuthSessionManager extends ChangeNotifier {
   Future<void> init() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      _accessToken = prefs.getString(_keyAccessToken);
-      _refreshToken = prefs.getString(_keyRefreshToken);
-
+      final savedToken = prefs.getString(_keyAccessToken);
+      final savedRefreshToken = prefs.getString(_keyRefreshToken);
       final userJsonStr = prefs.getString(_keyUserProfile);
-      if (userJsonStr != null && userJsonStr.isNotEmpty) {
-        try {
-          final map = jsonDecode(userJsonStr) as Map<String, dynamic>;
-          _currentUser = UserProfile.fromJson(map);
-        } catch (_) {}
-      }
 
-      // Configure API client with current token
-      if (_accessToken != null && _accessToken!.isNotEmpty) {
-        apiClient.setAuthTokens(
-          accessToken: _accessToken!,
-          refreshToken: _refreshToken ?? '',
-          userEmail: _currentUser?.email,
-        );
+      if (savedToken != null && savedToken.isNotEmpty) {
+        _accessToken = savedToken;
+        _refreshToken = savedRefreshToken;
+
+        if (userJsonStr != null && userJsonStr.isNotEmpty) {
+          try {
+            final map = jsonDecode(userJsonStr) as Map<String, dynamic>;
+            _currentUser = UserProfile.fromJson(map);
+          } catch (_) {}
+        }
+
+        // Configure API client with restored token if not guest
+        if (_accessToken != null && _accessToken != 'guest_token') {
+          apiClient.setAuthTokens(
+            accessToken: _accessToken!,
+            refreshToken: _refreshToken ?? '',
+            userEmail: _currentUser?.email,
+          );
+        }
       }
-    } catch (_) {
-      // In case of any storage error, fail gracefully
+    } catch (e) {
+      debugPrint('[AuthSessionManager] Error restoring session: $e');
     } finally {
       _isInitialized = true;
       notifyListeners();
@@ -123,16 +128,26 @@ class AuthSessionManager extends ChangeNotifier {
     return {'success': false, 'error': res['error'] ?? 'Đăng ký không thành công'};
   }
 
-  /// 4. Guest Mode (Instant Access without Server Tokens)
-  void enterAsGuest() {
+  /// 4. Guest Mode (Instant Access with persistent guest session across F5)
+  Future<void> enterAsGuest() async {
     _accessToken = 'guest_token';
-    _refreshToken = null;
+    _refreshToken = '';
     _currentUser = const UserProfile(
       id: 'guest',
       email: 'khach@quire.app',
       displayName: 'Khách trải nghiệm',
       username: '@khach.quire',
     );
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await Future.wait([
+        prefs.setString(_keyAccessToken, 'guest_token'),
+        prefs.setString(_keyRefreshToken, ''),
+        prefs.setString(_keyUserProfile, jsonEncode(_currentUser!.toJson())),
+      ]);
+    } catch (_) {}
+
     notifyListeners();
   }
 

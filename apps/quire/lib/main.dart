@@ -157,15 +157,19 @@ class _QuireAppState extends State<QuireApp> with WidgetsBindingObserver {
       themeMode: _themeController.value,
       home: isBlocked
           ? _buildBlockedView()
-          : (!_sessionManager.isAuthenticated
-              ? CalmAuthView(sessionManager: _sessionManager)
-              : QuireHomeScreen(
-                  bffClient: _bffClient,
-                  momentUploader: _momentUploader,
-                  themeController: _themeController,
-                  currentUserEmail: _sessionManager.userEmail,
-                  onSignOut: () => _sessionManager.logout(),
-                )),
+          : (!_sessionManager.isInitialized
+              ? Container(
+                  color: _themeController.value == ThemeMode.dark ? QuireTokens.paperDark : QuireTokens.paperLight,
+                )
+              : (!_sessionManager.isAuthenticated
+                  ? CalmAuthView(sessionManager: _sessionManager)
+                  : QuireHomeScreen(
+                      bffClient: _bffClient,
+                      momentUploader: _momentUploader,
+                      themeController: _themeController,
+                      currentUserEmail: _sessionManager.userEmail,
+                      onSignOut: () => _sessionManager.logout(),
+                    ))),
     );
   }
 
