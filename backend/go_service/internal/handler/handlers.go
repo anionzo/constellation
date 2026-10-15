@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
 	"github.com/go-chi/chi/v5"
+	"github.com/golang-jwt/jwt/v5"
 
 	"constellation/backend/go_service/internal/config"
 	"constellation/backend/go_service/internal/domain"
@@ -643,8 +643,23 @@ func (h *Handler) GetVersionGate(w http.ResponseWriter, r *http.Request) {
 }
 
 // ==========================================
-// 6. Authentication Handlers
+// 6. Authentication Handlers & HttpOnly Cookies
 // ==========================================
+
+const RefreshTokenCookieName = "quire_refresh_token"
+
+func setRefreshTokenCookie(w http.ResponseWriter, r *http.Request, refreshToken string, maxAge int) {
+	isSecure := r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https"
+	http.SetCookie(w, &http.Cookie{
+		Name:     RefreshTokenCookieName,
+		Value:    refreshToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   isSecure,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   maxAge,
+	})
+}
 
 func (h *Handler) HandleSignUp(w http.ResponseWriter, r *http.Request) {
 	var req domain.AuthSignUpRequest
@@ -670,6 +685,11 @@ func (h *Handler) HandleSignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Set HttpOnly, Secure, SameSite Cookie for web browsers
+	if res.RefreshToken != "" {
+		setRefreshTokenCookie(w, r, res.RefreshToken, 30*24*3600)
+	}
+
 	writeJSON(w, http.StatusCreated, res)
 }
 
@@ -693,20 +713,41 @@ func (h *Handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Set HttpOnly, Secure, SameSite Cookie for web browsers
+	if res.RefreshToken != "" {
+		setRefreshTokenCookie(w, r, res.RefreshToken, 30*24*3600)
+	}
+
 	writeJSON(w, http.StatusOK, res)
 }
 
 func (h *Handler) HandleRefreshToken(w http.ResponseWriter, r *http.Request) {
 	var req domain.AuthRefreshTokenRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.RefreshToken == "" {
-		writeError(w, http.StatusBadRequest, "Vui lòng cung cấp refresh token")
+	_ = json.NewDecoder(r.Body).Decode(&req)
+
+	// If not in JSON body, automatically extract from HttpOnly Cookie
+	if req.RefreshToken == "" {
+		if c, err := r.Cookie(RefreshTokenCookieName); err == nil && c.Value != "" {
+			req.RefreshToken = c.Value
+		}
+	}
+
+	if req.RefreshToken == "" {
+		writeError(w, http.StatusBadRequest, "Vui lòng cung cấp refresh token hoặc gửi kèm phiên đăng nhập hợp lệ")
 		return
 	}
 
 	res, err := h.repo.RefreshToken(r.Context(), req.RefreshToken)
 	if err != nil {
+		// Clear invalid cookie on browser
+		setRefreshTokenCookie(w, r, "", -1)
 		writeError(w, http.StatusUnauthorized, err.Error())
 		return
+	}
+
+	// Rotate HttpOnly cookie
+	if res.RefreshToken != "" {
+		setRefreshTokenCookie(w, r, res.RefreshToken, 30*24*3600)
 	}
 
 	writeJSON(w, http.StatusOK, res)
@@ -716,16 +757,42 @@ func (h *Handler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 	userID, _ := middleware.GetUserID(r.Context())
 	tokenJTI := middleware.GetTokenJTI(r.Context())
 
+	// Also extract user identity directly from Authorization header if route is public
+	if userID == "" {
+		authHeader := r.Header.Get("Authorization")
+		if parts := strings.SplitN(authHeader, " ", 2); len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
+			if token, err := jwt.Parse(parts[1], func(t *jwt.Token) (interface{}, error) {
+				return []byte(h.cfg.JWTSecret), nil
+			}); err == nil && token != nil {
+				if claims, ok := token.Claims.(jwt.MapClaims); ok {
+					if sub, ok := claims["sub"].(string); ok {
+						userID = sub
+					}
+					if jti, ok := claims["jti"].(string); ok {
+						tokenJTI = jti
+					}
+				}
+			}
+		}
+	}
+
 	var req domain.AuthLogoutRequest
 	_ = json.NewDecoder(r.Body).Decode(&req)
 
-	if err := h.repo.Logout(r.Context(), userID, tokenJTI, req.RefreshToken); err != nil {
-		writeError(w, http.StatusInternalServerError, "Lỗi khi đăng xuất")
-		return
+	// If not in JSON body, automatically extract from HttpOnly Cookie
+	if req.RefreshToken == "" {
+		if c, err := r.Cookie(RefreshTokenCookieName); err == nil && c.Value != "" {
+			req.RefreshToken = c.Value
+		}
 	}
 
+	_ = h.repo.Logout(r.Context(), userID, tokenJTI, req.RefreshToken)
+
+	// Wipe HttpOnly cookie on browser immediately
+	setRefreshTokenCookie(w, r, "", -1)
+
 	writeJSON(w, http.StatusOK, map[string]string{
-		"message": "Đăng xuất thành công, phiên đăng nhập đã được hủy",
+		"message": "Đăng xuất thành công, phiên đăng nhập và Cookie đã được hủy",
 	})
 }
 
@@ -740,6 +807,9 @@ func (h *Handler) HandleLogoutAll(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "Lỗi khi đăng xuất tất cả thiết bị")
 		return
 	}
+
+	// Wipe HttpOnly cookie on browser
+	setRefreshTokenCookie(w, r, "", -1)
 
 	writeJSON(w, http.StatusOK, map[string]string{
 		"message": "Đã thu hồi tất cả phiên đăng nhập trên toàn bộ thiết bị",
@@ -763,6 +833,9 @@ func (h *Handler) HandleDeactivateAccount(w http.ResponseWriter, r *http.Request
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+
+	// Wipe HttpOnly cookie on browser
+	setRefreshTokenCookie(w, r, "", -1)
 
 	writeJSON(w, http.StatusOK, map[string]string{
 		"message": "Tài khoản đã được vô hiệu hóa an toàn, toàn bộ phiên đăng nhập đã bị xóa",

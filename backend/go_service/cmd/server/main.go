@@ -58,10 +58,11 @@ func main() {
 	// Public System Endpoints
 	r.Get("/api/v1/system/version-gate", h.GetVersionGate)
 
-	// Public Auth Endpoints (Email & Password, Refresh Token)
+	// Public Auth Endpoints (Email & Password, Refresh Token, Cookie Logout)
 	r.Post("/api/v1/auth/signup", h.HandleSignUp)
 	r.Post("/api/v1/auth/login", h.HandleLogin)
 	r.Post("/api/v1/auth/refresh", h.HandleRefreshToken)
+	r.Post("/api/v1/auth/logout", h.HandleLogout)
 
 	// Protected Endpoints (Supabase JWT Verification with Revocation Check)
 	r.Group(func(protected chi.Router) {
@@ -71,7 +72,6 @@ func main() {
 		}))
 
 		// Auth Session Security
-		protected.Post("/api/v1/auth/logout", h.HandleLogout)
 		protected.Post("/api/v1/auth/logout-all", h.HandleLogoutAll)
 		protected.Post("/api/v1/auth/deactivate", h.HandleDeactivateAccount)
 

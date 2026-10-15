@@ -1,5 +1,5 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 /// Cross-platform persistent token storage service for Quire.
 /// Automatically maps to:
 /// - Web: `window.localStorage`
@@ -35,7 +35,8 @@ class TokenStorageService {
     final prefs = _prefs ?? await SharedPreferences.getInstance();
     await Future.wait([
       prefs.setString(_keyAccessToken, accessToken),
-      prefs.setString(_keyRefreshToken, refreshToken),
+      // On Web, Refresh Token is stored strictly in HttpOnly Secure Cookie (NEVER in localStorage to prevent XSS)
+      if (!kIsWeb && refreshToken.isNotEmpty) prefs.setString(_keyRefreshToken, refreshToken),
       prefs.setString(_keyUserEmail, userEmail),
       if (userId != null) prefs.setString(_keyUserId, userId),
       if (userName != null) prefs.setString(_keyUserName, userName),
