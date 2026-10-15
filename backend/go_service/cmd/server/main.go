@@ -67,6 +67,7 @@ func main() {
 	// Public Feed Endpoints (Accessible by guests & authenticated users)
 	r.Get("/api/v1/articles", h.GetArticles)
 	r.Get("/api/v1/moments/feed", h.GetFeed)
+	r.Get("/api/v1/articles/topics", h.GetArticleTopics)
 
 	// Protected Endpoints (Supabase JWT Verification with Revocation Check)
 	r.Group(func(protected chi.Router) {
@@ -87,6 +88,7 @@ func main() {
 		// Circle & Friends
 		protected.Get("/api/v1/circle/friends", h.GetFriends)
 		protected.Delete("/api/v1/circle/friends/{friendId}", h.RemoveFriend)
+		protected.Post("/api/v1/circle/friends/add", h.AddFriend)
 		protected.Post("/api/v1/circle/invites/generate", h.GenerateInviteLink)
 		protected.Get("/api/v1/circle/requests/received", h.GetReceivedRequests)
 		protected.Post("/api/v1/circle/requests/{id}/accept", h.AcceptRequest)
@@ -109,6 +111,8 @@ func main() {
 		protected.Get("/api/v1/chat/inbox", h.GetInbox)
 		protected.Get("/api/v1/chat/{friendId}/messages", h.GetMessages)
 		protected.Post("/api/v1/chat/{friendId}/messages", h.SendMessage)
+		protected.Post("/api/v1/chat/{friendId}/read", h.MarkChatAsRead)
+		protected.Get("/api/v1/chat/unread-count", h.GetUnreadMessageCount)
 	})
 
 	addr := fmt.Sprintf(":%s", cfg.Port)

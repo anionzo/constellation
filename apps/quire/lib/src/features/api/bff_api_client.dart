@@ -384,6 +384,127 @@ class BffApiClient {
     }
     return null;
   }
+
+  // ==========================================
+  // Dynamic Topics & Hashtags
+  // ==========================================
+
+  Future<List<Map<String, dynamic>>> getArticleTopics() async {
+    try {
+      final res = await _client.get(Uri.parse('$baseUrl/api/v1/articles/topics'));
+      if (res.statusCode == 200) {
+        final json = jsonDecode(res.body) as Map<String, dynamic>;
+        final list = json['data'] as List<dynamic>?;
+        if (list != null) {
+          return list.map((e) => e as Map<String, dynamic>).toList();
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  // ==========================================
+  // Bookmarks (Lưu bài viết)
+  // ==========================================
+
+  Future<bool> bookmarkArticle(String articleId) async {
+    try {
+      final res = await _client.post(
+        Uri.parse('$baseUrl/api/v1/articles/$articleId/bookmark'),
+        headers: _headers,
+      );
+      return res.statusCode == 200 || res.statusCode == 201;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> unbookmarkArticle(String articleId) async {
+    try {
+      final res = await _client.delete(
+        Uri.parse('$baseUrl/api/v1/articles/$articleId/bookmark'),
+        headers: _headers,
+      );
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // ==========================================
+  // Circle & Friends
+  // ==========================================
+
+  Future<List<Map<String, dynamic>>> getFriends() async {
+    try {
+      final res = await _client.get(Uri.parse('$baseUrl/api/v1/circle/friends'), headers: _headers);
+      if (res.statusCode == 200) {
+        final list = jsonDecode(res.body) as List<dynamic>?;
+        if (list != null) {
+          return list.map((e) => e as Map<String, dynamic>).toList();
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  Future<Map<String, dynamic>?> addFriendByUsername(String username) async {
+    try {
+      final res = await _client.post(
+        Uri.parse('$baseUrl/api/v1/circle/friends/add'),
+        headers: _headers,
+        body: jsonEncode({'username': username}),
+      );
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        return jsonDecode(res.body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // ==========================================
+  // Chat Receipts & Unread Notifications
+  // ==========================================
+
+  Future<bool> markChatAsRead(String friendId) async {
+    try {
+      final res = await _client.post(
+        Uri.parse('$baseUrl/api/v1/chat/$friendId/read'),
+        headers: _headers,
+      );
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<int> getUnreadMessageCount() async {
+    try {
+      final res = await _client.get(
+        Uri.parse('$baseUrl/api/v1/chat/unread-count'),
+        headers: _headers,
+      );
+      if (res.statusCode == 200) {
+        final json = jsonDecode(res.body) as Map<String, dynamic>;
+        return (json['unread_count'] as num?)?.toInt() ?? 0;
+      }
+    } catch (_) {}
+    return 0;
+  }
+
+  Future<List<dynamic>> getChatMessages(String friendId) async {
+    try {
+      final res = await _client.get(
+        Uri.parse('$baseUrl/api/v1/chat/$friendId/messages'),
+        headers: _headers,
+      );
+      if (res.statusCode == 200) {
+        final json = jsonDecode(res.body) as Map<String, dynamic>;
+        return json['data'] as List<dynamic>? ?? [];
+      }
+    } catch (_) {}
+    return [];
+  }
 }
 
 /// Production implementation of QuireMomentUploader communicating via BffApiClient.

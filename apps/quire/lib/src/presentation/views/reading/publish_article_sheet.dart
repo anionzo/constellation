@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import '../../theme/quire_tokens.dart';
 import '../tabs/reading_tab_view.dart';
 import '../../../features/photo_upload/services/native_camera_gallery_service.dart';
+import '../../../features/api/bff_api_client.dart';
 
 class PublishArticleSheet extends StatefulWidget {
+  final BffApiClient? bffClient;
   final void Function(ArticleItem newArticle) onArticlePublished;
 
   const PublishArticleSheet({
     Key? key,
+    this.bffClient,
     required this.onArticlePublished,
   }) : super(key: key);
 
@@ -21,17 +24,57 @@ class _PublishArticleSheetState extends State<PublishArticleSheet> {
   final TextEditingController _excerptController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
 
-  String _selectedCategory = 'Tản văn';
-  final List<String> _categories = ['Tản văn', 'Kiến trúc', 'Nội thất', 'Du lịch', 'Nghệ thuật', 'Triết học'];
+  String _selectedCategory = '#noithat';
+  final List<String> _categories = ['#noithat', '#kientruc', '#vanhoa', '#thietke', '#caphesang', '#nhipcham', '#lisbon', '#kyoto'];
+  final TextEditingController _customTagController = TextEditingController();
   Uint8List? _coverBytes;
   bool _isPublic = true;
   String _errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTopicsFromBackend();
+  }
+
+  Future<void> _loadTopicsFromBackend() async {
+    if (widget.bffClient == null) return;
+    try {
+      final topics = await widget.bffClient!.getArticleTopics();
+      if (topics.isNotEmpty && mounted) {
+        setState(() {
+          for (final t in topics) {
+            final tag = t['display_tag']?.toString() ?? '';
+            if (tag.isNotEmpty && !_categories.contains(tag)) {
+              _categories.add(tag);
+            }
+          }
+        });
+      }
+    } catch (_) {}
+  }
+
+  void _addCustomTag() {
+    String tag = _customTagController.text.trim();
+    if (tag.isEmpty) return;
+    if (!tag.startsWith('#')) {
+      tag = '#$tag';
+    }
+    setState(() {
+      if (!_categories.contains(tag)) {
+        _categories.insert(0, tag);
+      }
+      _selectedCategory = tag;
+      _customTagController.clear();
+    });
+  }
 
   @override
   void dispose() {
     _titleController.dispose();
     _excerptController.dispose();
     _contentController.dispose();
+    _customTagController.dispose();
     super.dispose();
   }
 
@@ -65,6 +108,7 @@ class _PublishArticleSheetState extends State<PublishArticleSheet> {
     final newArticle = ArticleItem(
       id: 'article_${DateTime.now().millisecondsSinceEpoch}',
       title: title,
+      category: _selectedCategory,
       excerpt: excerpt.isNotEmpty ? excerpt : (content.length > 120 ? '${content.substring(0, 120)}...' : content),
       fullContent: content,
       author: 'Bạn',
@@ -172,32 +216,77 @@ class _PublishArticleSheetState extends State<PublishArticleSheet> {
                 ),
                 const SizedBox(height: 20),
 
-                // Category Chips Selector
-                Text('CHỦ ĐỀ BÀI VIẾT', style: QuireTokens.eyebrow(isDark: isDark)),
+                // Dynamic Hashtags Selector & Custom Tag Input
+                Text('CHỦ ĐỀ BÀI VIẾT (#HASHTAGS)', style: QuireTokens.eyebrow(isDark: isDark)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8.0,
                   runSpacing: 8.0,
-                  children: _categories.map((cat) {
-                    final isSelected = _selectedCategory == cat;
-                    return ChoiceChip(
-                      label: Text(cat),
-                      selected: isSelected,
-                      onSelected: (_) => setState(() => _selectedCategory = cat),
-                      backgroundColor: surfaceColor,
-                      selectedColor: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
-                      labelStyle: TextStyle(
-                        fontFamily: QuireTokens.fontMono,
-                        fontSize: 11,
-                        color: isSelected ? QuireTokens.accentInkLight : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                      shape: RoundedRectangleBorder(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    ..._categories.map((cat) {
+                      final isSelected = _selectedCategory == cat;
+                      return ChoiceChip(
+                        label: Text(cat),
+                        selected: isSelected,
+                        onSelected: (_) => setState(() => _selectedCategory = cat),
+                        backgroundColor: surfaceColor,
+                        selectedColor: isDark ? QuireTokens.accentSoftDark : QuireTokens.accentSoftLight,
+                        labelStyle: TextStyle(
+                          fontFamily: QuireTokens.fontMono,
+                          fontSize: 11,
+                          color: isSelected ? QuireTokens.accentInkLight : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                          side: BorderSide(color: isSelected ? QuireTokens.accentLight : ruleColor),
+                        ),
+                      );
+                    }).toList(),
+
+                    // Custom Hashtag Creator Input
+                    Container(
+                      width: 170,
+                      height: 32,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: surfaceColor,
                         borderRadius: BorderRadius.circular(999),
-                        side: BorderSide(color: isSelected ? QuireTokens.accentLight : ruleColor),
+                        border: Border.all(color: ruleColor),
                       ),
-                    );
-                  }).toList(),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _customTagController,
+                              style: TextStyle(
+                                fontFamily: QuireTokens.fontMono,
+                                fontSize: 11,
+                                color: isDark ? QuireTokens.inkDark : QuireTokens.inkLight,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: '+ Tạo #tag mới...',
+                                hintStyle: TextStyle(
+                                  fontFamily: QuireTokens.fontMono,
+                                  fontSize: 10,
+                                  color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light,
+                                ),
+                                border: InputBorder.none,
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                              onSubmitted: (_) => _addCustomTag(),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: _addCustomTag,
+                            child: const Icon(Icons.add, size: 16, color: QuireTokens.accentLight),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 20),
 

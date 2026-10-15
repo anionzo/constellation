@@ -1,8 +1,10 @@
 import 'dart:typed_data';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../theme/quire_tokens.dart';
 import '../../../features/photo_upload/models/friend_chip.dart';
 import '../../../features/photo_upload/services/native_camera_gallery_service.dart';
+import '../../../features/api/bff_api_client.dart';
 
 class ChatMessage {
   final String id;
@@ -27,6 +29,7 @@ class ChatMessage {
 }
 
 class CircleChatSheet extends StatefulWidget {
+  final BffApiClient? bffClient;
   final FriendChip friend;
   final String? initialQuotedImageUrl;
   final Uint8List? initialQuotedImageBytes;
@@ -34,6 +37,7 @@ class CircleChatSheet extends StatefulWidget {
 
   const CircleChatSheet({
     Key? key,
+    this.bffClient,
     required this.friend,
     this.initialQuotedImageUrl,
     this.initialQuotedImageBytes,
@@ -51,8 +55,9 @@ class _CircleChatSheetState extends State<CircleChatSheet> {
   String? _quotedImageUrl;
   Uint8List? _quotedImageBytes;
   String? _quotedCaption;
-
-  late final List<ChatMessage> _messages;
+  Timer? _chatPoller;
+  bool _isLoading = true;
+  final List<ChatMessage> _messages = [];
 
   @override
   void initState() {
@@ -60,32 +65,51 @@ class _CircleChatSheetState extends State<CircleChatSheet> {
     _quotedImageUrl = widget.initialQuotedImageUrl;
     _quotedImageBytes = widget.initialQuotedImageBytes;
     _quotedCaption = widget.initialQuotedCaption;
+    _loadMessagesFromBackend();
 
-    // Sample initial quiet messages
-    _messages = [
-      ChatMessage(
-        id: '1',
-        text: 'Cậu xem bức ảnh tớ vừa chụp ở góc phố cũ chưa?',
-        isMe: false,
-        time: '14:02',
-      ),
-      ChatMessage(
-        id: '2',
-        text: 'Nắng chiều đẹp lắm, tớ thả tim rồi đó!',
-        isMe: true,
-        time: '14:05',
-      ),
-      ChatMessage(
-        id: '3',
-        text: 'Cuối tuần này nếu rảnh tản bộ tiếp nhé.',
-        isMe: false,
-        time: '14:06',
-      ),
-    ];
+    // Live realtime polling every 2.5 seconds while chat sheet is open
+    _chatPoller = Timer.periodic(const Duration(milliseconds: 2500), (_) {
+      _loadMessagesFromBackend(silent: true);
+    });
+  }
+
+  Future<void> _loadMessagesFromBackend({bool silent = false}) async {
+    if (widget.bffClient == null) {
+      if (mounted && !silent) setState(() => _isLoading = false);
+      return;
+    }
+    try {
+      final list = await widget.bffClient!.getChatMessages(widget.friend.id);
+      if (mounted) {
+        setState(() {
+          _messages.clear();
+          for (final item in list) {
+            final m = item as Map<String, dynamic>;
+            final sentAt = m['sent_at'] != null ? DateTime.tryParse(m['sent_at'].toString()) : null;
+            final timeStr = sentAt != null
+                ? '${sentAt.hour.toString().padLeft(2, '0')}:${sentAt.minute.toString().padLeft(2, '0')}'
+                : 'Vừa xong';
+            final isMe = m['sender_id'] != widget.friend.id;
+            _messages.add(ChatMessage(
+              id: m['id']?.toString() ?? '',
+              text: m['message_text']?.toString() ?? '',
+              isMe: isMe,
+              time: timeStr,
+            ));
+          }
+        });
+      }
+      // Mark conversation as read
+      await widget.bffClient?.markChatAsRead(widget.friend.id);
+    } catch (_) {
+    } finally {
+      if (mounted && !silent) setState(() => _isLoading = false);
+    }
   }
 
   @override
   void dispose() {
+    _chatPoller?.cancel();
     _msgController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -101,23 +125,21 @@ class _CircleChatSheetState extends State<CircleChatSheet> {
     setState(() {
       _messages.add(
         ChatMessage(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
           text: content,
           isMe: true,
           time: timeStr,
-          imageBytes: imageBytes,
-          quotedImageUrl: _quotedImageUrl,
-          quotedImageBytes: _quotedImageBytes,
-          quotedCaption: _quotedCaption,
         ),
       );
-
-      // Clear quote after sending
       _quotedImageUrl = null;
       _quotedImageBytes = null;
       _quotedCaption = null;
     });
 
+    widget.bffClient?.sendChatMessage(
+      friendId: widget.friend.id,
+      messageText: content,
+    ).then((_) => _loadMessagesFromBackend(silent: true));
     _msgController.clear();
 
     Future.delayed(const Duration(milliseconds: 100), () {
@@ -194,11 +216,21 @@ class _CircleChatSheetState extends State<CircleChatSheet> {
 
           // Messages List
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
+                : _messages.isEmpty
+                    ? Center(
+                        child: Text(
+                          'Chưa có tin nhắn nào.\nHãy gửi lời nhắn đầu tiên để bắt đầu cuộc trò chuyện!',
+                          textAlign: TextAlign.center,
+                          style: QuireTokens.meta(isDark: isDark),
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+                        itemCount: _messages.length,
+                        itemBuilder: (context, index) {
                 final msg = _messages[index];
                 return Align(
                   alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,

@@ -204,6 +204,7 @@ class _MomentsTabViewState extends State<MomentsTabView> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => CircleChatSheet(
+        bffClient: widget.bffClient,
         friend: friend,
         initialQuotedImageUrl: quotedImageUrl,
         initialQuotedImageBytes: quotedImageBytes,
@@ -217,7 +218,7 @@ class _MomentsTabViewState extends State<MomentsTabView> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => CircleInboxSheet(friends: widget.friends),
+      builder: (ctx) => CircleInboxSheet(bffClient: widget.bffClient, friends: widget.friends),
     );
   }
 

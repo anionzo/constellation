@@ -131,6 +131,52 @@ func (r *PostgresRepository) RemoveFriend(ctx context.Context, userID, friendID 
 	return nil
 }
 
+func (r *PostgresRepository) AddFriendByUsername(ctx context.Context, userID, rawUsername string) (*domain.CircleFriend, error) {
+	username := strings.TrimSpace(rawUsername)
+	if !strings.HasPrefix(username, "@") {
+		username = "@" + username
+	}
+
+	var friendID, name, bio, city string
+	err := r.pool.QueryRow(ctx, `
+		SELECT id, display_name, COALESCE(bio, ''), COALESCE(city, 'Lisbon')
+		FROM public.profiles
+		WHERE LOWER(username) = LOWER($1);
+	`, username).Scan(&friendID, &name, &bio, &city)
+	if err != nil {
+		return nil, fmt.Errorf("không tìm thấy người dùng có tên tài khoản %s", username)
+	}
+
+	if friendID == userID {
+		return nil, fmt.Errorf("bạn không thể kết bạn với chính mình")
+	}
+
+	_, err = r.pool.Exec(ctx, `
+		INSERT INTO public.circle_members (user_id, friend_id, status)
+		VALUES ($1, $2, 'active')
+		ON CONFLICT (user_id, friend_id) DO NOTHING;
+	`, userID, friendID)
+	if err != nil {
+		return nil, fmt.Errorf("không thể kết nối bạn bè: %w", err)
+	}
+
+	initials := "B"
+	if len(name) > 0 {
+		initials = strings.ToUpper(string([]rune(name)[:1]))
+	}
+
+	return &domain.CircleFriend{
+		ID:                 friendID,
+		Name:               name,
+		Username:           username,
+		Bio:                bio,
+		City:               city,
+		Initials:           initials,
+		SharedMomentsCount: 0,
+		HasUnreadStory:     false,
+	}, nil
+}
+
 func (r *PostgresRepository) CreateInvite(ctx context.Context, invite *domain.CircleInvite) error {
 	query := `
 		INSERT INTO public.circle_invites (sender_id, invite_code, invite_url, expires_at)
@@ -252,8 +298,9 @@ func (r *PostgresRepository) GetArticles(ctx context.Context, userID, scope, top
 		baseQuery += fmt.Sprintf(" AND a.is_public = false")
 	} else if scope == "public" {
 		baseQuery += fmt.Sprintf(" AND a.is_public = true")
+	} else if scope == "saved" {
+		baseQuery += fmt.Sprintf(" AND ($1 != '' AND EXISTS(SELECT 1 FROM public.saved_items s WHERE s.user_id::text = $1 AND s.target_id = a.id AND s.target_type = 'article'))")
 	}
-
 	if topic != "" && topic != "Tất cả" {
 		baseQuery += fmt.Sprintf(" AND a.category = $%d", argIdx)
 		args = append(args, topic)
@@ -311,8 +358,15 @@ func (r *PostgresRepository) PublishArticle(ctx context.Context, a *domain.Artic
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id, created_at;
 	`
-	return r.pool.QueryRow(ctx, query, a.AuthorID, a.Title, a.Excerpt, a.FullContent, a.Category, a.CoverImagePath, a.ReadTimeMinutes, a.IsPublic).
+	err := r.pool.QueryRow(ctx, query, a.AuthorID, a.Title, a.Excerpt, a.FullContent, a.Category, a.CoverImagePath, a.ReadTimeMinutes, a.IsPublic).
 		Scan(&a.ID, &a.CreatedAt)
+	if err != nil {
+		return err
+	}
+
+	// Automatically persist and increment hashtag usage
+	_ = r.RecordTopicUsage(ctx, a.Category)
+	return nil
 }
 
 func (r *PostgresRepository) ToggleLikeArticle(ctx context.Context, userID, articleID string) (bool, int, error) {
@@ -344,6 +398,50 @@ func (r *PostgresRepository) UnbookmarkArticle(ctx context.Context, userID, arti
 		WHERE user_id = $1 AND target_type = 'article' AND target_id = $2;
 	`
 	_, err := r.pool.Exec(ctx, query, userID, articleID)
+	return err
+}
+
+func (r *PostgresRepository) GetArticleTopics(ctx context.Context) ([]domain.ArticleTopic, error) {
+	query := `
+		SELECT id, name, display_tag, usage_count
+		FROM public.article_topics
+		ORDER BY usage_count DESC, created_at ASC;
+	`
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query article topics: %w", err)
+	}
+	defer rows.Close()
+
+	var topics []domain.ArticleTopic
+	for rows.Next() {
+		var t domain.ArticleTopic
+		if err := rows.Scan(&t.ID, &t.Name, &t.DisplayTag, &t.UsageCount); err != nil {
+			return nil, err
+		}
+		topics = append(topics, t)
+	}
+	return topics, nil
+}
+
+func (r *PostgresRepository) RecordTopicUsage(ctx context.Context, rawTag string) error {
+	tag := strings.TrimSpace(rawTag)
+	if tag == "" {
+		return nil
+	}
+	name := strings.ToLower(strings.TrimPrefix(tag, "#"))
+	if name == "" {
+		return nil
+	}
+	displayTag := "#" + name
+
+	query := `
+		INSERT INTO public.article_topics (name, display_tag, usage_count)
+		VALUES ($1, $2, 1)
+		ON CONFLICT (name) DO UPDATE
+		SET usage_count = article_topics.usage_count + 1, updated_at = now();
+	`
+	_, err := r.pool.Exec(ctx, query, name, displayTag)
 	return err
 }
 
@@ -506,21 +604,43 @@ func (r *PostgresRepository) DeleteMomentPermanently(ctx context.Context, userID
 // ==========================================
 
 func (r *PostgresRepository) GetInbox(ctx context.Context, userID string) ([]domain.ChatInboxItem, error) {
-	friends, err := r.GetFriends(ctx, userID)
+	query := `
+		SELECT p.id, p.display_name, COALESCE(p.username, ''),
+		       COALESCE((
+		           SELECT message_text FROM public.chat_messages
+		           WHERE (sender_id = p.id AND recipient_id = $1) OR (sender_id = $1 AND recipient_id = p.id)
+		           ORDER BY sent_at DESC LIMIT 1
+		       ), 'Bấm vào để bắt đầu cuộc trò chuyện...'),
+		       COALESCE((
+		           SELECT sent_at FROM public.chat_messages
+		           WHERE (sender_id = p.id AND recipient_id = $1) OR (sender_id = $1 AND recipient_id = p.id)
+		           ORDER BY sent_at DESC LIMIT 1
+		       ), cm.created_at),
+		       COALESCE((
+		           SELECT COUNT(*) FROM public.chat_messages
+		           WHERE sender_id = p.id AND recipient_id = $1 AND read_at IS NULL
+		       ), 0) as unread_count
+		FROM public.circle_members cm
+		JOIN public.profiles p ON p.id = cm.friend_id
+		WHERE cm.user_id = $1 AND cm.status = 'active'
+		ORDER BY unread_count DESC, cm.created_at DESC;
+	`
+	rows, err := r.pool.Query(ctx, query, userID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query inbox: %w", err)
 	}
+	defer rows.Close()
+
 	var items []domain.ChatInboxItem
-	for _, f := range friends {
-		items = append(items, domain.ChatInboxItem{
-			FriendID:       f.ID,
-			FriendName:     f.Name,
-			FriendUsername: f.Username,
-			FriendInitials: f.Initials,
-			LastMessage:    "Bấm vào để bắt đầu cuộc trò chuyện...",
-			LastMessageAt:  time.Now(),
-			UnreadCount:    0,
-		})
+	for rows.Next() {
+		var item domain.ChatInboxItem
+		if err := rows.Scan(&item.FriendID, &item.FriendName, &item.FriendUsername, &item.LastMessage, &item.LastMessageAt, &item.UnreadCount); err != nil {
+			return nil, err
+		}
+		if len(item.FriendName) > 0 {
+			item.FriendInitials = strings.ToUpper(string([]rune(item.FriendName)[:1]))
+		}
+		items = append(items, item)
 	}
 	return items, nil
 }
@@ -570,6 +690,25 @@ func (r *PostgresRepository) SendMessage(ctx context.Context, msg *domain.ChatMe
 	`
 	return r.pool.QueryRow(ctx, query, msg.SenderID, msg.RecipientID, msg.MessageText, msg.ImagePath, quotedID).
 		Scan(&msg.ID, &msg.SentAt)
+}
+
+func (r *PostgresRepository) MarkChatAsRead(ctx context.Context, userID, friendID string) error {
+	_, err := r.pool.Exec(ctx, `
+		UPDATE public.chat_messages
+		SET read_at = now()
+		WHERE recipient_id = $1 AND sender_id = $2 AND read_at IS NULL;
+	`, userID, friendID)
+	return err
+}
+
+func (r *PostgresRepository) GetUnreadMessageCount(ctx context.Context, userID string) (int, error) {
+	var count int
+	err := r.pool.QueryRow(ctx, `
+		SELECT COUNT(*)
+		FROM public.chat_messages
+		WHERE recipient_id = $1 AND read_at IS NULL;
+	`, userID).Scan(&count)
+	return count, err
 }
 
 // ==========================================

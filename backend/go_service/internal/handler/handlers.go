@@ -157,6 +157,28 @@ func (h *Handler) RemoveFriend(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *Handler) AddFriend(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "Chưa xác thực")
+		return
+	}
+	var req struct {
+		Username string `json:"username"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || strings.TrimSpace(req.Username) == "" {
+		writeError(w, http.StatusBadRequest, "Vui lòng nhập tên tài khoản (@username)")
+		return
+	}
+
+	friend, err := h.repo.AddFriendByUsername(r.Context(), userID, req.Username)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusCreated, friend)
+}
+
 func (h *Handler) GenerateInviteLink(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserID(r.Context())
 	if !ok {
@@ -280,6 +302,17 @@ func (h *Handler) GetArticles(w http.ResponseWriter, r *http.Request) {
 			NextCursor: nextCursor,
 			Limit:      limit,
 		},
+	})
+}
+
+func (h *Handler) GetArticleTopics(w http.ResponseWriter, r *http.Request) {
+	topics, err := h.repo.GetArticleTopics(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Không thể lấy danh sách chủ đề")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"data": topics,
 	})
 }
 
@@ -632,6 +665,37 @@ func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusCreated, msg)
+}
+
+func (h *Handler) MarkChatAsRead(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "Chưa xác thực")
+		return
+	}
+	friendID := chi.URLParam(r, "friendId")
+	if friendID == "" {
+		writeError(w, http.StatusBadRequest, "Thiếu friendId")
+		return
+	}
+
+	_ = h.repo.MarkChatAsRead(r.Context(), userID, friendID)
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func (h *Handler) GetUnreadMessageCount(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "Chưa xác thực")
+		return
+	}
+
+	count, err := h.repo.GetUnreadMessageCount(r.Context(), userID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "Lỗi kiểm tra tin nhắn")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]int{"unread_count": count})
 }
 
 // ==========================================

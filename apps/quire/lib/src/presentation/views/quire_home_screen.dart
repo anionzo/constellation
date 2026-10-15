@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../theme/quire_tokens.dart';
 import '../theme/quire_theme.dart';
@@ -43,24 +44,62 @@ class _QuireHomeScreenState extends State<QuireHomeScreen> {
   String _username = '@ban.quire';
   String _userBio = 'Thành viên từ tháng 3 · Lisbon';
   Uint8List? _userAvatarBytes;
-  late List<FriendChip> _friends;
+  List<FriendChip> _friends = [];
+  Timer? _notificationPoller;
+  int _lastUnreadCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _friends = [
-      const FriendChip(id: 'f1', name: 'Mai', initials: 'M'),
-      const FriendChip(id: 'f2', name: 'Tuấn', initials: 'T'),
-      const FriendChip(id: 'f3', name: 'Linh', initials: 'L'),
-      const FriendChip(id: 'f4', name: 'An', initials: 'A'),
-      const FriendChip(id: 'f5', name: 'Hà', initials: 'H'),
-      const FriendChip(id: 'f6', name: 'Khoa', initials: 'K'),
-      const FriendChip(id: 'f7', name: 'Trang', initials: 'TR'),
-      const FriendChip(id: 'f8', name: 'Duy', initials: 'D'),
-      const FriendChip(id: 'f9', name: 'Bảo', initials: 'B'),
-      const FriendChip(id: 'f10', name: 'Việt', initials: 'V'),
-      const FriendChip(id: 'f11', name: 'Quỳnh', initials: 'Q'),
-    ];
+    _loadFriendsFromBackend();
+    _startNotificationPolling();
+  }
+
+  @override
+  void dispose() {
+    _notificationPoller?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadFriendsFromBackend() async {
+    if (widget.bffClient == null) return;
+    try {
+      final list = await widget.bffClient!.getFriends();
+      if (list.isNotEmpty && mounted) {
+        setState(() {
+          _friends = list.map((item) {
+            final id = item['id']?.toString() ?? '';
+            final name = item['name']?.toString() ?? 'Bạn';
+            final initials = item['initials']?.toString() ?? (name.isNotEmpty ? name[0].toUpperCase() : 'B');
+            return FriendChip(id: id, name: name, initials: initials);
+          }).toList();
+        });
+      }
+    } catch (_) {}
+  }
+
+  void _startNotificationPolling() {
+    _notificationPoller = Timer.periodic(const Duration(seconds: 4), (_) async {
+      if (!mounted || widget.bffClient == null) return;
+      try {
+        final unread = await widget.bffClient!.getUnreadMessageCount();
+        if (unread > _lastUnreadCount && mounted) {
+          _lastUnreadCount = unread;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Bạn có $unread tin nhắn mới trong hộp thư vòng bạn bè!',
+                style: const TextStyle(fontFamily: QuireTokens.fontSerif),
+              ),
+              backgroundColor: QuireTokens.accentLight,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      } catch (_) {}
+    });
   }
 
   void _onProfileUpdated(String name, String username, String bio, Uint8List? avatarBytes) {

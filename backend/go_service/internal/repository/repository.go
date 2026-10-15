@@ -19,18 +19,20 @@ type Repository interface {
 
 	// Circle & Invites
 	GetFriends(ctx context.Context, userID string) ([]domain.CircleFriend, error)
+	AddFriendByUsername(ctx context.Context, userID, username string) (*domain.CircleFriend, error)
 	RemoveFriend(ctx context.Context, userID, friendID string) error
 	CreateInvite(ctx context.Context, invite *domain.CircleInvite) error
 	GetReceivedRequests(ctx context.Context, recipientID string) ([]domain.CircleRequest, error)
 	AcceptRequest(ctx context.Context, recipientID, requestID string) (*domain.CircleFriend, error)
 	DeclineRequest(ctx context.Context, recipientID, requestID string) error
-
 	// Articles
 	GetArticles(ctx context.Context, userID, scope, topic string, cursorTime *time.Time, cursorID *string, limit int) ([]domain.Article, bool, *string, error)
 	PublishArticle(ctx context.Context, a *domain.Article) error
 	ToggleLikeArticle(ctx context.Context, userID, articleID string) (bool, int, error)
 	BookmarkArticle(ctx context.Context, userID, articleID string) error
 	UnbookmarkArticle(ctx context.Context, userID, articleID string) error
+	GetArticleTopics(ctx context.Context) ([]domain.ArticleTopic, error)
+	RecordTopicUsage(ctx context.Context, tag string) error
 
 	// Moments
 	GetFeed(ctx context.Context, userID, circleID string, cursorTime *time.Time, cursorID *string, limit int) ([]domain.Moment, bool, *string, error)
@@ -44,7 +46,8 @@ type Repository interface {
 	GetInbox(ctx context.Context, userID string) ([]domain.ChatInboxItem, error)
 	GetMessages(ctx context.Context, userID, friendID string, cursorTime *time.Time, cursorID *string, limit int) ([]domain.ChatMessage, bool, *string, error)
 	SendMessage(ctx context.Context, msg *domain.ChatMessage) error
-
+	MarkChatAsRead(ctx context.Context, userID, friendID string) error
+	GetUnreadMessageCount(ctx context.Context, userID string) (int, error)
 	// Auth & Session Security
 	SignUp(ctx context.Context, email, password, displayName string) (*domain.AuthResponse, error)
 	Login(ctx context.Context, email, password string) (*domain.AuthResponse, error)
@@ -257,6 +260,41 @@ func (m *MemoryRepository) GetFriends(ctx context.Context, userID string) ([]dom
 	return friends, nil
 }
 
+func (m *MemoryRepository) AddFriendByUsername(ctx context.Context, userID, rawUsername string) (*domain.CircleFriend, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	target := strings.ToLower(strings.TrimPrefix(rawUsername, "@"))
+	var foundProfile *domain.Profile
+	for _, p := range m.profiles {
+		if strings.ToLower(strings.TrimPrefix(p.Username, "@")) == target {
+			foundProfile = p
+			break
+		}
+	}
+	if foundProfile == nil {
+		return nil, fmt.Errorf("không tìm thấy người dùng có tên tài khoản @%s", target)
+	}
+
+	initials := "B"
+	if len(foundProfile.DisplayName) > 0 {
+		initials = strings.ToUpper(string([]rune(foundProfile.DisplayName)[:1]))
+	}
+
+	newFriend := domain.CircleFriend{
+		ID:                 foundProfile.ID,
+		Name:               foundProfile.DisplayName,
+		Username:           foundProfile.Username,
+		Bio:                foundProfile.Bio,
+		City:               foundProfile.City,
+		Initials:           initials,
+		SharedMomentsCount: 0,
+		HasUnreadStory:     false,
+	}
+	m.friends[userID] = append(m.friends[userID], newFriend)
+	return &newFriend, nil
+}
+
 func (m *MemoryRepository) RemoveFriend(ctx context.Context, userID, friendID string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -341,6 +379,11 @@ func (m *MemoryRepository) GetArticles(ctx context.Context, userID, scope, topic
 		if scope == "public" && !a.IsPublic {
 			continue
 		}
+		if scope == "saved" {
+			if bms, ok := m.bookmarks[userID]; !ok || !bms[a.ID] {
+				continue
+			}
+		}
 		if topic != "" && topic != "Tất cả" && a.Category != topic {
 			continue
 		}
@@ -412,6 +455,23 @@ func (m *MemoryRepository) UnbookmarkArticle(ctx context.Context, userID, articl
 	if m.bookmarks[userID] != nil {
 		delete(m.bookmarks[userID], articleID)
 	}
+	return nil
+}
+
+func (m *MemoryRepository) GetArticleTopics(ctx context.Context) ([]domain.ArticleTopic, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return []domain.ArticleTopic{
+		{ID: "top_1", Name: "noithat", DisplayTag: "#noithat", UsageCount: 12},
+		{ID: "top_2", Name: "kientruc", DisplayTag: "#kientruc", UsageCount: 9},
+		{ID: "top_3", Name: "vanhoa", DisplayTag: "#vanhoa", UsageCount: 8},
+		{ID: "top_4", Name: "thietke", DisplayTag: "#thietke", UsageCount: 7},
+		{ID: "top_5", Name: "caphesang", DisplayTag: "#caphesang", UsageCount: 6},
+		{ID: "top_6", Name: "nhipcham", DisplayTag: "#nhipcham", UsageCount: 5},
+	}, nil
+}
+
+func (m *MemoryRepository) RecordTopicUsage(ctx context.Context, tag string) error {
 	return nil
 }
 
@@ -560,6 +620,30 @@ func (m *MemoryRepository) SendMessage(ctx context.Context, msg *domain.ChatMess
 	msg.SentAt = time.Now()
 	m.chatMessages = append(m.chatMessages, msg)
 	return nil
+}
+
+func (m *MemoryRepository) MarkChatAsRead(ctx context.Context, userID, friendID string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	now := time.Now()
+	for _, msg := range m.chatMessages {
+		if msg.RecipientID == userID && msg.SenderID == friendID && msg.ReadAt == nil {
+			msg.ReadAt = &now
+		}
+	}
+	return nil
+}
+
+func (m *MemoryRepository) GetUnreadMessageCount(ctx context.Context, userID string) (int, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	count := 0
+	for _, msg := range m.chatMessages {
+		if msg.RecipientID == userID && msg.ReadAt == nil {
+			count++
+		}
+	}
+	return count, nil
 }
 
 func (m *MemoryRepository) SignUp(ctx context.Context, email, password, displayName string) (*domain.AuthResponse, error) {

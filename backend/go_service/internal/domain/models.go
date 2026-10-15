@@ -133,6 +133,14 @@ type PaginatedResponse[T any] struct {
 	Pagination PaginationMetadata `json:"pagination"`
 }
 
+// ArticleTopic represents a dynamic hashtag / topic in Quire.
+type ArticleTopic struct {
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	DisplayTag string `json:"display_tag"`
+	UsageCount int    `json:"usage_count"`
+}
+
 // AuthSignUpRequest represents payload to register a new account.
 type AuthSignUpRequest struct {
 	Email       string `json:"email"`

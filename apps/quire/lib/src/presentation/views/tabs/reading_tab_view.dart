@@ -7,6 +7,7 @@ import '../../../features/api/bff_api_client.dart';
 class ArticleItem {
   final String id;
   final String title;
+  final String category;
   final String excerpt;
   final String fullContent;
   final String author;
@@ -22,6 +23,7 @@ class ArticleItem {
   ArticleItem({
     required this.id,
     required this.title,
+    this.category = '#noithat',
     required this.excerpt,
     required this.fullContent,
     required this.author,
@@ -46,10 +48,29 @@ class ReadingTabView extends StatefulWidget {
 
 class _ReadingTabViewState extends State<ReadingTabView> {
   int _filterIndex = 0; // 0: Tất cả, 1: Công khai, 2: Vòng bạn bè, 3: Đã lưu
+  String _selectedTopic = 'Tất cả';
+  List<String> _dynamicTopics = ['Tất cả', '#noithat', '#kientruc', '#vanhoa', '#thietke'];
+
   @override
   void initState() {
     super.initState();
+    _loadTopics();
     _loadArticlesFromBackend();
+  }
+
+  Future<void> _loadTopics() async {
+    if (widget.bffClient == null) return;
+    try {
+      final topics = await widget.bffClient!.getArticleTopics();
+      if (topics.isNotEmpty && mounted) {
+        setState(() {
+          _dynamicTopics = [
+            'Tất cả',
+            ...topics.map((t) => t['display_tag']?.toString() ?? '').where((s) => s.isNotEmpty),
+          ];
+        });
+      }
+    } catch (_) {}
   }
 
   bool _isLoading = true;
@@ -65,9 +86,10 @@ class _ReadingTabViewState extends State<ReadingTabView> {
     if (_filterIndex == 1) scope = 'public';
     if (_filterIndex == 2) scope = 'circle';
     if (_filterIndex == 3) scope = 'saved';
+    String? topic = _selectedTopic == 'Tất cả' ? null : _selectedTopic;
 
     try {
-      final res = await widget.bffClient!.getArticles(scope: scope);
+      final res = await widget.bffClient!.getArticles(scope: scope, topic: topic);
       if (res != null && res['data'] is List) {
         final List<dynamic> list = res['data'] as List<dynamic>;
         if (mounted) {
@@ -78,6 +100,7 @@ class _ReadingTabViewState extends State<ReadingTabView> {
               _articles.add(ArticleItem(
                 id: m['id']?.toString() ?? '',
                 title: m['title']?.toString() ?? '',
+                category: m['category']?.toString() ?? '#noithat',
                 excerpt: m['excerpt']?.toString() ?? '',
                 fullContent: m['full_content']?.toString() ?? '',
                 author: m['author_name']?.toString() ?? 'Tác giả',
@@ -106,10 +129,11 @@ class _ReadingTabViewState extends State<ReadingTabView> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => PublishArticleSheet(
+        bffClient: widget.bffClient,
         onArticlePublished: (newArticle) {
           widget.bffClient?.publishArticle(
             title: newArticle.title,
-            category: 'Ghi chép',
+            category: newArticle.category,
             excerpt: newArticle.excerpt,
             fullContent: newArticle.fullContent,
             isPublic: newArticle.isPublic,
@@ -444,6 +468,40 @@ class _ReadingTabViewState extends State<ReadingTabView> {
             ],
           ),
         ),
+
+        const SizedBox(height: 10),
+        // Dynamic Hashtags Bar (#noithat, #kientruc, ...)
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: _dynamicTopics.map((tag) {
+              final isSel = _selectedTopic == tag;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ChoiceChip(
+                  label: Text(tag),
+                  selected: isSel,
+                  onSelected: (_) {
+                    setState(() => _selectedTopic = tag);
+                    _loadArticlesFromBackend();
+                  },
+                  backgroundColor: surfaceColor,
+                  selectedColor: isDark ? QuireTokens.accentDark : QuireTokens.accentLight,
+                  labelStyle: TextStyle(
+                    fontFamily: QuireTokens.fontMono,
+                    fontSize: 10.5,
+                    fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                    color: isSel ? Colors.white : (isDark ? QuireTokens.inkDark : QuireTokens.inkLight),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                    side: BorderSide(color: isSel ? Colors.transparent : ruleColor),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
         const SizedBox(height: 16),
 
         // Live Database Articles Feed
@@ -535,7 +593,7 @@ class _ReadingTabViewState extends State<ReadingTabView> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '${article.author} · ${article.readTime}'.toUpperCase(),
+                              '${article.category} · ${article.author} · ${article.readTime}'.toUpperCase(),
                               style: QuireTokens.meta(isDark: isDark),
                             ),
                             Row(
@@ -550,10 +608,16 @@ class _ReadingTabViewState extends State<ReadingTabView> {
                                         ? QuireTokens.accentLight
                                         : (isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light),
                                   ),
-                                  onPressed: () {
+                                  onPressed: () async {
+                                    final willBookmark = !article.isBookmarked;
                                     setState(() {
-                                      article.isBookmarked = !article.isBookmarked;
+                                      article.isBookmarked = willBookmark;
                                     });
+                                    if (willBookmark) {
+                                      await widget.bffClient?.bookmarkArticle(article.id);
+                                    } else {
+                                      await widget.bffClient?.unbookmarkArticle(article.id);
+                                    }
                                   },
                                 ),
                               ],

@@ -62,6 +62,15 @@
     "indexedAt": "0001-01-01T00:00:00Z",
     "stale": true
   },
+  "doc:doc-93662c5199ab479ca05f5c1f64236805": {
+    "entityType": "doc",
+    "entityId": "doc-93662c5199ab479ca05f5c1f64236805",
+    "canonicalHash": "36f9ccfa34025390185a84453e806b816f4637b3eac59142fdc6ad75c8d804d8",
+    "revision": 2,
+    "path": "docs/h-thng-phn-tng-api-lung-x-l-nghip-v-chun-constellation-backend-api-blueprint.md",
+    "indexedAt": "0001-01-01T00:00:00Z",
+    "stale": true
+  },
   "doc:doc-9d44dbfe04863402ffc5cf56c024fa74": {
     "entityType": "doc",
     "entityId": "doc-9d44dbfe04863402ffc5cf56c024fa74",

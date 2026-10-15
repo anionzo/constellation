@@ -135,7 +135,7 @@ class _YouTabViewState extends State<YouTabView> {
             context: context,
             isScrollControlled: true,
             backgroundColor: Colors.transparent,
-            builder: (_) => CircleChatSheet(friend: friend),
+            builder: (_) => CircleChatSheet(bffClient: widget.bffClient, friend: friend),
           );
         },
         onRemoveFriend: () {
@@ -414,7 +414,7 @@ class _YouTabViewState extends State<YouTabView> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(QuireTokens.rBtn)),
                             elevation: 0,
                           ),
-                          onPressed: () {
+                          onPressed: () async {
                             final name = _addFriendController.text.trim();
                             if (name.isNotEmpty) {
                               final initials = name.split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase();
@@ -424,6 +424,7 @@ class _YouTabViewState extends State<YouTabView> {
                                 initials: initials.isNotEmpty ? initials : name[0].toUpperCase(),
                               );
                               widget.onAddFriend?.call(newChip);
+                              await widget.bffClient?.addFriendByUsername(name);
                               _addFriendController.clear();
                               setSheetState(() {});
                             }
@@ -832,68 +833,102 @@ class _YouTabViewState extends State<YouTabView> {
   void _openSavedSheet() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
         final bgColor = isDark ? QuireTokens.paperDark : QuireTokens.paperLight;
         final ruleColor = isDark ? QuireTokens.ruleDark : QuireTokens.ruleLight;
 
-        return Container(
-          padding: const EdgeInsets.all(24.0),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(QuireTokens.rSheet)),
-            border: Border.all(color: ruleColor),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              constraints: const BoxConstraints(maxHeight: 580),
+              padding: const EdgeInsets.all(24.0),
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(QuireTokens.rSheet)),
+                border: Border.all(color: ruleColor),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('THƯ VIỆN LƯU TRỮ', style: QuireTokens.eyebrow(isDark: isDark)),
-                  IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(ctx)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('THƯ VIỆN LƯU TRỮ (POSTGRESQL)', style: QuireTokens.eyebrow(isDark: isDark)),
+                      IconButton(icon: const Icon(Icons.close, size: 20), onPressed: () => Navigator.pop(ctx)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text('Bài viết đã lưu', style: QuireTokens.title(isDark: isDark)),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: FutureBuilder<Map<String, dynamic>?>(
+                      future: widget.bffClient?.getArticles(scope: 'saved'),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+                        }
+                        final items = snapshot.data?['data'] as List<dynamic>? ?? [];
+                        if (items.isEmpty) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.bookmark_border, size: 36, color: isDark ? QuireTokens.ink3Dark : QuireTokens.ink3Light),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Chưa có bài viết nào được lưu.',
+                                    style: QuireTokens.title(isDark: isDark).copyWith(fontSize: 16),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Bấm vào biểu tượng bookmark ở góc bài viết để lưu vào thư viện đọc sau.',
+                                    textAlign: TextAlign.center,
+                                    style: QuireTokens.body(isDark: isDark),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                        return ListView.separated(
+                          itemCount: items.length,
+                          separatorBuilder: (_, __) => Divider(color: ruleColor),
+                          itemBuilder: (context, index) {
+                            final art = items[index] as Map<String, dynamic>;
+                            final id = art['id']?.toString() ?? '';
+                            final title = art['title']?.toString() ?? 'Bài viết';
+                            final author = art['author_name']?.toString() ?? 'Tác giả';
+                            final tag = art['category']?.toString() ?? '#noithat';
+
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: const Icon(Icons.bookmark, color: QuireTokens.accentLight),
+                              title: Text(title, style: QuireTokens.h3(isDark: isDark).copyWith(fontSize: 15)),
+                              subtitle: Text('$tag · $author', style: QuireTokens.meta(isDark: isDark)),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.bookmark_remove_outlined, color: Color(0xFFC13832), size: 20),
+                                tooltip: 'Bỏ lưu',
+                                onPressed: () async {
+                                  await widget.bffClient?.unbookmarkArticle(id);
+                                  setSheetState(() {});
+                                },
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 4),
-              Text('Bài viết & Khoảnh khắc đã lưu', style: QuireTokens.title(isDark: isDark)),
-              const SizedBox(height: 16),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.bookmark, color: QuireTokens.accentLight),
-                title: Text('Nghệ thuật của gạch men azulejo ở Lisbon', style: QuireTokens.h3(isDark: isDark).copyWith(fontSize: 15)),
-                subtitle: Text('Inês Castro · Đã lưu hôm qua', style: QuireTokens.meta(isDark: isDark)),
-                trailing: IconButton(
-                  icon: const Icon(Icons.bookmark_remove_outlined, color: Color(0xFFC13832), size: 20),
-                  tooltip: 'Bỏ lưu',
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Đã bỏ lưu bài viết khỏi Thư viện!')),
-                    );
-                  },
-                ),
-              ),
-              const Divider(),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.bookmark, color: QuireTokens.accentLight),
-                title: Text('Những thư viện im lặng ở cố đô Kyoto', style: QuireTokens.h3(isDark: isDark).copyWith(fontSize: 15)),
-                subtitle: Text('Kenji Sato · Đã lưu tuần trước', style: QuireTokens.meta(isDark: isDark)),
-                trailing: IconButton(
-                  icon: const Icon(Icons.bookmark_remove_outlined, color: Color(0xFFC13832), size: 20),
-                  tooltip: 'Bỏ lưu',
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Đã bỏ lưu bài viết khỏi Thư viện!')),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
