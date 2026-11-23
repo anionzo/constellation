@@ -24,6 +24,8 @@ Khung của Quire đã khá đủ. Client Flutter gọi đúng 29 endpoint mà G
 | B1 | Thiếu `go.sum` | `go build` lỗi khi chạy trực tiếp, còn Dockerfile phải chạy `go mod tidy` lúc build |
 | B2 | Thiếu khai báo `http` trong `pubspec.yaml` | Hiện chỉ chạy được nhờ dependency transitive |
 | B3 | Không có test Go, README mặc định | `go test ./...` báo "no test files" |
+| D1 | Hai schema song song cho moments và vòng bạn | `01` tạo `quire_moments`, `quire_circles`, `quire_circle_members` (circle UUID, có storage policy). Nhưng BFF chỉ dùng `public.moments` (`02`, `circle_id VARCHAR DEFAULT 'circle_1'`) và `public.circle_members` (quan hệ bạn bè user và friend). Client gửi `circleId: 'default-circle-id'` |
+| D2 | Bảng lõi nằm trong migration seed | `public.circle_members` được tạo trong `04-seed-real-data.sql` |
 
 ## 2. Quyết định hosting: dùng DB online miễn phí hay tự host?
 
@@ -57,14 +59,26 @@ Go BFF vẫn cần một nơi chạy riêng. Đây là câu hỏi mở (mục 6)
 
 ## 3. Thiết kế các hạng mục
 
+### W0. Thống nhất schema moments và vòng bạn (D1, D2). Làm trước W1
+
+Mô hình mà BFF và UI đang chạy thật là **vòng bạn theo từng người**: mỗi user có danh sách bạn trong `public.circle_members`, và feed hiện moment của chính mình cùng của bạn bè. Không có khái niệm "circle UUID" nào ở client. Vì vậy:
+
+- **Nguồn dữ liệu duy nhất là `public.moments` và `public.circle_members`.** Các bảng `quire_moments`, `quire_moment_recipients`, `quire_circles`, `quire_circle_members` ở `01` không có ai dùng. Viết migration mới để drop chúng, hoặc ít nhất đánh dấu deprecated, kèm hàm `purge_expired_quire_moments()` và các policy storage dựa trên chúng. Hàm purge 30 ngày được viết lại cho `public.moments`.
+- Chuyển `CREATE TABLE public.circle_members` (cùng index và RLS nếu có) từ `04` sang một migration schema mới (ví dụ `08-circle-members-schema.sql`), để khi tách seed ra ở W6 thì bảng không bị mất.
+- Bỏ cột `circle_id` khỏi luồng moment, hoặc giữ cột nhưng không bắt buộc. Path ảnh đổi thành `quire-moments/{sender_id}/{moment_id}.webp`.
+- Quy tắc quyền: người upload phải là `sender_id`. Người xem phải là sender hoặc có row `circle_members(user_id = viewer, friend_id = sender, status = 'active')`, giống điều kiện đang dùng ở `GetFeed`.
+- Storage policy viết lại theo `sender_id`. Thực tế, bucket chỉ truy cập qua signed URL do BFF cấp bằng service key, nên policy chỉ là lớp phòng thủ thứ hai.
+
+Điều kiện nghiệm thu: `grep -rn "default-circle-id\|circle_1" apps/quire/lib backend` không còn kết quả. Áp toàn bộ migration lên DB trống (không seed) thì có đủ bảng mà BFF cần.
+
 ### W1. Luồng ảnh moment thật (P1, P2). Ưu tiên cao nhất
 
 Luồng mới dùng signed upload URL để client không cần giữ key Supabase:
 
 1. Client nén ảnh WebP (dùng `media_storage`) và giữ trong RAM trong cửa sổ Undo 900ms như hiện tại.
-2. Client gọi `POST /api/v1/moments/upload-url` với `{circle_id, moment_id}`. BFF kiểm tra quyền thành viên của circle, rồi gọi Storage API `createSignedUploadUrl` cho path `quire-moments/{circle_id}/{moment_id}.webp`.
+2. Client gọi `POST /api/v1/moments/upload-url` với `{moment_id}`. BFF lấy `sender_id` từ JWT, rồi gọi Storage API `createSignedUploadUrl` cho path `quire-moments/{sender_id}/{moment_id}.webp` (theo W0).
 3. Client `PUT` ảnh lên signed URL đó.
-4. Client gọi `POST /api/v1/moments` với `image_path`. BFF kiểm tra object đã tồn tại.
+4. Client gọi `POST /api/v1/moments` với `image_path`. BFF kiểm tra path thuộc thư mục `{sender_id}/` của chính người gửi và object đã tồn tại, rồi insert vào `public.moments`.
 5. Khi trả về feed hoặc archive, BFF sinh **signed download URL** (TTL khoảng 1 giờ) vào trường `image_url`. Bucket để private.
 
 Thay đổi:
@@ -73,10 +87,10 @@ Thay đổi:
 - Go: thêm `internal/storage` (client cho Supabase Storage REST), endpoint `upload-url`, và sinh signed URL trong `GetFeed`, `GetArchive`.
 
 Điều kiện nghiệm thu:
-- Đăng moment xong thì object có trong bucket và row có trong `quire_moments`.
+- Đăng moment xong thì object có trong bucket và row có trong `public.moments`.
 - Người nhận khác mở feed thì thấy ảnh thật, không phải ô xám.
 - Bấm Undo trong 900ms thì không có request mạng nào được gửi.
-- Người không thuộc circle xin upload URL thì bị trả 403.
+- Gửi `image_path` nằm ngoài thư mục của chính mình thì bị trả 403. Người không phải bạn của sender thì không nhận được signed URL của ảnh.
 
 ### W2. Backend fail-fast (P3, S1, S2, B1)
 
@@ -101,8 +115,9 @@ Thay đổi:
 
 - Thêm bảng `app_versions(platform, min_supported_version, latest_version, is_maintenance_mode, update_url, ...)`. `GetVersionGate` đọc từ bảng này.
 - Client dùng `BffSystemConfigRepository`, xác định platform từ `kIsWeb` hoặc `defaultTargetPlatform`, và cache bằng `shared_preferences`.
+- `currentAppVersion` không còn gán cứng `1.0.0` trong `main.dart`, mà đọc từ bản build đang cài (`package_info_plus`, tức `version` trong `pubspec.yaml`).
 
-Điều kiện nghiệm thu: tăng `min_supported_version` trong DB thì client cũ hiện `ForceUpdateScreen`.
+Điều kiện nghiệm thu: đặt `min_supported_version = 1.1.0` thì build `1.0.0` hiện `ForceUpdateScreen`, còn build `1.1.0` vào app bình thường. Cả hai trường hợp đều có test.
 
 ### W5. Dọn mock và nối nốt UI (P6, P7)
 
@@ -114,7 +129,7 @@ Thay đổi:
 
 ### W6. Dữ liệu và migration an toàn (S3)
 
-- Chuyển migration 04 và 06 sang `backend/supabase/seed/dev-seed.sql`. Đầu file kiểm tra một biến như `app.env = 'dev'`, sai thì dừng.
+- Sau khi W0 đã chuyển phần schema (`circle_members`) ra khỏi `04`, chuyển phần dữ liệu còn lại của 04 và 06 sang `backend/supabase/seed/dev-seed.sql`. Đầu file kiểm tra một biến như `app.env = 'dev'`, sai thì dừng.
 - Mật khẩu seed lấy từ biến môi trường, không ghi thẳng vào file.
 
 ### W7. Chất lượng (B2, B3)
@@ -127,12 +142,13 @@ Thay đổi:
 ## 4. Thứ tự thực hiện
 
 1. **W2 + W7 phần build** (go.sum, Dockerfile, pubspec): nhỏ, giúp các bước sau build ổn định.
-2. **Lên Supabase Cloud + W6**: tạo project, áp migration đã dọn, dùng seed dev riêng.
-3. **W1**: luồng ảnh thật, là tính năng cốt lõi.
-4. **W5**: dọn mock.
-5. **W3**: chat realtime.
-6. **W4**: version gate.
-7. **W7 phần còn lại**: test, CI, README.
+2. **W0 + W6**: thống nhất schema, tách seed.
+3. **Lên Supabase Cloud**: tạo project, áp migration đã dọn.
+4. **W1**: luồng ảnh thật, là tính năng cốt lõi.
+5. **W5**: dọn mock.
+6. **W3**: chat realtime.
+7. **W4**: version gate.
+8. **W7 phần còn lại**: test, CI, README.
 
 Mỗi bước là một PR riêng.
 
