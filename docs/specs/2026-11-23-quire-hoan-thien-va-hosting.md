@@ -26,6 +26,7 @@ Khung của Quire đã khá đủ. Client Flutter gọi đúng 29 endpoint mà G
 | B3 | Không có test Go, README mặc định | `go test ./...` báo "no test files" |
 | D1 | Hai schema song song cho moments và vòng bạn | `01` tạo `quire_moments`, `quire_circles`, `quire_circle_members` (circle UUID, có storage policy). Nhưng BFF chỉ dùng `public.moments` (`02`, `circle_id VARCHAR DEFAULT 'circle_1'`) và `public.circle_members` (quan hệ bạn bè user và friend). Client gửi `circleId: 'default-circle-id'` |
 | D2 | Bảng lõi nằm trong migration seed | `public.circle_members` được tạo trong `04-seed-real-data.sql` |
+| D3 | Kết bạn một chiều | `AddFriendByUsername` chỉ ghi A → B, không cần B đồng ý. Còn `AcceptRequest` ghi cả hai chiều. Feed lại lọc theo viewer → sender, nên nếu A tự thêm B thì B không thấy moment của A |
 
 ## 2. Quyết định hosting: dùng DB online miễn phí hay tự host?
 
@@ -66,8 +67,12 @@ Mô hình mà BFF và UI đang chạy thật là **vòng bạn theo từng ngư�
 - **Nguồn dữ liệu duy nhất là `public.moments` và `public.circle_members`.** Các bảng `quire_moments`, `quire_moment_recipients`, `quire_circles`, `quire_circle_members` ở `01` không có ai dùng. Viết migration mới để drop chúng, hoặc ít nhất đánh dấu deprecated, kèm hàm `purge_expired_quire_moments()` và các policy storage dựa trên chúng. Hàm purge 30 ngày được viết lại cho `public.moments`.
 - Chuyển `CREATE TABLE public.circle_members` (cùng index và RLS nếu có) từ `04` sang một migration schema mới (ví dụ `08-circle-members-schema.sql`), để khi tách seed ra ở W6 thì bảng không bị mất.
 - Bỏ cột `circle_id` khỏi luồng moment, hoặc giữ cột nhưng không bắt buộc. Path ảnh đổi thành `quire-moments/{sender_id}/{moment_id}.webp`.
+- **Quan hệ bạn bè phải hai chiều và có đồng ý (D3).** `POST /circle/friends/add` không ghi thẳng vào `circle_members` nữa, mà tạo một `circle_requests` ở trạng thái pending. Chỉ khi `AcceptRequest` chạy thì mới ghi cả hai chiều A ↔ B (như code hiện có). `RemoveFriend` xoá cả hai chiều. Viết migration dọn dữ liệu cũ: các cặp chỉ có một chiều thì bổ sung chiều còn lại, hoặc chuyển thành request pending. Đề xuất chuyển thành request pending, để đúng tinh thần riêng tư của Quire.
+- Moment gửi tới mọi bạn bè hiện tại. Nếu sau này cần chọn từng người nhận, thêm bảng `moment_recipients(moment_id, recipient_id)` và lọc theo bảng đó. Việc này nằm ngoài phạm vi spec.
 - Quy tắc quyền: người upload phải là `sender_id`. Người xem phải là sender hoặc có row `circle_members(user_id = viewer, friend_id = sender, status = 'active')`, giống điều kiện đang dùng ở `GetFeed`.
 - Storage policy viết lại theo `sender_id`. Thực tế, bucket chỉ truy cập qua signed URL do BFF cấp bằng service key, nên policy chỉ là lớp phòng thủ thứ hai.
+
+Điều kiện nghiệm thu bổ sung: A gửi lời mời và B chưa chấp nhận thì không ai thấy moment của người kia. Sau khi B chấp nhận thì cả hai thấy moment của nhau. Một bên xoá bạn thì cả hai đều mất quyền xem.
 
 Điều kiện nghiệm thu: `grep -rn "default-circle-id\|circle_1" apps/quire/lib backend` không còn kết quả. Áp toàn bộ migration lên DB trống (không seed) thì có đủ bảng mà BFF cần.
 
